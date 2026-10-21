@@ -3,7 +3,7 @@ import {key} from '../game/dungeon.js';
 const T=24;
 export class DungeonScene extends Phaser.Scene {
   constructor(){super('dungeon');}
-  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.draw();}
+  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();}
   setGame(game){this.gameModel=game;this.draw();}
   draw(){
     if(!this.ready||!this.gameModel)return;
