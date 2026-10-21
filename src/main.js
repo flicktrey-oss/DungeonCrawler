@@ -5,6 +5,7 @@ import { attack, defense, threshold } from './game/items.js';
 import { DungeonScene } from './render/scene.js';
 import './style.css';
 import { drawMinimap, drawWorldMinimap, campBearing } from './minimap.js';
+import { mountEquipment } from './equipment-ui.js';
 import { mountInventory } from './inventory-ui.js';
 import { inventoryLayout } from './game/inventory.js';
 import { ENCOUNTERS } from './game/encounters.js';
@@ -34,13 +35,13 @@ function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Every non-camp region and crypt floor regenerates on return.</b> Creatures, loot, quests, terrain and local fog reset; claim rewards before leaving. Camp storage and merchant stock stay stable. World-map squares remember travel history, not permanent terrain.</p>
-  <p>WASD/arrows or touch arrows move/bump attack. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; Esc pauses. Every valid action takes one turn, with arrival grace on transitions.</p>
+  <p>WASD/arrows or touch arrows move/bump attack. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
-  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath<br>v0.5.0 — Encounters & expeditions</p>', [['New Game', start], ['Instructions', help]]);
+  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath<br>v0.5.1 — Equipment screen</p>', [['New Game', start], ['Instructions', help]]);
 }
 function storage() {
   if (!model?.atCamp()) return;
@@ -69,10 +70,29 @@ function merchant() {
   }
   model.state.player.inventory.forEach((item,index)=>{const b=document.createElement('button');b.className='item';b.textContent=`Sell ${item.name} · ${item.sellValue??(item.kind==='potion'?3:1)} gold`;b.onclick=()=>{model.action({type:'sell',index});render();merchant();};$('shop-sales').append(b);});
 }
-function bag() {
+function bag(view='satchel',slot='weapon') {
   if(!model||model.state.status!=='playing')return;
-  paused=true;panel='bag';const buttons=[['Return',closePanel]];if(model.state.items.some(i=>i.x===model.state.player.x&&i.y===model.state.player.y))buttons.unshift(['Pick up item here',()=>{model.action({type:'pickup'});render();if(model.state.status==='playing'){bag();$('bag-result').textContent=model.state.log.at(-1);}}]);modal('Your equipment','<p>10×10 satchel. Select an item to move, rotate, use or drop it.</p><div id="bag-editor"></div><p id="bag-result" role="status"></p>',buttons);
-  mountInventory($('bag-editor'),model,action=>{model.action(action);render();if(model.state.status==='playing'){bag();$('bag-result').textContent=model.state.log.at(-1);}});
+  paused=true;panel='bag';
+  const perform=action=>{
+    const focusSlot=action.slot??model.state.player.inventory[action.index]?.kind??slot;
+    model.action(action);render();
+    if(model.state.status==='playing'){bag(view,focusSlot);$('bag-result').textContent=model.state.log.at(-1);}
+  };
+  const buttons=[['Return',closePanel]];
+  if(view==='satchel'&&model.state.items.some(i=>i.x===model.state.player.x&&i.y===model.state.player.y))buttons.unshift(['Pick up item here',()=>perform({type:'pickup'})]);
+  modal('Your equipment',`<div class="equipment-tabs" role="tablist" aria-label="Character inventory view">
+    <button role="tab" id="satchel-tab" aria-selected="${view==='satchel'}" aria-controls="character-panel">Satchel</button>
+    <button role="tab" id="equipment-tab" aria-selected="${view==='equipment'}" aria-controls="character-panel">Equipment</button>
+    </div><p class="hint">Viewing and switching tabs are free. Equipping and unequipping cost one turn. Unequipped items need room in your satchel.</p>
+    <div id="character-panel" role="tabpanel" aria-labelledby="${view==='satchel'?'satchel-tab':'equipment-tab'}"><div id="bag-editor"></div></div><p id="bag-result" role="status"></p>`,buttons);
+  const switchView=next=>bag(next,slot);
+  $('satchel-tab').onclick=()=>switchView('satchel');$('equipment-tab').onclick=()=>switchView('equipment');
+  for(const tab of [$('satchel-tab'),$('equipment-tab')]){
+    tab.tabIndex=tab.getAttribute('aria-selected')==='true'?0:-1;
+    tab.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();event.stopPropagation();const next=event.key==='Home'?'satchel':event.key==='End'?'equipment':view==='satchel'?'equipment':'satchel';switchView(next);$(`${next}-tab`).focus();};
+  }
+  if(view==='equipment')mountEquipment($('bag-editor'),model,perform,['weapon','armor','amulet'].includes(slot)?slot:'weapon');
+  else mountInventory($('bag-editor'),model,perform);
 }
 function encounterDialog() {
   const event=model?.activeEncounter();if(!event||!['villager','shrine'].includes(event.type))return;
@@ -179,6 +199,7 @@ $('minimap-widget').addEventListener('toggle', () => {
 $('minimap-widget').querySelector('summary').addEventListener('click', event => { if (event.detail > 0) document.activeElement?.blur(); });
 $('help').onclick = help;
 $('manage-bag').onclick=()=>{if(!paused)bag();};
+$('open-equipment').onclick=()=>{if(!paused)bag('equipment','amulet');};
 window.addEventListener('keydown', event => {
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if ((event.target instanceof HTMLButtonElement || event.target?.tagName === 'SUMMARY' || event.target?.tagName==='INPUT') && (event.key === 'Enter' || event.key === ' ')) return;

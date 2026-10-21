@@ -81,3 +81,13 @@ summary{font:18px Georgia,serif;color:#e0c59e;cursor:pointer;padding:8px 0}
 #inventory{max-height:240px}#quest-info{font:12px/1.7 system-ui;color:#c4d1c9}
 #shop-sales{display:grid;gap:5px}button:disabled{opacity:.45;cursor:default}
 @media(max-width:700px),(pointer:coarse){#manage-bag{width:100%}.bag-controls{font-size:12px}.bag-controls button{font-size:12px;padding:7px 9px}.bag-grid{width:min(100%,290px)}}
+
+.equipment-tabs{display:flex;gap:8px;margin-bottom:10px}.equipment-tabs button{flex:1;min-height:44px}.equipment-tabs [aria-selected=true]{background:#46635d;border-color:#e0c59e}
+.equipment-stats{font:13px system-ui;text-align:center;color:#a9d5cd}
+.equipment-portrait{position:relative;width:min(100%,330px);height:280px;margin:10px auto;background:radial-gradient(ellipse,#283d42,#111c29 70%);border:1px solid #4d616a;border-radius:5px}
+.equipment-portrait svg{display:block;width:100%;height:100%;image-rendering:pixelated}
+.portrait-slot{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:58px;min-height:54px;padding:5px;font-size:11px;background:#1d2b3eeb}
+.portrait-slot.selected{border-color:#ffe19c}.portrait-slot[data-equipped=true]{color:#9aefda;background:#304d50ed}.slot-icon{font-size:23px;line-height:25px}
+.slot-weapon{right:8px;top:150px}.slot-armor{left:8px;top:145px}.slot-amulet{right:8px;top:62px}
+#bag-editor section p{font:13px/1.6 system-ui;color:#c6d0d3}#open-equipment{width:100%;margin-top:6px}
+@media(max-width:700px),(pointer:coarse){.equipment-portrait{height:260px}.portrait-slot{min-width:54px;min-height:54px}.slot-armor{left:5px}.slot-weapon,.slot-amulet{right:5px}}

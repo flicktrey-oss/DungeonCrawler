@@ -42,8 +42,9 @@ test('canceled gestures, drags and secondary fingers never spend extra turns', a
   const second = { x: point.x, y: point.y + 50, id: 2 };
   await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point, second] });
   await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect(page.locator('.floor')).toContainText('TURN 1');
-  await move(page, 'west'); await expect(page.locator('.floor')).toContainText('TURN 2');
+  // Ambiguous two-finger gestures cancel rather than committing a partial tap.
+  await expect(page.locator('.floor')).toContainText('TURN 0');
+  await move(page, 'west'); await expect(page.locator('.floor')).toContainText('TURN 1');
 });
 
 test('phone can use Mana, storage, spatial inventory and discovered crypt stairs without a keyboard',async({page})=>{

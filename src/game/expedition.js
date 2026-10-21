@@ -91,6 +91,11 @@ export class Expedition extends Game {
       if(!Number.isInteger(index)||p.inventory[index]?.kind!=='potion'||p.hp===p.maxHp){this.message(p.hp===p.maxHp?'You are already at full health.':'No tonic selected.');return false;}
       p.inventory.splice(index,1);const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+16);this.message(`Ember tonic restores ${p.hp-before} health.`);return true;
     }
+    if(a.type==='unequip'){
+      if(!['weapon','armor','amulet'].includes(a.slot)||!p[a.slot])return false;
+      const item=p[a.slot];if(!addItem(p,item)){this.message('No fitting space in your satchel. The item stays equipped.');return false;}
+      p[a.slot]=null;this.message(`Unequipped ${item.name}.`);return true;
+    }
     if(a.type==='equip'){
       const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item||!['weapon','armor','amulet'].includes(item.kind))return false;
       const inventory=p.inventory.filter((_,i)=>i!==a.index),old=p[item.kind];if(old&&!addItem({inventory},old)){this.message('No room for the equipment you would remove.');return false;}
