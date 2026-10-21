@@ -17,7 +17,7 @@ export class Game {
     const used=new Set([key(d.start.x,d.start.y),key(d.stairs.x,d.stairs.y)]), tiles=[];
     for(const room of d.rooms.slice(1)) for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(!used.has(key(x,y)))tiles.push({x,y});
     const spot=()=>{while(tiles.length){const i=this.rng.int(0,tiles.length-1),p=tiles.splice(i,1)[0],k=key(p.x,p.y);if(!used.has(k)){used.add(k);return p;}}throw new Error('Dungeon has no free spawn tiles');};
-    const spawnEnemy=(kind)=>{const base=enemyTypes[kind],scale=s.floor-1; s.enemies.push({...base,...spot(),kind,id:s.enemies.length,hp:base.hp+scale*2,attack:base.attack+scale,actions:0});};
+    const spawnEnemy=(kind)=>{const base=enemyTypes[kind],scale=s.floor-1; s.enemies.push({...base,...spot(),kind,id:s.enemies.length,hp:base.hp+scale*2,maxHp:base.hp+scale*2,attack:base.attack+scale,actions:0});};
     for(let i=0;i<4+s.floor*2;i++)spawnEnemy(this.rng.pick(s.floor===1?['slime','slime','skeleton']:['slime','skeleton','goblin']));
     if(s.floor===5)spawnEnemy('boss');
     for(const item of [potion(),potion(),potion(),equipment('weapon',s.floor),equipment('armor',s.floor),{kind:'gold',name:'Gold',amount:this.rng.int(8,18)},{kind:'chest',name:'Sealed coffer',description:'Open with E for a randomized reward.'}])s.items.push({...item,...spot()});

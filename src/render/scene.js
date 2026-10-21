@@ -19,7 +19,18 @@ export class DungeonScene extends Phaser.Scene {
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.actor(e,e.kind);
-    this.actor(s.player,'player');this.cameras.main.centerOn(s.player.x*T+12,s.player.y*T+12);
+    this.actor(s.player,'player');
+    // Draw bars last so neighboring actors and scenery cannot cover them.
+    for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);
+    this.cameras.main.centerOn(s.player.x*T+12,s.player.y*T+12);
+  }
+  healthBar(enemy){
+    const g=this.paint,x=enemy.x*T+2,y=Math.max(0,enemy.y*T-5);
+    const ratio=Math.max(0,Math.min(1,enemy.hp/enemy.maxHp));
+    g.fillStyle(0x080c12);g.fillRect(x,y,20,5);
+    g.fillStyle(0x512b36);g.fillRect(x+1,y+1,18,3);
+    g.fillStyle(ratio>.5?0x81bf78:ratio>.25?0xe1b765:0xe16d72);
+    g.fillRect(x+1,y+1,Math.max(1,Math.round(18*ratio)),3);
   }
   outdoorTile(t,x,y,a,biome,tx,ty){
     const g=this.paint,marsh=biome==='marsh';const ground=({forest:0x344b35,marsh:0x344b40,highlands:0x55564d,ashlands:0x493536})[biome]??0x344b35;

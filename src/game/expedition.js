@@ -19,7 +19,7 @@ export class Expedition extends Game {
   }
   makeEnemy(kind,p,danger,id){
     const base=enemyTypes[kind],extra=Math.max(0,danger-1);
-    return {...base,...p,kind,id,hp:base.hp+extra*2,attack:base.attack+Math.floor(extra/2),xp:({skeleton:3,goblin:3,leech:3,wolf:5,boar:5,guardian:10})[kind]??base.xp,actions:0};
+    return {...base,...p,kind,id,hp:base.hp+extra*2,maxHp:base.hp+extra*2,attack:base.attack+Math.floor(extra/2),xp:({skeleton:3,goblin:3,leech:3,wolf:5,boar:5,guardian:10})[kind]??base.xp,actions:0};
   }
   saveRegion(){if(!this.location)return;const data={};for(const field of fields)data[field]=this.state[field];this.regions.set(this.location.id,data);}
   nextVisit(id){const n=this.visits.get(id)??0;this.visits.set(id,n+1);return n;}
