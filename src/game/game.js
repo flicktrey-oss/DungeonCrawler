@@ -7,7 +7,7 @@ import { damage, enemyTypes } from './combat.js';
 import { TurnManager } from './turn-manager.js';
 export class Game {
   constructor(seed=Date.now()) {
-    this.rng=new Random(seed); this.state={seed,floor:1,turn:0,status:'playing',log:[],player:{x:0,y:0,hp:32,maxHp:32,attack:5,defense:1,level:1,xp:0,gold:0,inventory:[potion(),potion()],weapon:null,armor:null}};
+    this.rng=new Random(seed); this.state={seed,floor:1,turn:0,status:'playing',log:[],player:{x:0,y:0,hp:32,maxHp:32,mana:100,maxMana:100,attack:5,defense:1,level:1,xp:0,gold:0,inventory:[potion(),potion()],weapon:null,armor:null}};
     this.turns=new TurnManager(this); this.loadFloor(); this.message('You enter the Ember Vault. Find the Ash Warden below.');
   }
   message(text){this.state.log.push(text);if(this.state.log.length>80)this.state.log.shift();}
