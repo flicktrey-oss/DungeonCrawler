@@ -17,7 +17,7 @@ describe('camp merchant', () => {
     const g = new Expedition(2); approach(g); g.state.player.gold = 35;
     expect(g.action({ type: 'buy', id: 'spear', price: 0 })).toBe(true);
     expect(g.state.player.gold).toBe(0); expect(g.state.turn).toBe(1); expect(g.shop[1].stock).toBe(0);
-    expect(g.state.player.inventory.at(-1)).toEqual(g.shop[1].item); expect(g.state.player.inventory.at(-1)).not.toBe(g.shop[1].item);
+    expect(g.state.player.inventory.at(-1)).toMatchObject(g.shop[1].item); expect(g.state.player.inventory.at(-1)).not.toBe(g.shop[1].item);
     expect(g.state.player.weapon).toBe(null);
   });
   it('rejects unaffordable, invalid, sold-out and distant purchases without taking a turn or gold', () => {
@@ -76,13 +76,13 @@ describe('world overview', () => {
     const g = new Expedition(8); expect(worldMapCells(g)[0].entranceKnown).toBe(false);
     const size = g.regions.size, before = structuredClone(g.state);
     worldMapCells(g); expect(g.state).toEqual(before); expect(g.regions.size).toBe(size);
-    g.state.explored.add('28,15'); expect(worldMapCells(g)[0].entranceKnown).toBe(true);
+    g.state.entrance={x:28,y:15};g.state.explored.add('28,15'); expect(worldMapCells(g)[0].entranceKnown).toBe(true);
   });
   it('uses the entrance region when underground, without adding a square for each dungeon depth', () => {
     const g = new Expedition(9); g.visitWorld(-1, 0, { x: 39, y: 15 });
     g.visitCrypt(-1, 0, 1); g.visitCrypt(-1, 0, 2);
     const cells = worldMapCells(g); expect(cells).toHaveLength(2);
-    expect(cells.find(c => c.current)).toMatchObject({ rx: -1, ry: 0, biome: 'marsh' });
+    expect(cells.find(c => c.current)).toMatchObject({ rx: -1, ry: 0, biome: 'forest' });
   });
   it('places east right and north above, fitting negative and distant visited coordinates into the same canvas', () => {
     const cells = [{ rx: -20, ry: -10 }, { rx: 0, ry: 0 }, { rx: 25, ry: 17 }], layout = worldMapLayout(cells);

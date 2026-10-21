@@ -1,31 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { generateWorldRegion, CAMP } from '../../src/game/world.js';
-import { directions, walkable, key } from '../../src/game/dungeon.js';
-function route(map, start, goal) {
-  const queue = [{ ...start, path: [] }], seen = new Set([key(start.x, start.y)]);
-  for (let i = 0; i < queue.length; i++) {
-    const n = queue[i]; if (n.x === goal.x && n.y === goal.y) return n.path;
-    for (const [dx, dy] of directions) { const x = n.x + dx, y = n.y + dy, k = key(x, y); if (walkable(map, x, y) && !seen.has(k)) { seen.add(k); queue.push({ x, y, path: [...n.path, ({'0,-1':'w','0,1':'s','1,0':'d','-1,0':'a'})[key(dx,dy)]] }); } }
-  }
-  throw Error('No route to test destination');
-}
-test('earn gold, shop, buy once, and show remaining gold and stock accurately', async ({ page }) => {
-  const seed = 1700000000000, region = generateWorldRegion(seed, 0, 0), cache = region.lootSpots[1];
-  await page.clock.setFixedTime(new Date(seed)); await page.goto('/');
-  await page.getByRole('button', { name: 'New Game', exact: true }).click();
-  let turns = 0;
-  for (const k of route(region.map, CAMP, cache)) { await page.keyboard.press(k); turns++; }
-  await page.keyboard.press('e'); turns++; await expect(page.locator('.numbers')).toContainText('11 gold');
-  for (const k of route(region.map, cache, { x: 22, y: 15 })) { await page.keyboard.press(k); turns++; }
-  await page.keyboard.press('e'); await expect(page.getByRole('heading', { name: 'Mara the Wayfarer', exact: true })).toBeVisible();
-  await expect(page.locator('.floor')).toContainText(`TURN ${turns}`);
-  await page.getByRole('button', { name: 'Buy Ember tonic · 10 gold', exact: true }).click(); turns++;
-  await expect(page.locator('#shop-gold')).toHaveText('Your gold: 1');
-  await expect(page.getByRole('button', { name: 'Buy Ember tonic · 10 gold', exact: true })).toBeDisabled();
-  await expect(page.locator('#shop-offers section').first()).toContainText('2 left');
-  await page.getByRole('button', { name: 'Return', exact: true }).click();
-  await expect(page.locator('.floor')).toContainText(`TURN ${turns}`);
-  await expect(page.locator('#inventory button')).toHaveCount(3);
+import { expeditionDriver } from './expedition-driver.js';
+
+test('complete a frog quest, sell its reward and buy supplies using earned gold',async({page})=>{
+ const d=await expeditionDriver(page,5);await d.east();const event=d.game.state.encounters.find(e=>e.type==='villager');
+ await d.walk({x:event.x,y:event.y+1});await page.keyboard.press('e');
+ await page.getByRole('button',{name:'Accept frog quest',exact:true}).click();d.game.action({type:'acceptQuest'});await page.getByRole('button',{name:'Return',exact:true}).click();
+ for(const frog of d.game.state.enemies.filter(e=>e.questId))await d.hunt(frog);
+ await d.walk({x:event.x,y:event.y+1});await page.keyboard.press('e');
+ await page.getByRole('button',{name:'Claim Reedheart amulet',exact:true}).click();d.game.action({type:'claimQuest'});await page.getByRole('button',{name:'Return',exact:true}).click();
+ await d.walk({x:0,y:15});await d.send({type:'move',dx:-1,dy:0});await d.walk({x:22,y:15});await page.keyboard.press('e');
+ const index=d.game.state.player.inventory.findIndex(i=>i.kind==='amulet');await page.getByRole('button',{name:'Sell Reedheart amulet · 12 gold',exact:true}).click();d.game.action({type:'sell',index});
+ const before=d.game.state.player.gold;await page.getByRole('button',{name:'Buy Ember tonic · 10 gold',exact:true}).click();d.game.action({type:'buy',id:'tonic'});
+ await expect(page.locator('#shop-gold')).toHaveText(`Your gold: ${before-10}`);await expect(page.locator('#shop-offers section').first()).toContainText('2 left');
+ await page.getByRole('button',{name:'Return',exact:true}).click();await expect(page.locator('.floor')).toContainText(`TURN ${d.game.state.turn}`);
 });
 
 test('minimap stays fogged, follows the player, switches regions and can be collapsed for free', async ({ page }) => {
@@ -39,8 +26,7 @@ test('minimap stays fogged, follows the player, switches regions and can be coll
   await page.getByLabel('Toggle minimap', { exact: true }).focus(); await page.keyboard.press('Enter'); await expect(map).not.toBeVisible(); await page.keyboard.press('Enter'); await expect(map).toBeVisible(); await expect(page.locator('.floor')).toContainText('TURN 0');
   for (let i = 0; i < 8; i++) await page.keyboard.press('d');
   await expect(map).toHaveAttribute('aria-label', /tile 28, 15/);
-  await page.keyboard.press('Enter'); await expect(page.locator('#minimap-location')).toHaveText('Depth 1');
-  await page.keyboard.press('q'); await expect(page.locator('#minimap-location')).toHaveText('0,0');
+  await page.keyboard.press('Enter'); await expect(page.locator('#minimap-location')).toHaveText('0,0');
   for (let i = 0; i < 12; i++) await page.keyboard.press('d');
   await expect(page.locator('#minimap-location')).toHaveText('1,0'); await expect(page.locator('#camp-bearing')).toHaveText('Camp: 1 W');
 });

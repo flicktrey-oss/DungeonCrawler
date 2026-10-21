@@ -1,7 +1,7 @@
 import { key } from './game/dungeon.js';
 
-const palette = { '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
-const labels = { C: 'C', M: 'M', D: '>', '>': '>', '<': '<', R: 'R', A: '*' };
+const palette = { B:'#d48c76',V:'#e0ddb0',W:'#bca273',S:'#b7a0e0',K:'#b9bd91',Y:'#5b4545', '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
+const labels = {B:'!',V:'?',W:'W',S:'S',K:'K', C: 'C', M: 'M', D: '>', '>': '>', '<': '<', R: 'R', A: '*' };
 // Never expose unvisited terrain or unseen creatures through this widget.
 export function minimapCells(state) {
   const cells = [];
@@ -57,7 +57,7 @@ export function drawWorldMinimap(canvas, game) {
   const layout = worldMapLayout(cells, canvas.width, canvas.height), size = layout.size;
   for (const cell of cells) {
     const x = layout.x + cell.rx * size, y = layout.y + cell.ry * size;
-    ctx.fillStyle = cell.biome === 'marsh' ? '#47717b' : '#547749'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
+    ctx.fillStyle = ({forest:'#547749',marsh:'#47717b',highlands:'#8a887b',ashlands:'#99594f'})[cell.biome]??'#547749'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
     if (cell.entranceKnown) { ctx.fillStyle = '#d4a5ff'; const mark = Math.max(1, size / 5); ctx.fillRect(x + size - mark - 2, y + 2, mark, mark); }
     if (cell.home && size >= 10) { ctx.font = `bold ${Math.min(13, size * .6)}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe0a0'; ctx.fillText('C', x + size / 2, y + size / 2); }
     if (cell.current) { ctx.strokeStyle = '#4cf3dc'; ctx.lineWidth = Math.min(2, size / 5); ctx.strokeRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2)); }

@@ -1,0 +1,28 @@
+import { inventoryLayout, footprint } from './game/inventory.js';
+export function mountInventory(container, game, perform) {
+  let selected=null, rotated=false, notice='Select an item, then tap an empty cell or set its row and column. Arranging is free; using or dropping takes a turn.';
+  function draw(){
+    const items=game.state.player.inventory,layout=inventoryLayout(items)??[];container.replaceChildren();
+    const info=document.createElement('p');info.textContent=`${layout.reduce((n,p)=>n+p.w*p.h,0)} / 100 cells · ${items.length} items`;container.append(info);
+    const grid=document.createElement('div');grid.className='bag-grid';grid.setAttribute('aria-label','10 by 10 inventory grid');
+    const place=(x,y)=>{if(selected===null){notice='Select an item first.';draw();return;}notice=game.arrange(selected,x,y,rotated)?'Item moved. No turn spent.':'That footprint overlaps another item or leaves the bag.';draw();};
+    for(let y=0;y<10;y++)for(let x=0;x<10;x++){const cell=document.createElement('div');cell.className='bag-cell';cell.style.gridArea=`${y+1} / ${x+1}`;cell.onclick=()=>place(x,y);grid.append(cell);}
+    for(const p of layout){
+      const item=items[p.index],b=document.createElement('button');b.className=`bag-item ${selected===p.index?'selected':''}`;b.style.gridArea=`${p.y+1} / ${p.x+1} / span ${p.h} / span ${p.w}`;b.textContent=p.w*p.h===1?item.name[0]:item.name;
+      b.setAttribute('aria-label',`Select ${item.name}, ${p.w} by ${p.h}`);b.title=`${item.name} (${p.w}×${p.h})`;
+      b.onclick=()=>{selected=p.index;rotated=Boolean(item.rotated);notice=`${item.name}: ${item.description}`;draw();};grid.append(b);
+    }
+    container.append(grid);
+    const status=document.createElement('p');status.className='hint';status.setAttribute('role','status');status.textContent=notice;container.append(status);
+    const item=items[selected],position=layout.find(p=>p.index===selected),controls=document.createElement('div');controls.className='bag-controls';
+    const input=(name,value)=>{const label=document.createElement('label'),field=document.createElement('input');label.textContent=name+' ';field.type='number';field.min=1;field.max=10;field.value=value;field.setAttribute('aria-label',name);label.append(field);controls.append(label);return field;};
+    const x=input('Column',(position?.x??0)+1),y=input('Row',(position?.y??0)+1);
+    const button=(label,fn,disabled=false)=>{const b=document.createElement('button');b.textContent=label;b.disabled=disabled;b.onclick=fn;controls.append(b);};
+    button('Place item',()=>place(Number(x.value)-1,Number(y.value)-1),!item);
+    button('Rotate item',()=>{rotated=!rotated;notice=`${footprint({...item,rotated}).join('×')} orientation planned. Tap a destination or press Place item to apply it.`;status.textContent=notice;},!item||footprint(item)[0]===footprint(item)[1]);
+    button('Use / equip',()=>perform({type:item.kind==='potion'?'potion':'equip',index:selected}),!item||!['potion','weapon','armor','amulet'].includes(item.kind));
+    button('Drop item',()=>perform({type:'drop',index:selected}),!item);
+    container.append(controls);
+  }
+  draw();
+}

@@ -72,3 +72,12 @@ summary{font:18px Georgia,serif;color:#e0c59e;cursor:pointer;padding:8px 0}
 #map-collapse-icon{margin-left:auto;font:bold 17px system-ui;color:#ffe0a0}
 #minimap-location{float:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:700px),(pointer:coarse){#map-tabs button{min-height:44px;min-width:44px;font-size:11px;padding:3px 1px}}
+
+.bag-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(10,minmax(0,1fr));width:min(100%,320px);aspect-ratio:1;margin:10px auto;background:#111a24;position:relative}
+.bag-cell{border:1px solid #354350;min-width:0;min-height:0;cursor:crosshair}
+.bag-item{z-index:1;min-height:0!important;min-width:0!important;padding:1px!important;font:10px/1.2 system-ui!important;overflow:hidden;background:#3c5963;border:2px solid #9daf9a;touch-action:manipulation}
+.bag-item.selected{border-color:#ffe19c;background:#67573d}
+.bag-controls{display:flex;gap:7px;flex-wrap:wrap;font:13px system-ui}.bag-controls input{width:52px;padding:7px;font-size:16px}.bag-controls button{min-height:44px}
+#inventory{max-height:240px}#quest-info{font:12px/1.7 system-ui;color:#c4d1c9}
+#shop-sales{display:grid;gap:5px}button:disabled{opacity:.45;cursor:default}
+@media(max-width:700px),(pointer:coarse){#manage-bag{width:100%}.bag-controls{font-size:12px}.bag-controls button{font-size:12px;padding:7px 9px}.bag-grid{width:min(100%,290px)}}

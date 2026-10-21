@@ -1,14 +1,14 @@
 # DungeonCrawler: The Wildlands
 
-An original, strictly turn-based exploration game in Phaser 3 and JavaScript. Set out from Lantern Camp into a seeded wilderness of forests and marshes, discover ruined watchposts and crypt entrances, and return with better equipment. There is no final world boundary or mandatory victory screen: the expedition continues until you die.
+A strictly turn-based, original Phaser 3 browser adventure. Explore a shifting wilderness, hunt modest prey, complete local encounters, and return to Lantern Camp to sell trophies and prepare for harder lands.
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.4.1 — Local & world maps** on the title screen. The source is currently on `feature/playable-roguelike`, pending merge to `main`. The previous dungeon-only game remains in Git history and in the original `Game` simulation for regression tests.
+Look for **v0.5.0 — Encounters & expeditions** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
-## Play locally
+## Install and run
 
-Install Node.js 22 or newer, then:
+Use Node.js 22 or newer:
 
 ```sh
 git clone https://github.com/flicktrey-oss/DungeonCrawler.git
@@ -18,109 +18,108 @@ npm ci
 npm run dev
 ```
 
-Open the local address printed by Vite and click **New Game**. If you already have the checkout, skip cloning. For a restricted cloud home directory, use `npm ci --cache /workspace/.npm-cache`. No backend, paid services, accounts, or API keys are required.
+Open Vite’s printed address. Existing checkouts can skip cloning. In the restricted cloud home directory use `npm ci --cache /workspace/.npm-cache`. No backend, paid service, art download, or API key is needed.
 
 ## Controls
 
-| Control | Action |
+| Desktop | Touch | Action |
+| --- | --- | --- |
+| WASD / arrows | Direction pad | One tile; bump enemies to attack |
+| E | Collect / Trade / Interact | Loot, camp storage, merchant, or local encounter |
+| Enter / `>` | Enter ↓ | Enter a discovered crypt / descend on stairs |
+| Q / `<` | Leave ↑ | Retreat while on an upward stair |
+| H | Potion | Drink a tonic for up to 16 health |
+| M | Vision · 25 | Reveal through walls for three turns, costing 25 Mana |
+| Period | Wait | Spend one turn |
+| I | Manage 10×10 satchel | Arrange, rotate, use, equip, or drop items |
+| Esc | Pause / Help | Instructions / pause |
+
+The world waits indefinitely for you. Each valid action costs exactly one turn, followed by one action per living enemy in the current region. Slimes and beetles can spend actions resting. Walking into obstacles or invalid actions is free. Crossing regions and using stairs costs a turn but gives **arrival grace**, so enemies cannot attack before you inspect the destination. Held keys/touches do not repeat. Only the current region is active.
+
+## Slower progression and danger
+
+Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, and no gold. Ordinary woodland rats and beetles award 2 XP; the first level needs 20 XP (ten ordinary kills). Later thresholds increase with level. Levels grant a little health, occasional attack/defense, and a small heal. Quests and stronger foes can accelerate progress.
+
+| Region distance from camp | Biome | Suggested level |
+| --- | --- | ---: |
+| 0–1 | Whisperwood | 1 |
+| 2–3 | Lantern Marsh | 4 |
+| 4–6 | Broken Highlands | 8 |
+| 7+ | Ashen Reach | 12 |
+
+Distance is Manhattan distance: `abs(regionX) + abs(regionY)`. Farther biomes contain substantially stronger creatures. Area levels remain visible on phones and trail exits warn before crossing. Being able to enter a biome does not mean you can survive it. Forests form groves and meadows; marshes contain pools/reeds, highlands rocky ridges, and ashlands burned trees. Fallen logs, graves, flowers, bones and other scenery provide visual variation without gathering or crafting.
+
+## Six discoverable encounters
+
+Each wilderness visit rolls **one or two different encounters**. None is guaranteed on every map. Camp is the exception: it remains a safe, fixed base with its trader.
+
+| Encounter | Interaction |
 | --- | --- |
-| WASD / arrows | Move one tile; bump an enemy to attack |
-| E | Collect/open loot underfoot; open storage while on the camp tent |
-| Enter / `>` | Enter a crypt, or descend on its downward stair |
-| Q / `<` | Ascend on an upward stair; depth one returns to the surface entrance |
-| M / Mind Vision button | Reveal nearby terrain and entities through walls for 3 turns; costs 25 Mana |
-| H | Drink a healing tonic |
-| Click satchel item | Drink or equip; replaced gear returns to the satchel |
-| Period (`.`) | Wait one turn |
-| I | Inventory help |
-| Esc / Pause button | Pause, help, resume |
+| Forgotten crypt | Discover its archway, then enter a two-depth dungeon with a dangerous Warden and a rare gear reward |
+| Creature den | Fight a stronger named beast for its hoard |
+| Mirekeeper | Accept a quest to clear three troublesome frogs, return for a Reedheart amulet (+1 defense) and 6 XP |
+| Abandoned caravan | Find a coffer guarded by scavengers |
+| Wayfarer shrine | Choose one exchange: 5 gold for 12 HP, or 6 HP for 25 Mana; each costs a turn |
+| Hidden cache | Follow the grave/cloth marker to buried supplies |
 
-Successful actions cost one turn. Each living enemy in the **current** region gets one action afterward; slow slimes rest every other turn. Idle time never advances the world. Key repeat is ignored: separate presses move separate tiles. Trees, rocks, deep water, walls, and invalid commands cost no turn.
+Stand next to the Mirekeeper and press E / Interact. Accepting and claiming are separate turns; reading dialogue is free. Only that encounter’s three frogs count. You can clear them before accepting, but must claim before leaving. Open Local quest for progress. The amulet is 2×2 and must be equipped to grant defense. A full satchel leaves the reward claimable.
 
-**Arrival grace:** crossing regions and using stairs consumes a turn, but enemies do not act on that arrival turn. You see the destination before deciding what to do. Regions you leave remain frozen.
+Shrines reject exchanges you cannot afford, lethal HP payments, and restoring an already full resource. Once used, a shrine is spent for that visit. Common coffers contain a tonic or a small purse; equipment is rare and low tier in early regions. Better gear belongs to harder areas and Wardens.
 
-## Explore and return
+## Regenerating visits, stable camp
 
-- Start on the tent at **Lantern Camp (0, 0)**. Its entire region is enemy-free. Press E or click Camp storage to transfer supplies. Inspection is free; each transfer costs a turn. Only carried inventory can be stored; equipped items must first be replaced.
-- Follow trails to the north, south, east, or west edges to generate neighboring 40×30 regions. The HUD shows region coordinates so you can find the camp again. East or west changes the first coordinate; north or south changes the second.
-- Whisperwood forests contain wolves and boars. Lantern Marsh contains slimes and leeches. Terrain, creatures, and danger vary by region. Difficulty rises with distance from camp, capped at danger 5/5 in this first version.
-- Seek ruined stone watchposts for equipment and dark stone archways for **crypt entrances**. Stand on an archway and press Enter. Every region has an entrance, including the starting region east of camp.
-- Crypts have **two depths**, stronger melee encounters, equipment, potions, coffers, and a Crypt Warden on the second depth. Defeating it awards XP and bonus gold and counts as a cleared crypt; the wilderness remains open.
-- Retreat using Q on a green upward stair. From depth two, this returns to the first depth's downward stair; from depth one, it returns to the exact outdoor entrance. Retrace your route to camp.
-- Collected loot, dead enemies, discoveries, and explored terrain remain changed when you revisit. Persistence is **within the current run only**. Reloading the page starts over.
-- **Permadeath remains enabled:** death ends the character, world changes, and camp storage. A new run starts fresh. There is no hardcore toggle or resurrection.
+**Every re-entry into a non-camp region or crypt floor generates a fresh visit**, including terrain, enemies, encounters, treasure, quest status, and local fog. This is intentional: hunting and rewards are repeatable. Different visit numbers are seeded, so the same seed plus the same visits/actions is reproducible. Biome and region coordinates remain stable.
 
-Mana starts at 100. Mind Vision costs 25 and lasts for the casting turn plus the next two completed turns. Revealed terrain stays mapped; entities return to ordinary line of sight afterward. Successful movement and melee restore 5 Mana, capped at 100. Waiting and casting do not recharge. Region transitions end the vision effect, preserving remaining Mana.
+Leaving a quest abandons its local progress; claimed character rewards stay yours. Ascending from a crypt regenerates the surface, so its entrance may move or disappear. You emerge on a vacant walkable tile nearest your old entrance. Moving between crypt depths likewise generates a fresh floor with valid return stairs. Camp terrain, stored supplies, and merchant stock persist throughout the run.
 
-## Verify and build
+The World map remembers **which regions you visited**, not permanent terrain. Purple entrance markers outside the active region mean **last seen**; a new visit can change those encounters.
+
+## Gold, drops and merchant
+
+Creatures do not always drop loot: approximately 50% drop nothing, 20% drop 1–3 coins, and 30% drop a low-value trophy. Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
+
+Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn longsword (+1 attack, 35 gold), or patched vest (+1 defense, 30 gold). Sell carried items from the same dialogue. Equipped gear must first be replaced before it can be sold. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
+
+## The 10×10 satchel
+
+Open **I** or **Satchel / equipment → Manage 10×10 satchel**.
+
+- Potions and trophies: **1×1**.
+- Swords/spears: **7×2**, rotatable to **2×7**.
+- Armor: **4×4**.
+- Amulets: **2×2**.
+
+Select an item, then tap an empty cell or set a one-based Column/Row and press Place item. Rotate item changes the planned orientation; choose a destination to commit it. Rearranging is free and does not advance enemies. Using, equipping or dropping costs a turn.
+
+Capacity depends on contiguous shape, not just the number of free cells. Pickups, purchases, retrieval, quest rewards and equipment swaps check fit before committing. Failures leave ground items, money, stock, stored items and rewards intact. Camp storage is not spatially limited. Bag inspection also offers **Pick up item here**, so items dropped at camp or beside the merchant remain recoverable even where E normally opens another dialogue.
+
+## Maps, Mana and permadeath
+
+Local and World tabs switch the same minimap canvas. Local shows explored tiles and discovered features. World shows one square per visited region, biome colors, camp, your region, and last-seen entrances. Minimize/restore with Map − / +; switching costs no turns.
+
+Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Moving/melee restore 5 Mana; waiting and casting do not. Transitions end the effect. Terrain revealed during a visit stays mapped until that region regenerates.
+
+**There is no save system.** Death ends the run, including camp storage. Refreshing, closing the page or Safari unloading it also loses the run. The slower progression is intended for longer runs, not cross-session persistence yet. No construction, crafting, hunger, gathering, farming systems, multiplayer, or paid services were added.
+
+## Verify
 
 ```sh
-npm test                 # all Vitest simulation suites
-npm run build            # production files in dist/
-npm run preview          # local production preview
-```
-
-Optional browser tests:
-
-```sh
+npm test
+npm run build
+npm run preview
+# Optional browser suite:
 npx playwright install chromium
 npm run test:browser
-# Or use installed Linux Chromium:
+# Existing Linux Chromium:
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-The 45 simulation tests cover original combat/turn rules plus seeded world connectivity, biome spawn validity, negative coordinates, world transitions, inactive-region freezing, persistent crypt returns, guardian rewards, arrival safety, camp storage, and permadeath. Fourteen browser tests exercise desktop input, touch movement, canceled gestures, multiple fingers, held touches, phone layouts, Mana, storage, region travel, and crypt entry/exit. Phone tests use Chromium touch emulation, not a physical iPhone. The expected large-bundle warning comes from bundled Phaser.
+Validation: 62 simulation tests and 15 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
-## Architecture
+Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
-- `src/game/expedition.js`: current game mode; region transitions, per-run storage, crypts, persistence, guardian rewards. Extends the original `Game` rather than mixing rendering with rules.
-- `src/game/world.js`: coordinate-seeded forest/marsh region generation, connected trails, spawn locations, landmarks. Generation order does not change terrain.
-- `src/game/game.js`, `turn-manager.js`: authoritative player state, inventory/combat/leveling, synchronous turn transaction. Enemy decisions never run on a timer.
-- `src/game/dungeon.js`, `ai.js`, `visibility.js`, `combat.js`, `items.js`, `random.js`: reusable generation, pathfinding, fog, rules, and PRNG.
-- `src/render/scene.js`: original programmatic terrain, creature, item, and landmark graphics; player-centered camera.
-- `src/main.js`, `style.css`: menus, controls, HUD, camp storage, log.
-- `tests/*.test.js`, `tests/browser/`: simulation and Chromium validation.
+## Architecture and publishing
 
-Only the active region is simulated or drawn. Visited regions retain state in memory; there is no disk saving, region eviction, or cross-session persistence yet. The world is generated on demand in connected regions, with an immediate transition at a trail edge rather than continuous pixel scrolling. Forests and marshes currently change by region, not through blended biome boundaries. Equipment and creature variety are intentionally small. There is no gathering, crafting, freeform construction, terrain destruction, hunger, farming, multiplayer, audio or teleportation. Difficulty is an initial pass requiring playtesting.
+`src/game/expedition.js` is the current mode, extending the original dungeon-only `Game`. `world.js` builds terrain and encounter sites; `encounters.js` defines the six types and treasure; `inventory.js` owns spatial capacity; `merchant.js` owns stock and purchasing. Combat, items, visibility, AI, seeded RNG and the central turn manager remain independent of Phaser. `inventory-ui.js` provides the grid editor; `main.js` handles dialogues/HUD/input; `render/scene.js` draws snapshots; `minimap.js` owns both map views.
 
-## GitHub Pages
-
-In **Settings → Pages**, use **Source: GitHub Actions**. In **Settings → Environments → github-pages**, allow deployment from `feature/playable-roguelike` (and `main` after merging). The Publish browser game workflow tests, builds, and uses GitHub's official Pages artifact deployment on source pushes. A successful workflow deployment is required before the public version changes.
-
-Relative Vite asset URLs support `/DungeonCrawler/`. The old `gh-pages` branch is a historical fallback snapshot, not the source for current automatic deployments. No new hosting service or secret is required.
-
-## iPhone / touch browser controls
-
-Open the same public link in Safari and start New Game. A directional pad and six action buttons appear on touch devices (or narrow screens). Tap an arrow to move or bump attack; **one release is one turn**. Holding does not repeat. Sliding off a button, canceling a gesture, or using a secondary finger does not commit another action.
-
-- **Wait** spends a turn.
-- **Collect / Camp chest** picks up an item or opens storage on the camp tent.
-- **Enter ↓ / Leave ↑** enter crypts, descend, or retreat on stairs.
-- **Potion** heals; **Vision · 25** casts Mind Vision; **Pause / Help** opens instructions.
-- Contextual buttons are dimmed when unavailable.
-- Health, Mana, and XP sit above the map. Tap **Satchel / equipment** or **Chronicle** to expand them below the controls. Descriptions appear under items; no hover is required.
-- Portrait and landscape layouts preserve readable tiles and at least 44 CSS-pixel touch targets. Scroll outside the movement controls to inspect inventory/logs.
-
-No saving was added: refreshing, closing, or Safari unloading the page loses the run. Real iPhone Safari testing remains necessary; automated validation here used Chromium. Playwright WebKit could not be downloaded because the environment blocked its download domains.
-
-## Mara’s camp shop and the minimap (v0.4.0)
-
-Mara the Wayfarer stands **two tiles east and one north of the tent**. Her stall blocks movement; stand on a neighboring tile to trade. From a new run, walk **two steps east**, then press **E** or tap **Trade**. The starting character has no gold: find caches and fight enemies before buying.
-
-| Item | Price | Stock per run |
-| --- | ---: | ---: |
-| Ember tonic (+16 health when used) | 10 gold | 3 |
-| Ashwood spear (+3 attack when equipped) | 35 gold | 1 |
-| Ringmail (+2 defense when equipped) | 30 gold | 1 |
-
-Browsing is free and pauses input; a successful purchase spends one turn and adds the item to your satchel. Equip or drink it separately. Unaffordable or sold-out purchases are disabled; rejected purchases never spend gold or turns. Stock persists across travel and resets on a new run. There is no selling or restocking in this version.
-
-The **minimap in the map’s upper-right corner** shows the entire current region or crypt depth, with unexplored tiles hidden and remembered terrain dimmed. Your marker is turquoise with a white border. Known features use **C** for camp, **M** for merchant, **R** for ruins, and **> / <** for entrances and stairs. It never shows enemies or loose items. Region coordinates and a bearing toward camp help you navigate the overworld; underground, return to the surface first. Tap/click **Map** to hide or show it without taking a turn. The Local tab shows tiles in this region; the World tab shows the visited regions of your expedition.
-
-Validation includes earning gold through actual UI movement, collecting it, buying a tonic, checking gold/stock, touch trading, minimap fog, region/depth changes, and free minimap toggling.
-
-## Two views in one minimap (v0.4.1)
-
-Use **Local** and **World** tabs inside the existing minimap widget. They replace the same canvas rather than adding another panel. Local shows explored tiles within the current region or crypt depth. World shows **one square per visited outdoor region**: green for forest, blue for marsh, C for camp, a turquoise outline for your current region, and purple corners for discovered entrances. North is up; east is right. Newly entered regions appear automatically, repeated visits do not duplicate squares, and unvisited regions stay blank. The view scales to fit the discovered world. Underground, it marks the region containing your entrance rather than adding dungeon floors as world squares.
-
-Tap/click the **Map −** header to minimize the entire widget to its header, and **Map +** to restore it. The selected tab is retained while minimized and across travel. Tabs and minimizing never spend turns, reveal terrain, or move enemies. On a keyboard, Tab focuses the active tab and arrow keys switch tabs without moving the player. A new run starts on Local with a fresh world overview. No cross-session saving was added.
+GitHub Pages uses **Source: GitHub Actions**, with `feature/playable-roguelike` allowed by the `github-pages` environment. Source pushes trigger testing/building and official Pages artifact deployment. The public URL changes only after a successful workflow; a Git push alone does not verify publication. Relative asset URLs support `/DungeonCrawler/`. The historical `gh-pages` branch is not the active deployment source.

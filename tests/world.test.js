@@ -11,7 +11,7 @@ function reachable(map, start) {
   }
   return seen;
 }
-function descend(game) { Object.assign(game.state.player, game.state.entrance); expect(game.action({ type: 'descend' })).toBe(true); }
+function descend(game) { if(game.location.kind==='world'&&!game.state.entrance){for(let rx=1;rx<40;rx++){if(generateWorldRegion(game.state.seed,rx,0).entrance){game.visitWorld(rx,0,{x:0,y:15});break;}}} Object.assign(game.state.player, game.state.entrance); expect(game.action({ type: 'descend' })).toBe(true); }
 function ascend(game) { Object.assign(game.state.player, game.state.upstairs); expect(game.action({ type: 'ascend' })).toBe(true); }
 
 describe('seeded wilderness', () => {
@@ -23,15 +23,16 @@ describe('seeded wilderness', () => {
     for (let seed = 0; seed < 180; seed++) {
       const d = generateWorldRegion(seed, seed % 13 - 6, seed % 9 - 4), seen = reachable(d.map, CAMP);
       for (let y = 0; y < 30; y++) for (let x = 0; x < 40; x++) if (walkable(d.map, x, y)) expect(seen.has(key(x, y))).toBe(true);
-      for (const p of [d.entrance, d.landmark, { x: 0, y: 15 }, { x: 39, y: 15 }, { x: 20, y: 0 }, { x: 20, y: 29 }]) expect(seen.has(key(p.x, p.y))).toBe(true);
+      for (const p of [...d.encounters.filter(e=>e.type!=='villager'), { x: 0, y: 15 }, { x: 39, y: 15 }, { x: 20, y: 0 }, { x: 20, y: 29 }]) expect(seen.has(key(p.x, p.y))).toBe(true);
     }
   });
   it('has safe distinct spawns and biome-specific creatures, with an enemy-free starting region', () => {
     for (let seed = 0; seed < 30; seed++) for (const [rx, ry] of [[0, 0], [1, 0], [2, 0], [-3, -2]]) {
-      const d = generateWorldRegion(seed, rx, ry), positions = [...d.spawns, ...d.lootSpots, d.entrance, d.landmark, CAMP];
+      const d = generateWorldRegion(seed, rx, ry), positions = [...d.spawns, CAMP];
+      expect(d.encounters.length).toBe(d.home?0:d.encounters.length);if(!d.home){expect(d.encounters.length).toBeGreaterThanOrEqual(1);expect(d.encounters.length).toBeLessThanOrEqual(2);}
       expect(new Set(positions.map(p => key(p.x, p.y))).size).toBe(positions.length);
       for (const p of positions) expect(walkable(d.map, p.x, p.y)).toBe(true);
-      for (const e of d.spawns) { expect(BIOMES[d.biome].enemies).toContain(e.kind); expect(e.x).toBeGreaterThanOrEqual(5); expect(e.y).toBeGreaterThanOrEqual(5); }
+      for (const e of d.spawns) { expect([...BIOMES[d.biome].enemies,'elite','pondFrog','beetle']).toContain(e.kind); expect(e.x).toBeGreaterThanOrEqual(5); expect(e.y).toBeGreaterThanOrEqual(5); }
       if (d.home) expect(d.spawns).toHaveLength(0);
     }
   });
@@ -50,13 +51,10 @@ describe('expedition transitions and persistence', () => {
     g.action({ type: 'move', dx: 0, dy: -1 }); expect(g.location.ry).toBe(-1); expect(g.state.player.y).toBe(29);
     g.action({ type: 'move', dx: 0, dy: 1 }); expect(g.location.ry).toBe(0); expect(g.state.player.y).toBe(0);
   });
-  it('remembers collected loot and explored terrain rather than regenerating cleared regions', () => {
-    const g = new Expedition(11); g.visitWorld(1, 0, { x: 0, y: 15 }); g.state.transition = false;
-    const item = g.state.items[0]; Object.assign(g.state.player, item); g.action({ type: 'pickup' });
-    const count = g.state.items.length, terrain = structuredClone(g.state.map); g.state.explored.add('39,29');
-    g.state.enemies[0].hp = 0;
-    g.visitWorld(2, 0, { x: 0, y: 15 }); g.visitWorld(1, 0, { x: 39, y: 15 });
-    expect(g.state.items.length).toBe(count); expect(g.state.map).toEqual(terrain); expect(g.state.explored.has('39,29')).toBe(true); expect(g.state.enemies[0].hp).toBe(0);
+  it('regenerates terrain, creatures, encounters and fog on return while preserving progression', () => {
+    const g=new Expedition(11);g.visitWorld(1,0,{x:0,y:15});const terrain=structuredClone(g.state.map);g.state.explored.add('39,29');g.state.enemies[0].hp=0;g.state.player.gold=19;
+    g.visitWorld(0,0,CAMP);g.visitWorld(1,0,{x:0,y:15});
+    expect(g.state.visit).toBe(1);expect(g.state.map).not.toEqual(terrain);expect(g.state.enemies[0].hp).toBeGreaterThan(0);expect(g.state.explored.has('39,29')).toBe(false);expect(g.state.player.gold).toBe(19);expect(g.state.regionsDiscovered).toBe(2);
   });
   it('keeps inactive regions frozen and gives active enemies only one action per ordinary turn', () => {
     const g = new Expedition(3); g.visitWorld(1, 0, { x: 0, y: 15 }); g.state.transition = false;
@@ -64,20 +62,17 @@ describe('expedition transitions and persistence', () => {
     g.visitWorld(0, 0, CAMP); g.state.transition = false; for (let i = 0; i < 5; i++) g.action({ type: 'wait' });
     expect(enemies.every(e => e.actions === 1)).toBe(true);
   });
-  it('returns from a crypt to the exact entrance and persists loot, player stats and inventory', () => {
-    const g = new Expedition(6), entrance = { ...g.state.entrance }; descend(g);
-    expect(g.location.kind).toBe('crypt'); expect(g.state.enemies.every(e => e.actions === 0)).toBe(true);
-    const item = g.state.items[0]; Object.assign(g.state.player, item); g.state.enemies.forEach(e => { e.range = 0; }); g.action({ type: 'pickup' }); const count = g.state.items.length;
-    g.state.player.mana = 30; const bag = structuredClone(g.state.player.inventory); ascend(g);
-    expect(g.location.kind).toBe('world'); expect(g.state.player.x).toBe(entrance.x); expect(g.state.player.y).toBe(entrance.y); expect(g.state.player.mana).toBe(30); expect(g.state.player.inventory).toEqual(bag);
-    descend(g); expect(g.state.items.length).toBe(count); expect(g.state.map[g.state.upstairs.y][g.state.upstairs.x]).toBe('<');
+  it('returns from a crypt to regenerated, safely reachable surface while preserving stats and bag', () => {
+    const g=new Expedition(6);descend(g);expect(g.location.kind).toBe('crypt');expect(g.state.enemies.every(e=>e.actions===0)).toBe(true);
+    g.state.player.mana=30;const bag=structuredClone(g.state.player.inventory),hp=g.state.player.hp;ascend(g);
+    expect(g.location.kind).toBe('world');expect(g.state.visit).toBe(1);expect(walkable(g.state.map,g.state.player.x,g.state.player.y)).toBe(true);expect(g.state.player.mana).toBe(30);expect(g.state.player.inventory).toEqual(bag);expect(g.state.player.hp).toBe(hp);
   });
-  it('connects both depths with persistent stairs and a tougher guardian that does not end the endless run', () => {
+  it('connects both regenerated depths and a tougher guardian that does not end the endless run', () => {
     const g = new Expedition(17); descend(g); const down = { ...g.state.stairs }; Object.assign(g.state.player, down);
     g.action({ type: 'descend' }); expect(g.location.depth).toBe(2);
     const guardian = g.state.enemies.find(e => e.kind === 'guardian'); expect(guardian.hp).toBeGreaterThan(30); expect(guardian.attack).toBeGreaterThan(7);
     guardian.hp = 0; g.kill(guardian); expect(g.state.status).toBe('playing'); expect(g.state.cryptsCleared).toBe(1);
-    ascend(g); expect(g.location.depth).toBe(1); expect(g.state.player.x).toBe(down.x); expect(g.state.player.y).toBe(down.y);
+    ascend(g); expect(g.location.depth).toBe(1); expect(g.state.player.x).toBe(g.state.stairs.x); expect(g.state.player.y).toBe(g.state.stairs.y);expect(g.state.visit).toBe(1);
   });
   it('never overlaps creatures and arrival tiles, including occupied return stairs', () => {
     const g = new Expedition(14); descend(g); const target = { ...g.state.stairs }; g.state.enemies[0].x = target.x; g.state.enemies[0].y = target.y;
@@ -87,7 +82,7 @@ describe('expedition transitions and persistence', () => {
   });
   it('stores and retrieves only at camp, costs turns, and resets all storage on death/new run', () => {
     const g = new Expedition(1); expect(g.atCamp()).toBe(true); const item = g.state.player.inventory[0];
-    expect(g.action({ type: 'store', index: 0 })).toBe(true); expect(g.stash).toEqual([item]); expect(g.state.turn).toBe(1);
+    expect(g.action({ type: 'store', index: 0 })).toBe(true); expect(g.stash[0].name).toBe(item.name); expect(g.state.turn).toBe(1);
     expect(g.action({ type: 'retrieve', index: 0 })).toBe(true); expect(g.stash).toHaveLength(0); expect(g.state.turn).toBe(2);
     g.action({ type: 'store', index: 0 }); g.state.player.x--; expect(g.action({ type: 'retrieve', index: 0 })).toBe(false); expect(g.state.turn).toBe(3);
     g.state.status = 'dead'; expect(g.action({ type: 'retrieve', index: 0 })).toBe(false); expect(new Expedition(1).stash).toHaveLength(0);

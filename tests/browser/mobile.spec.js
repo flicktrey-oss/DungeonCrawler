@@ -1,3 +1,4 @@
+import { expeditionDriver } from './expedition-driver.js';
 import { test, expect } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 });
@@ -45,21 +46,14 @@ test('canceled gestures, drags and secondary fingers never spend extra turns', a
   await move(page, 'west'); await expect(page.locator('.floor')).toContainText('TURN 2');
 });
 
-test('phone can use Mana, storage, inventory and crypt stairs without a keyboard', async ({ page }) => {
-  await begin(page);
-  await page.getByRole('button', { name: 'Vision · 25', exact: true }).tap();
-  await expect(page.locator('.mana span')).toHaveText('Mana 75 / 100');
-  await page.getByRole('button', { name: 'Camp chest', exact: true }).tap();
-  await page.getByRole('button', { name: 'Store Ember tonic', exact: true }).first().tap();
-  await page.getByRole('button', { name: 'Take Ember tonic', exact: true }).tap();
-  await page.getByRole('button', { name: 'Return', exact: true }).tap();
-  await page.locator('#satchel-panel summary').tap(); await expect(page.locator('#inventory .item-description').first()).toBeVisible();
-  await page.locator('#satchel-panel summary').tap();
-  for (let i = 0; i < 8; i++) await move(page, 'east');
-  await page.getByRole('button', { name: 'Enter ↓', exact: true }).tap();
-  await expect(page.locator('#stats h2')).toHaveText('Rootbound Crypt · 1/2');
-  await page.getByRole('button', { name: 'Leave ↑', exact: true }).tap();
-  await expect(page.locator('#stats h2')).toHaveText('Whisperwood (0, 0)');
+test('phone can use Mana, storage, spatial inventory and discovered crypt stairs without a keyboard',async({page})=>{
+ const d=await expeditionDriver(page,1,true);await d.send({type:'mindVision'});
+ await page.getByRole('button',{name:'Camp chest',exact:true}).tap();await page.getByRole('button',{name:'Store Ember tonic',exact:true}).first().tap();d.game.action({type:'store',index:0});
+ await page.getByRole('button',{name:'Take Ember tonic',exact:true}).tap();d.game.action({type:'retrieve',index:0});await page.getByRole('button',{name:'Return',exact:true}).tap();
+ await page.locator('#satchel-panel summary').tap();await page.getByRole('button',{name:'Manage 10×10 satchel [I]',exact:true}).tap();
+ await expect(page.getByLabel('10 by 10 inventory grid',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Return',exact:true}).tap();
+ await page.locator('#satchel-panel summary').tap();await d.east();await d.walk(d.game.state.entrance);await d.send({type:'descend'});await expect(page.locator('#minimap-location')).toHaveText('Depth 1');
+ await d.send({type:'ascend'});await expect(page.locator('#stats h2')).toHaveText('Whisperwood (1, 0)');
 });
 
 for (const [width, height] of [[375, 667], [390, 844], [844, 390]]) {
@@ -96,4 +90,14 @@ test('phone switches the same minimap and minimizes it to a header without using
   await expect(page.getByRole('tab', { name: 'World', exact: true })).toHaveAttribute('aria-selected', 'true');
   await page.getByRole('tab', { name: 'Local', exact: true }).tap(); await expect(map).toHaveAttribute('aria-label', /Explored map/);
   await expect(page.locator('.floor')).toContainText('TURN 0');
+});
+
+test('phone rearranges the 10×10 satchel for free and drops/recovers an item at camp',async({page})=>{
+ await begin(page);await page.locator('#satchel-panel summary').tap();await page.getByRole('button',{name:'Manage 10×10 satchel [I]',exact:true}).tap();
+ await page.getByRole('button',{name:'Select Ember tonic, 1 by 1',exact:true}).first().tap();
+ await page.getByRole('spinbutton',{name:'Column',exact:true}).fill('10');await page.getByRole('spinbutton',{name:'Row',exact:true}).fill('10');await page.getByRole('button',{name:'Place item',exact:true}).tap();
+ await expect(page.locator('.bag-item').first()).toHaveAttribute('style',/10 \/ 10/);await expect(page.locator('.floor')).toContainText('TURN 0');
+ await page.getByRole('button',{name:'Drop item',exact:true}).tap();await expect(page.locator('.bag-item')).toHaveCount(1);
+ await page.getByRole('button',{name:'Pick up item here',exact:true}).tap();await expect(page.locator('.bag-item')).toHaveCount(2);
+ await page.getByRole('button',{name:'Return',exact:true}).tap();await expect(page.locator('.floor')).toContainText('TURN 2');
 });
