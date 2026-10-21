@@ -88,8 +88,10 @@ The public game address, once Pages is enabled and its deployment completes, is:
 
 https://flicktrey-oss.github.io/DungeonCrawler/
 
-For the one-time setup, open repository **Settings → Pages**, select **Deploy from a branch**, choose **gh-pages** and **/ (root)**, and click **Save**. GitHub builds and publishes the site; it can take a few minutes. The `gh-pages` branch contains only the generated browser files and is separate from source code.
+For the one-time setup, open repository **Settings → Pages**, set **Source** to **GitHub Actions**. Then open **Actions → Publish browser game** and run the workflow on **feature/playable-roguelike** (or main once merged). GitHub builds and publishes the site; it can take a few minutes. The old `gh-pages` branch is retained as a fallback snapshot; automatic releases now use GitHub’s official Pages artifact deployment.
 
-The **Publish browser game** workflow tests, builds, and updates `gh-pages` on code pushes to `main` or `feature/playable-roguelike`. It can also be run manually from the Actions tab. Relative asset URLs let the build work under `/DungeonCrawler/`. There is no backend or secret configuration. Keep the source on the feature branch until its PR is merged; no merge is required to play the initial published version.
+The **Publish browser game** workflow tests, builds, and deploys a Pages artifact on code pushes to `main` or `feature/playable-roguelike`. It can also be run manually from the Actions tab. Relative asset URLs let the build work under `/DungeonCrawler/`. There is no backend or secret configuration. Keep the source on the feature branch until its PR is merged; no merge is required to play the initial published version.
 
 Mind Vision is available from level 1. Start with 100 Mana; successful movement and melee restore 5 Mana (capped at 100). Waiting, casting, and other actions do not restore Mana. Vision lasts for the casting turn plus the next two completed turns, with no real-time countdown. Revealed terrain remains explored after the effect ends; enemies return to ordinary line-of-sight visibility. Mana persists between floors; the vision effect does not. Teleportation and class abilities are not implemented yet.
+
+The title-screen footer identifies release v0.2.1 (Mind Vision). If you see an older footer, you are viewing an earlier deployment. GitHub-token branch pushes do not trigger branch-based Pages builds, so use the GitHub Actions source for reliable automatic publishing.
