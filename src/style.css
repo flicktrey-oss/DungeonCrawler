@@ -117,3 +117,11 @@ summary{font:18px Georgia,serif;color:#e0c59e;cursor:pointer;padding:8px 0}
   #satchel-panel #inventory{max-height:110px}#satchel-panel .item{font-size:12px}
   #satchel-panel button{font-size:12px;padding:6px}
 }
+
+#character-inspector{position:absolute;z-index:3;left:7px;bottom:7px;width:190px;margin:0;padding:10px;background:#0c1420f5;border:1px solid #617381;border-radius:4px;font:12px/1.4 system-ui;max-height:calc(100% - 14px);overflow:auto;box-shadow:0 4px 15px #0008}
+#character-inspector h3{font:16px Georgia,serif;color:#e0c59e;margin:0 28px 8px 0}#close-inspector{float:right;padding:0;min-width:30px;min-height:30px;font-size:22px}
+.inspection-portrait{display:block;width:72px;height:72px;margin:auto;background:#1a2833;border:1px solid #3e5562;image-rendering:pixelated}.inspection-race{text-align:center;color:#b4cdc6;margin:6px 0}
+#character-inspector dl{display:grid;grid-template-columns:1fr auto;gap:4px;margin:8px 0}#character-inspector dd{margin:0;color:#eed8ac}.inspection-health{height:7px;margin:0}
+@media(max-width:700px),(pointer:coarse){#character-inspector{width:156px;left:4px;bottom:4px;padding:7px;font-size:11px}#character-inspector h3{font-size:14px}.inspection-portrait{width:48px;height:48px}#close-inspector{min-width:44px;min-height:44px}.inspection-race{margin:3px 0}}
+
+@media(max-width:700px),(pointer:coarse){#map-tools{flex-direction:row-reverse}}

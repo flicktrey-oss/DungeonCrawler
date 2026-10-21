@@ -10,13 +10,14 @@ import { mountInventory } from './inventory-ui.js';
 import { inventoryLayout } from './game/inventory.js';
 import { ENCOUNTERS } from './game/encounters.js';
 import { bindTouchControls } from './touch-controls.js';
+import { characterAt, characterDetails } from './character-inspection.js';
 import { bindKeyboardMovement } from './keyboard-movement.js';
 
 const scene = new DungeonScene();
 const phaser = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: 768, height: 624, pixelArt: true,
   backgroundColor: '#090c12', scene: [scene], scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   callbacks: { postBoot() { setTimeout(() => { if (model) scene.setGame(model); }, 0); } } });
-let model = null, paused = true, panel = null, mapView = 'local';
+let model = null, paused = true, panel = null, mapView = 'local', inspected = null, inspectedMap = null;
 new ResizeObserver(() => {
   const parent = document.getElementById('game');
   if (parent.clientWidth && parent.clientHeight) phaser.scale.resize(parent.clientWidth, parent.clientHeight);
@@ -32,14 +33,14 @@ function modal(title, body, buttons) {
   for (const [text, fn] of buttons) { const b = document.createElement('button'); b.textContent = text; b.onclick = fn; $('overlay').querySelector('.buttons').append(b); }
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls(); }
-function start() { mapView = 'local'; model = new Expedition(); closePanel(); render(); }
+function start() { inspected=null; mapView = 'local'; model = new Expedition(); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Every non-camp region and crypt floor regenerates on return.</b> Creatures, loot, quests, terrain and local fog reset; claim rewards before leaving. Camp storage and merchant stock stay stable. World-map squares remember travel history, not permanent terrain.</p>
   <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
-  <p>Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
+  <p>Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
@@ -152,12 +153,28 @@ function render() {
   if (!p.inventory.length) $('inventory').textContent = 'Your satchel is empty.';
   $('latest-event').textContent = s.log.at(-1) ?? '';
   $('log').innerHTML = s.log.slice(-25).map(t => `<p>${escape(t)}</p>`).join(''); $('log').scrollTop = $('log').scrollHeight;
+  renderInspection();
   syncTouchControls();
   if (s.status === 'dead') {
     paused = true; panel = 'dead';
     modal('Your lantern goes dark.', `<p>Your expedition ends here. The camp and its supplies are lost.</p><p>Level ${p.level} · ${s.regionsDiscovered} regions · ${s.cryptsCleared} crypts cleared · ${p.gold} gold</p><p class="hint">Seed: ${s.seed}</p>`, [['New Run', start], ['Title', () => { model = null; menu(); }]]);
   }
 }
+function renderInspection(){
+  const current=inspected&&model&&characterAt(model,inspected.x,inspected.y);
+  if(!current||model.state.map!==inspectedMap||current.kind!==inspected.kind||(!inspected.friendly&&current!==inspected)||model.state.status!=='playing')inspected=null;
+  $('character-inspector').classList.toggle('hidden',!inspected);
+  if(!inspected)return;
+  const d=characterDetails(model,inspected);
+  $('inspection-details').innerHTML=`<h3>${escape(d.name)}</h3><img class="inspection-portrait" alt="${escape(d.name)} portrait" src="${scene.portrait(d.kind)}"><p class="inspection-race">${escape(d.race)}</p>
+    <dl><dt>Strength</dt><dd>${d.strength??'—'}</dd><dt>Defense</dt><dd>${d.defense??'—'}</dd><dt>Health</dt><dd>${d.hp===null?'Noncombatant':`${d.hp} / ${d.maxHp}`}</dd></dl>
+    ${d.hp===null?'<p class="hint">Friendly · use Interact nearby.</p>':`<div class="bar inspection-health"><div style="width:${Math.max(0,d.hp/d.maxHp*100)}%"></div></div>`}`;
+}
+scene.onInspect=(x,y)=>{
+  if(!model||paused||model.state.status!=='playing')return;
+  inspected=characterAt(model,x,y);inspectedMap=model.state.map;renderInspection();
+};
+$('close-inspector').onclick=()=>{inspected=null;renderInspection();document.activeElement?.blur();};
 function act(action) { if (!model || paused) return; if (document.activeElement?.tagName === 'SUMMARY') document.activeElement.blur(); model.action(action); render(); }
 function syncTouchControls() {
   const ready = model && !paused && model.state.status === 'playing';

@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a shifting w
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.5.4 — Enemy health bars** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.5.5 — Character inspection** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -114,7 +114,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 65 simulation tests and 21 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 65 simulation tests and 23 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -143,3 +143,7 @@ Hold WASD or an arrow key to keep stepping: one immediate action, a 300 ms initi
 ## Enemy health bars (v0.5.4)
 
 Visible living enemies have a small health bar above their sprite. Bars shrink as damage is dealt and change from green to amber to red as health runs low. Hidden enemies remain hidden; defeated enemies and their bars disappear. Each bar shows remaining health as a proportion of that creature's maximum, rather than a comparison of its attack strength.
+
+## Character inspection (v0.5.5)
+
+Click or tap a visible character on the main map to open a compact portrait card with race/creature type, Strength (attack), Defense and current/maximum Health. The adventurer's stats include equipped gear. Merchant and quest-giver cards show Human / Noncombatant with no invented combat stats. Inspection costs no turn; the card updates as combat proceeds and closes if the creature dies or leaves sight. Click empty ground or × to dismiss. Hidden characters cannot be inspected.

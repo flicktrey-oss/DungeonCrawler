@@ -3,7 +3,18 @@ import {key} from '../game/dungeon.js';
 const T=24;
 export class DungeonScene extends Phaser.Scene {
   constructor(){super('dungeon');}
-  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();}
+  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();const canvas=this.sys.game.canvas;let down=null;
+    canvas.addEventListener('pointerdown',event=>{down=event.isPrimary&&event.button===0?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;});
+    canvas.addEventListener('pointercancel',()=>{down=null;});
+    canvas.addEventListener('pointerup',event=>{
+      const pressed=down;down=null;
+      if(!pressed||pressed.id!==event.pointerId||Math.hypot(event.clientX-pressed.x,event.clientY-pressed.y)>12)return;
+      // Read the current DOM rectangle: mobile HUD changes and page scrolling move the canvas.
+      const rect=canvas.getBoundingClientRect();
+      const point=this.cameras.main.getWorldPoint((event.clientX-rect.left)*this.scale.width/rect.width,(event.clientY-rect.top)*this.scale.height/rect.height);
+      this.onInspect?.(Math.floor(point.x/T),Math.floor(point.y/T));
+    });}
+
   setGame(game){this.gameModel=game;this.draw();}
   draw(){
     if(!this.ready||!this.gameModel)return;
@@ -32,8 +43,8 @@ export class DungeonScene extends Phaser.Scene {
     g.fillStyle(ratio>.5?0x81bf78:ratio>.25?0xe1b765:0xe16d72);
     g.fillRect(x+1,y+1,Math.max(1,Math.round(18*ratio)),3);
   }
-  outdoorTile(t,x,y,a,biome,tx,ty){
-    const g=this.paint,marsh=biome==='marsh';const ground=({forest:0x344b35,marsh:0x344b40,highlands:0x55564d,ashlands:0x493536})[biome]??0x344b35;
+  outdoorTile(t,x,y,a,biome,tx,ty,g=this.paint){
+    const marsh=biome==='marsh';const ground=({forest:0x344b35,marsh:0x344b40,highlands:0x55564d,ashlands:0x493536})[biome]??0x344b35;
     g.fillStyle(t==='~'?0x264650:t==='.'?0x70614b:ground,a);g.fillRect(x,y,24,24);
     if(t===','||t===';'||t==='T'){g.fillStyle(marsh?0x688361:0x577447,a);const n=(tx*7+ty*11)%15;g.fillRect(x+3+n,y+5,2,4);g.fillRect(x+5,y+17-n/2,3,2);}
     if(t==='T'){g.fillStyle(0x594937,a);g.fillRect(x+10,y+12,5,11);g.fillStyle(0x20392d,a);g.fillRect(x+2,y+3,20,13);g.fillStyle(0x45684a,a);g.fillRect(x+5,y+1,14,9);g.fillStyle(0x63835a,a);g.fillRect(x+7,y+2,7,3);}
@@ -49,7 +60,17 @@ export class DungeonScene extends Phaser.Scene {
   }
   scenery(d,a){const g=this.paint,x=d.x*T,y=d.y*T;g.fillStyle(d.type==='flowers'?0xbea273:d.type==='reeds'?0x9ca569:d.type==='log'?0x796047:0xa3a699,a);if(d.type==='log'){g.fillRect(x+2,y+14,20,5);g.fillStyle(0xb89a69,a);g.fillRect(x+2,y+14,3,5);}else if(d.type==='grave'){g.fillRect(x+9,y+7,6,13);g.fillRect(x+5,y+11,14,3);}else{g.fillRect(x+5,y+11,3,3);g.fillRect(x+14,y+17,4,2);g.fillRect(x+11,y+5,2,4);}}
   item(i){const g=this.paint,x=i.x*T,y=i.y*T;const colors={potion:0xf36a83,gold:0xf8cc68,weapon:0xd2e4e8,armor:0x829bb4,chest:0xb98043,amulet:0xb2e7cb,trophy:0xc7ba93};g.fillStyle(colors[i.kind]);if(i.kind==='potion'){g.fillRect(x+9,y+9,7,10);g.fillStyle(0xe0e9d9);g.fillRect(x+11,y+5,3,5);}else if(i.kind==='weapon'){g.fillRect(x+11,y+4,3,15);g.fillRect(x+7,y+15,11,3);}else{g.fillRect(x+6,y+9,13,10);g.fillStyle(0xffe2a1);g.fillRect(x+11,y+11,3,5);}}
-  actor(e,kind){const g=this.paint,x=e.x*T,y=e.y*T;g.fillStyle(0x000000,0.35);g.fillEllipse(x+12,y+21,19,6);
+  portrait(kind){
+    const textureKey=`portrait-${kind}`;
+    if(!this.textures.exists(textureKey)){
+      const brush=this.make.graphics({x:0,y:0},false);
+      if(kind==='merchant'||kind==='villager')this.outdoorTile(kind==='merchant'?'M':'V',0,0,1,'forest',0,0,brush);
+      else this.actor({x:0,y:0},kind,brush);
+      brush.generateTexture(textureKey,T,T);brush.destroy();
+    }
+    return this.textures.get(textureKey).getSourceImage().toDataURL();
+  }
+  actor(e,kind,g=this.paint){const x=e.x*T,y=e.y*T;g.fillStyle(0x000000,0.35);g.fillEllipse(x+12,y+21,19,6);
     const colors={player:0x70c6c0,slime:0x8fbd67,skeleton:0xd6ccad,goblin:0xc67d57,boss:0xc56388,guardian:0xb76883,wolf:0xb8b7a6,boar:0x93775c,leech:0xa9b55c,rat:0xa2937a,beetle:0xa18b58,pondFrog:0x86bd72,frog:0x71ab6d,elite:0xc9a16c,goat:0xaea99b,ashling:0xd16a4f};g.fillStyle(colors[kind]);
     if(['wolf','boar','leech','rat','beetle','frog','pondFrog','elite','goat'].includes(kind)){g.fillRect(x+3,y+9,18,9);g.fillRect(x+3,y+17,4,5);g.fillRect(x+16,y+17,4,5);g.fillRect(x+15,y+5,7,7);g.fillStyle(0xe5db9f);g.fillRect(x+19,y+7,2,2);}else if(kind==='slime'){g.fillEllipse(x+12,y+15,19,14);}else{g.fillRect(x+6,y+9,13,11);g.fillRect(x+8,y+3,9,9);g.fillRect(x+6,y+19,4,4);g.fillRect(x+15,y+19,4,4);}
     g.fillStyle(0x15202b);g.fillRect(x+9,y+(kind==='slime'?13:6),2,2);g.fillRect(x+14,y+(kind==='slime'?13:6),2,2);

@@ -12,6 +12,10 @@
   <main>
     <section id="stats" aria-label="Character status"></section>
     <div id="game" aria-label="Dungeon map">
+      <section id="character-inspector" class="hidden" role="region" aria-label="Character inspection">
+        <button id="close-inspector" aria-label="Close character inspection">×</button>
+        <div id="inspection-details"></div>
+      </section>
       <div id="map-tools" aria-label="Map and character panels">
       <details id="minimap-widget" open>
         <summary aria-label="Toggle minimap" title="Minimize map">Map <span id="minimap-location"></span><span id="map-collapse-icon" aria-hidden="true">−</span></summary>
@@ -53,7 +57,7 @@
       <p class="hint">WASD / Arrows: hold to move / attack<br>E: collect / camp chest · H: potion<br>M: Mind Vision · Q: ascend<br>.: wait · Enter: enter / descend<br>I: inventory · Esc: pause</p>
     </aside>
   </main>
-  <footer>Explore · Discover · Return home — v0.5.4 · Enemy health bars</footer>
+  <footer>Explore · Discover · Return home — v0.5.5 · Character inspection</footer>
 </div>
 <div id="overlay"></div>
 <script type="module" src="/src/main.js"></script>
