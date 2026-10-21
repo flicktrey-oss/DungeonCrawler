@@ -13,7 +13,7 @@ export class Game {
   message(text){this.state.log.push(text);if(this.state.log.length>80)this.state.log.shift();}
   loadFloor(){
     const s=this.state,d=generateDungeon(this.rng); Object.assign(s,d);Object.assign(s.player,d.start);
-    s.enemies=[];s.items=[];s.explored=new Set();s.visible=new Set();
+    s.enemies=[];s.items=[];s.explored=new Set();s.visible=new Set();s.mindVisionUntil=0;
     const used=new Set([key(d.start.x,d.start.y),key(d.stairs.x,d.stairs.y)]), tiles=[];
     for(const room of d.rooms.slice(1)) for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(!used.has(key(x,y)))tiles.push({x,y});
     const spot=()=>{while(tiles.length){const i=this.rng.int(0,tiles.length-1),p=tiles.splice(i,1)[0],k=key(p.x,p.y);if(!used.has(k)){used.add(k);return p;}}throw new Error('Dungeon has no free spawn tiles');};
@@ -34,6 +34,10 @@ export class Game {
       if(enemy){const hit=damage(attack(p),enemy.defense);enemy.hp-=hit;this.message(`You strike ${enemy.name} for ${hit}.`);if(enemy.hp<=0)this.kill(enemy);}
       else {p.x=x;p.y=y;const item=s.items.find(i=>i.x===x&&i.y===y);if(item)this.message(`${item.name} here. Press E to collect or open.`);if(s.map[y][x]==='>')this.message(s.floor<5?'Stairs down. Press Enter to descend.':'The final stair is sealed. Defeat the Ash Warden.');}
       return true;
+    }
+    if(a.type==='mindVision'){
+      if(p.mana<25){this.message('Mind Vision needs 25 Mana. Move or fight to recharge.');return false;}
+      p.mana-=25;s.mindVisionUntil=s.turn+3;this.message('Mind Vision pierces nearby walls for 3 turns. Terrain remains mapped.');return true;
     }
     if(a.type==='wait'){this.message('You listen to the darkness.');return true;}
     if(a.type==='pickup'){

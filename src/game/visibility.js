@@ -8,6 +8,6 @@ export function updateVisibility(state) {
       if((xx!==p.x||yy!==p.y)&&map[yy][xx]==='#') {clear=false;break;}
       const e=2*err; if(e>=dy){err+=dy;xx+=sx;} if(e<=dx){err+=dx;yy+=sy;}
     }
-    if(clear){state.visible.add(key(x,y));state.explored.add(key(x,y));}
+    if(clear || state.turn<=state.mindVisionUntil && state.mindVisionUntil>0){state.visible.add(key(x,y));state.explored.add(key(x,y));}
   }
 }
