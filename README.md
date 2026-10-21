@@ -80,3 +80,13 @@ The engine has no timers or dependency on Phaser. Graphics render snapshots of s
 ## First-version limits
 
 Designed for keyboard and mouse on desktop. Combat feedback uses the scrolling chronicle; there are no floating damage numbers or movement animations. Art and equipment variety are deliberately modest. No sound, mobile touch controls, save system, shops, ranged attacks, or interactive door-opening yet. Balance is an initial pass, not an exhaustive playtest. All code, names, and graphics in the game are original; no art from other roguelikes is included.
+
+## Play on GitHub Pages
+
+The public game address, once Pages is enabled and its deployment completes, is:
+
+https://flicktrey-oss.github.io/DungeonCrawler/
+
+For the one-time setup, open repository **Settings → Pages**, select **Deploy from a branch**, choose **gh-pages** and **/ (root)**, and click **Save**. GitHub builds and publishes the site; it can take a few minutes. The `gh-pages` branch contains only the generated browser files and is separate from source code.
+
+The **Publish browser game** workflow tests, builds, and updates `gh-pages` on code pushes to `main` or `feature/playable-roguelike`. It can also be run manually from the Actions tab. Relative asset URLs let the build work under `/DungeonCrawler/`. There is no backend or secret configuration. Keep the source on the feature branch until its PR is merged; no merge is required to play the initial published version.

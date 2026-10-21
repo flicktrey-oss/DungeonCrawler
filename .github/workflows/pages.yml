@@ -1,0 +1,35 @@
+name: Publish browser game
+on:
+  push:
+    branches: [main, feature/playable-roguelike]
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Publish static files to gh-pages
+        env:
+          GIT_INDEX_FILE: ${{ runner.temp }}/pages.index
+        run: |
+          touch dist/.nojekyll
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --no-tags origin gh-pages:refs/remotes/origin/gh-pages
+          git --work-tree="$PWD/dist" add --all --force
+          tree=$(git write-tree)
+          commit=$(git commit-tree "$tree" -p refs/remotes/origin/gh-pages -m "Publish game from $GITHUB_SHA")
+          git push origin "$commit:refs/heads/gh-pages"
