@@ -3,3 +3,5 @@
 .mana{background:#18283e;border-color:#3b567c}.mana div{background:#426fc0}
 
 .ability{width:100%;background:#253351;border-color:#627cb0}.ability:disabled{opacity:.45;cursor:not-allowed}
+
+#overlay article{max-height:92vh;overflow-y:auto}#storage-lists{display:grid;grid-template-columns:1fr 1fr;gap:14px}.location{margin:0 0 10px}aside h2{font-size:17px}#stats{margin-bottom:10px;padding-bottom:10px}#inventory{max-height:130px}#log{height:135px}

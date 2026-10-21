@@ -9,11 +9,11 @@ export class TurnManager {
       if(action.type==='move'){const p=g.state.player;p.mana=Math.min(p.maxMana,p.mana+5);}
       g.state.turn++;
       // Snapshot the survivors after the player action; newly loaded floors also act once.
-      if(g.state.status==='playing') for(const enemy of [...g.state.enemies]) {
+      if(g.state.status==='playing'&&!g.state.transition) for(const enemy of [...g.state.enemies]) {
         if(g.state.status!=='playing') break;
         if(enemy.hp>0) g.actEnemy(enemy);
       }
-      g.refresh(); return true;
+      g.state.transition=false;g.refresh(); return true;
     } finally {this.busy=false;}
   }
 }

@@ -1,97 +1,90 @@
-# DungeonCrawler: The Ember Vault
+# DungeonCrawler: The Wildlands
 
-An original desktop-browser fantasy roguelike built with Phaser 3, JavaScript ES modules, and Vite. Explore five seeded procedural floors, find equipment, and defeat the Ash Warden. The game uses original programmatic pixel-style graphics and needs no backend, account, API keys, or downloaded art.
+An original, strictly turn-based exploration game in Phaser 3 and JavaScript. Set out from Lantern Camp into a seeded wilderness of forests and marshes, discover ruined watchposts and crypt entrances, and return with better equipment. There is no final world boundary or mandatory victory screen: the expedition continues until you die.
+
+**Play:** https://flicktrey-oss.github.io/DungeonCrawler/
+
+Look for **v0.3.0 — Overworld expedition** on the title screen. The source is currently on `feature/playable-roguelike`, pending merge to `main`. The previous dungeon-only game remains in Git history and in the original `Game` simulation for regression tests.
 
 ## Play locally
 
-Install **Node.js 22 or newer** (includes npm), then open a terminal:
+Install Node.js 22 or newer, then:
 
 ```sh
 git clone https://github.com/flicktrey-oss/DungeonCrawler.git
 cd DungeonCrawler
-# Until the pull request is merged:
 git switch feature/playable-roguelike
 npm ci
 npm run dev
 ```
 
-Open the local address printed by Vite in a desktop browser, then click **New Game**. If using an existing checkout, skip cloning and run the npm commands there. In a cloud workspace, use your development environment's supported browser access; the server binds to all interfaces. Nothing is deployed publicly by these commands.
+Open the local address printed by Vite and click **New Game**. If you already have the checkout, skip cloning. For a restricted cloud home directory, use `npm ci --cache /workspace/.npm-cache`. No backend, paid services, accounts, or API keys are required.
 
-If npm reports that its default cache is unwritable in the cloud container, use `npm ci --cache /workspace/.npm-cache`.
-
-## Controls and rules
+## Controls
 
 | Control | Action |
 | --- | --- |
-| WASD / arrow keys | Move one tile; bump an enemy to attack |
-| E | Pick up the item or open the coffer under you |
-| M / Mind Vision button | Spend 25 Mana to reveal nearby terrain and enemies through walls for 3 turns |
-| H | Drink an Ember tonic, restoring up to 16 health |
-| Click a satchel item | Drink a tonic or equip weapon/armor |
+| WASD / arrows | Move one tile; bump an enemy to attack |
+| E | Collect/open loot underfoot; open storage while on the camp tent |
+| Enter / `>` | Enter a crypt, or descend on its downward stair |
+| Q / `<` | Ascend on an upward stair; depth one returns to the surface entrance |
+| M / Mind Vision button | Reveal nearby terrain and entities through walls for 3 turns; costs 25 Mana |
+| H | Drink a healing tonic |
+| Click satchel item | Drink or equip; replaced gear returns to the satchel |
 | Period (`.`) | Wait one turn |
-| Enter / `>` | Descend while standing on the stairs |
-| I | Inspect equipment and inventory help |
-| Escape / Pause button | Pause or resume / show help |
+| I | Inventory help |
+| Esc / Pause button | Pause, help, resume |
 
-Each successful action costs **exactly one turn**, followed by one action for each surviving enemy. Slow slimes spend every other action resting. Held-key repeat is ignored; release and press again to act again. Walking into walls, unusable stairs, empty pickups, and drinking at full health cost no turn. Thinking, inspecting inventory, and pausing never advance time. On death or victory the turn ends immediately. Descending costs a turn; new-floor enemies receive their action, with the player starting in an enemy-free room.
+Successful actions cost one turn. Each living enemy in the **current** region gets one action afterward; slow slimes rest every other turn. Idle time never advances the world. Key repeat is ignored: separate presses move separate tiles. Trees, rocks, deep water, walls, and invalid commands cost no turn.
 
-Doors are passable wooden archways in this first version. Stand on an item before collecting it; hover over satchel entries for descriptions. Equipping swaps your old item into the satchel and consumes a turn. Gold is score/loot, with no shop yet.
+**Arrival grace:** crossing regions and using stairs consumes a turn, but enemies do not act on that arrival turn. You see the destination before deciding what to do. Regions you leave remain frozen.
 
-## Surviving the vault
+## Explore and return
 
-- Explore for weapons, armor, three tonics per floor, gold, and a randomized coffer reward.
-- Enemies pursue within their detection range using grid pathfinding. Corridors prevent being surrounded. Slimes rest every other turn; goblins hit harder than skeletons.
-- Your health does not automatically refill between floors. Kill enemies for XP, occasional gold, and levels; leveling improves health, attack, and sometimes defense, and restores a little health.
-- The map remembers explored terrain in dim light. Creatures and loose items are only shown in current line of sight.
-- Descend through five floors and kill the Ash Warden on floor five to win. The final stair is sealed. Death is permanent; New Run creates a fresh randomized character and dungeon. No save/resume is implemented.
+- Start on the tent at **Lantern Camp (0, 0)**. Its entire region is enemy-free. Press E or click Camp storage to transfer supplies. Inspection is free; each transfer costs a turn. Only carried inventory can be stored; equipped items must first be replaced.
+- Follow trails to the north, south, east, or west edges to generate neighboring 40×30 regions. The HUD shows region coordinates so you can find the camp again. East or west changes the first coordinate; north or south changes the second.
+- Whisperwood forests contain wolves and boars. Lantern Marsh contains slimes and leeches. Terrain, creatures, and danger vary by region. Difficulty rises with distance from camp, capped at danger 5/5 in this first version.
+- Seek ruined stone watchposts for equipment and dark stone archways for **crypt entrances**. Stand on an archway and press Enter. Every region has an entrance, including the starting region east of camp.
+- Crypts have **two depths**, stronger melee encounters, equipment, potions, coffers, and a Crypt Warden on the second depth. Defeating it awards XP and bonus gold and counts as a cleared crypt; the wilderness remains open.
+- Retreat using Q on a green upward stair. From depth two, this returns to the first depth's downward stair; from depth one, it returns to the exact outdoor entrance. Retrace your route to camp.
+- Collected loot, dead enemies, discoveries, and explored terrain remain changed when you revisit. Persistence is **within the current run only**. Reloading the page starts over.
+- **Permadeath remains enabled:** death ends the character, world changes, and camp storage. A new run starts fresh. There is no hardcore toggle or resurrection.
 
-## Build and verify
+Mana starts at 100. Mind Vision costs 25 and lasts for the casting turn plus the next two completed turns. Revealed terrain stays mapped; entities return to ordinary line of sight afterward. Successful movement and melee restore 5 Mana, capped at 100. Waiting and casting do not recharge. Region transitions end the vision effect, preserving remaining Mana.
+
+## Verify and build
 
 ```sh
-npm test                 # Vitest simulation tests
-npm run build            # produces dist/
-npm run preview          # locally serves the production build
+npm test                 # all Vitest simulation suites
+npm run build            # production files in dist/
+npm run preview          # local production preview
 ```
 
-An optional real-browser test checks rendering, keyboard repeat, idle behavior, pause, and inventory:
+Optional browser tests:
 
 ```sh
 npx playwright install chromium
 npm run test:browser
-# Or use an existing Linux Chromium installation:
+# Or use installed Linux Chromium:
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-The default unit suite does not require browser downloads. Vite may report a large chunk because Phaser is bundled; this is expected for this initial version.
+The 32 simulation tests cover original combat/turn rules plus seeded world connectivity, biome spawn validity, negative coordinates, world transitions, inactive-region freezing, persistent crypt returns, guardian rewards, arrival safety, camp storage, and permadeath. Three browser tests exercise input, Mana, storage, region travel, and crypt entry/exit. The expected large-bundle warning comes from bundled Phaser.
 
 ## Architecture
 
-- `src/game/random.js`: deterministic PRNG. `new Game(seed)` reproduces a run for the same action sequence.
-- `src/game/dungeon.js`: rooms, connected corridors, archways, stairs, tile rules.
-- `src/game/game.js`: authoritative state, floor creation, player commands, progression, enemy actions.
-- `src/game/turn-manager.js`: synchronous action transaction; guards reentrancy and stops finished runs.
-- `src/game/ai.js`, `combat.js`, `items.js`, `visibility.js`: pathfinding, combat definitions, equipment, fog.
-- `src/render/scene.js`: Phaser canvas graphics and player-centered camera; never advances the simulation.
-- `src/main.js`, `style.css`: keyboard input, menus, HUD, satchel, event log.
-- `tests/game.test.js`: 15 tests, including connectivity across 150 seeds and spawn constraints on all floors across 30 seeds.
-- `tests/browser/game.spec.js`: browser input and UI smoke test.
+- `src/game/expedition.js`: current game mode; region transitions, per-run storage, crypts, persistence, guardian rewards. Extends the original `Game` rather than mixing rendering with rules.
+- `src/game/world.js`: coordinate-seeded forest/marsh region generation, connected trails, spawn locations, landmarks. Generation order does not change terrain.
+- `src/game/game.js`, `turn-manager.js`: authoritative player state, inventory/combat/leveling, synchronous turn transaction. Enemy decisions never run on a timer.
+- `src/game/dungeon.js`, `ai.js`, `visibility.js`, `combat.js`, `items.js`, `random.js`: reusable generation, pathfinding, fog, rules, and PRNG.
+- `src/render/scene.js`: original programmatic terrain, creature, item, and landmark graphics; player-centered camera.
+- `src/main.js`, `style.css`: menus, controls, HUD, camp storage, log.
+- `tests/*.test.js`, `tests/browser/`: simulation and Chromium validation.
 
-The engine has no timers or dependency on Phaser. Graphics render snapshots of state; animation timing cannot cause a turn. The only simulation entry point for UI actions is `Game.action`, mediated by the turn manager. Dead enemies remain as inert records and never render, block paths, or act.
+Only the active region is simulated or drawn. Visited regions retain state in memory; there is no disk saving, region eviction, or cross-session persistence yet. The world is generated on demand in connected regions, with an immediate transition at a trail edge rather than continuous pixel scrolling. Forests and marshes currently change by region, not through blended biome boundaries. Equipment and creature variety are intentionally small. There is no gathering, crafting, freeform construction, terrain destruction, hunger, farming, multiplayer, audio, mobile touch support, or teleportation. Difficulty is an initial pass requiring playtesting.
 
-## First-version limits
+## GitHub Pages
 
-Designed for keyboard and mouse on desktop. Combat feedback uses the scrolling chronicle; there are no floating damage numbers or movement animations. Art and equipment variety are deliberately modest. No sound, mobile touch controls, save system, shops, ranged attacks, or interactive door-opening yet. Balance is an initial pass, not an exhaustive playtest. All code, names, and graphics in the game are original; no art from other roguelikes is included.
+In **Settings → Pages**, use **Source: GitHub Actions**. In **Settings → Environments → github-pages**, allow deployment from `feature/playable-roguelike` (and `main` after merging). The Publish browser game workflow tests, builds, and uses GitHub's official Pages artifact deployment on source pushes. A successful workflow deployment is required before the public version changes.
 
-## Play on GitHub Pages
-
-The public game address, once Pages is enabled and its deployment completes, is:
-
-https://flicktrey-oss.github.io/DungeonCrawler/
-
-For the one-time setup, open repository **Settings → Pages**, set **Source** to **GitHub Actions**. Then open **Actions → Publish browser game** and run the workflow on **feature/playable-roguelike** (or main once merged). GitHub builds and publishes the site; it can take a few minutes. The old `gh-pages` branch is retained as a fallback snapshot; automatic releases now use GitHub’s official Pages artifact deployment.
-
-The **Publish browser game** workflow tests, builds, and deploys a Pages artifact on code pushes to `main` or `feature/playable-roguelike`. It can also be run manually from the Actions tab. Relative asset URLs let the build work under `/DungeonCrawler/`. There is no backend or secret configuration. Keep the source on the feature branch until its PR is merged; no merge is required to play the initial published version.
-
-Mind Vision is available from level 1. Start with 100 Mana; successful movement and melee restore 5 Mana (capped at 100). Waiting, casting, and other actions do not restore Mana. Vision lasts for the casting turn plus the next two completed turns, with no real-time countdown. Revealed terrain remains explored after the effect ends; enemies return to ordinary line-of-sight visibility. Mana persists between floors; the vision effect does not. Teleportation and class abilities are not implemented yet.
-
-The title-screen footer identifies release v0.2.1 (Mind Vision). If you see an older footer, you are viewing an earlier deployment. GitHub-token branch pushes do not trigger branch-based Pages builds, so use the GitHub Actions source for reliable automatic publishing.
+Relative Vite asset URLs support `/DungeonCrawler/`. The old `gh-pages` branch is a historical fallback snapshot, not the source for current automatic deployments. No new hosting service or secret is required.
