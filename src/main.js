@@ -10,6 +10,7 @@ import { mountInventory } from './inventory-ui.js';
 import { inventoryLayout } from './game/inventory.js';
 import { ENCOUNTERS } from './game/encounters.js';
 import { bindTouchControls } from './touch-controls.js';
+import { bindKeyboardMovement } from './keyboard-movement.js';
 
 const scene = new DungeonScene();
 const phaser = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: 768, height: 624, pixelArt: true,
@@ -24,6 +25,7 @@ new ResizeObserver(() => {
 const $ = id => document.getElementById(id);
 const escape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function modal(title, body, buttons) {
+  stopMovement();
   syncTouchControls();
   $('overlay').classList.remove('hidden');
   $('overlay').innerHTML = `<article><p class="eyebrow">DUNGEONCRAWLER · WILDLANDS</p><h2>${title}</h2>${body}<div class="buttons"></div></article>`;
@@ -35,7 +37,7 @@ function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Every non-camp region and crypt floor regenerates on return.</b> Creatures, loot, quests, terrain and local fog reset; claim rewards before leaving. Camp storage and merchant stock stay stable. World-map squares remember travel history, not permanent terrain.</p>
-  <p>WASD/arrows or touch arrows move/bump attack. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions.</p>
+  <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
@@ -204,7 +206,9 @@ $('satchel-panel').querySelector('summary').addEventListener('click', event => {
 $('help').onclick = help;
 $('manage-bag').onclick=()=>{if(!paused)bag();};
 $('open-equipment').onclick=()=>{if(!paused)bag('equipment','amulet');};
+const stopMovement = bindKeyboardMovement(act, () => model && !paused && model.state.status === 'playing');
 window.addEventListener('keydown', event => {
+  if (event.target?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if ((event.target instanceof HTMLButtonElement || event.target?.tagName === 'SUMMARY' || event.target?.tagName==='INPUT') && (event.key === 'Enter' || event.key === ' ')) return;
   const k = event.key.toLowerCase();
@@ -212,9 +216,7 @@ window.addEventListener('keydown', event => {
   if (k === 'escape') { if (model && paused && model.state.status === 'playing') closePanel(); else if (!paused) help(); return; }
   if(k==='i'&&model&&model.state.status==='playing'){if(panel==='bag')closePanel();else if(!paused)bag();return;}
   if(k==='e'&&!paused){interact();return;}
-  const moves = { w: [0, -1], arrowup: [0, -1], s: [0, 1], arrowdown: [0, 1], a: [-1, 0], arrowleft: [-1, 0], d: [1, 0], arrowright: [1, 0] };
-  if (moves[k]) act({ type: 'move', dx: moves[k][0], dy: moves[k][1] });
-  else if (k === '.') act({ type: 'wait' }); else if (k === 'e') act({ type: 'pickup' });
+  if (k === '.') act({ type: 'wait' });
   else if (k === 'h') act({ type: 'potion' }); else if (k === 'm') act({ type: 'mindVision' });
   else if (k === 'enter' || k === '>') act({ type: 'descend' }); else if (k === 'q' || k === '<') act({ type: 'ascend' });
 });

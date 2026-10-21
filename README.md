@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a shifting w
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.5.2 — Map-side satchel & Chronicle** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.5.3 — Hold to move** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -114,7 +114,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 65 simulation tests and 19 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 65 simulation tests and 21 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -135,3 +135,7 @@ Touch actions commit once through the native click after a valid release, preven
 ## Desktop panels (v0.5.2)
 
 Map and Satchel / equipment are independent dropdowns beside each other in the upper-right of the play area. Satchel starts collapsed; expand it for quick item use, the 10×10 bag, or the character equipment screen. The I shortcut still opens the bag directly. Chronicle now appears directly below character stats, with its own scrolling log. Local quest sits at the bottom of the desktop sidebar. Browsing these panels does not spend turns.
+
+## Held keyboard movement (v0.5.3)
+
+Hold WASD or an arrow key to keep stepping: one immediate action, a 300 ms initial delay, then one action every 150 ms. Each valid step or bump attack advances exactly one turn; walls still cost no turn. Release to stop. Menus, clicking controls, switching tabs, and losing window focus cancel held movement. After cancellation, release and press again to move. Only the most recently pressed direction repeats; other actions and touch controls remain one action per press/tap.
