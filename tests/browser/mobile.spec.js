@@ -67,8 +67,20 @@ for (const [width, height] of [[375, 667], [390, 844], [844, 390]]) {
     await page.setViewportSize({ width, height }); await begin(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     for (const button of await page.locator('#touch-controls button').all()) { const box = await button.boundingBox(); expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44); }
-    const canvas = await page.locator('canvas').boundingBox(); expect(canvas.width).toBeLessThanOrEqual(width); expect(canvas.height).toBeGreaterThan(170);
+    const canvas = await page.locator('#game > canvas').boundingBox(); expect(canvas.width).toBeLessThanOrEqual(width); expect(canvas.height).toBeGreaterThan(170);
     const controls = await page.locator('#touch-controls').boundingBox(); expect(controls.y + controls.height).toBeLessThanOrEqual(height);
     await page.screenshot({ path: `test-results/phone-${width}.png`, fullPage: true });
   });
 }
+
+test('phone can browse the merchant and toggle the minimap without extra turns', async ({ page }) => {
+  await begin(page); await move(page, 'east'); await move(page, 'east');
+  await page.getByRole('button', { name: 'Trade', exact: true }).tap();
+  await expect(page.getByRole('heading', { name: 'Mara the Wayfarer', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Buy Ember tonic · 10 gold', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Return', exact: true }).tap();
+  await page.getByLabel('Toggle minimap', { exact: true }).tap(); await expect(page.locator('#minimap')).not.toBeVisible();
+  await page.getByLabel('Toggle minimap', { exact: true }).tap(); await expect(page.locator('#minimap')).toBeVisible();
+  await expect(page.locator('.floor')).toContainText('TURN 2');
+  await page.screenshot({ path: 'test-results/merchant-minimap-phone.png', fullPage: true });
+});

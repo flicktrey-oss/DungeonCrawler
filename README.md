@@ -4,7 +4,7 @@ An original, strictly turn-based exploration game in Phaser 3 and JavaScript. Se
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.3.1 — Touch controls** on the title screen. The source is currently on `feature/playable-roguelike`, pending merge to `main`. The previous dungeon-only game remains in Git history and in the original `Game` simulation for regression tests.
+Look for **v0.4.0 — Merchant & minimap** on the title screen. The source is currently on `feature/playable-roguelike`, pending merge to `main`. The previous dungeon-only game remains in Git history and in the original `Game` simulation for regression tests.
 
 ## Play locally
 
@@ -69,7 +69,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-The 32 simulation tests cover original combat/turn rules plus seeded world connectivity, biome spawn validity, negative coordinates, world transitions, inactive-region freezing, persistent crypt returns, guardian rewards, arrival safety, camp storage, and permadeath. Nine browser tests exercise desktop input, touch movement, canceled gestures, multiple fingers, held touches, phone layouts, Mana, storage, region travel, and crypt entry/exit. Phone tests use Chromium touch emulation, not a physical iPhone. The expected large-bundle warning comes from bundled Phaser.
+The 41 simulation tests cover original combat/turn rules plus seeded world connectivity, biome spawn validity, negative coordinates, world transitions, inactive-region freezing, persistent crypt returns, guardian rewards, arrival safety, camp storage, and permadeath. Twelve browser tests exercise desktop input, touch movement, canceled gestures, multiple fingers, held touches, phone layouts, Mana, storage, region travel, and crypt entry/exit. Phone tests use Chromium touch emulation, not a physical iPhone. The expected large-bundle warning comes from bundled Phaser.
 
 ## Architecture
 
@@ -102,3 +102,19 @@ Open the same public link in Safari and start New Game. A directional pad and si
 - Portrait and landscape layouts preserve readable tiles and at least 44 CSS-pixel touch targets. Scroll outside the movement controls to inspect inventory/logs.
 
 No saving was added: refreshing, closing, or Safari unloading the page loses the run. Real iPhone Safari testing remains necessary; automated validation here used Chromium. Playwright WebKit could not be downloaded because the environment blocked its download domains.
+
+## Mara’s camp shop and the minimap (v0.4.0)
+
+Mara the Wayfarer stands **two tiles east and one north of the tent**. Her stall blocks movement; stand on a neighboring tile to trade. From a new run, walk **two steps east**, then press **E** or tap **Trade**. The starting character has no gold: find caches and fight enemies before buying.
+
+| Item | Price | Stock per run |
+| --- | ---: | ---: |
+| Ember tonic (+16 health when used) | 10 gold | 3 |
+| Ashwood spear (+3 attack when equipped) | 35 gold | 1 |
+| Ringmail (+2 defense when equipped) | 30 gold | 1 |
+
+Browsing is free and pauses input; a successful purchase spends one turn and adds the item to your satchel. Equip or drink it separately. Unaffordable or sold-out purchases are disabled; rejected purchases never spend gold or turns. Stock persists across travel and resets on a new run. There is no selling or restocking in this version.
+
+The **minimap in the map’s upper-right corner** shows the entire current region or crypt depth, with unexplored tiles hidden and remembered terrain dimmed. Your marker is turquoise with a white border. Known features use **C** for camp, **M** for merchant, **R** for ruins, and **> / <** for entrances and stairs. It never shows enemies or loose items. Region coordinates and a bearing toward camp help you navigate the overworld; underground, return to the surface first. Tap/click **Map** to hide or show it without taking a turn. This is a local region map, not a whole-world atlas.
+
+Validation includes earning gold through actual UI movement, collecting it, buying a tonic, checking gold/stock, touch trading, minimap fog, region/depth changes, and free minimap toggling.

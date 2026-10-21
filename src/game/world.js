@@ -1,3 +1,4 @@
+import { MERCHANT } from './merchant.js';
 import { Random } from './random.js';
 import { WIDTH, HEIGHT, key, directions, walkable } from './dungeon.js';
 
@@ -38,7 +39,7 @@ export function generateWorldRegion(seed, rx, ry) {
   const landmark = { x: rng.int(5, 12), y: rng.int(5, 10) };
   carve(CAMP, entrance); carve(CAMP, landmark);
   map[entrance.y][entrance.x] = 'D'; map[landmark.y][landmark.x] = 'R';
-  if (home) map[CAMP.y][CAMP.x] = 'C';
+  if (home) { map[CAMP.y][CAMP.x] = 'C'; map[MERCHANT.y][MERCHANT.x] = 'M'; }
   // Remove isolated pockets so every passable tile and feature is reachable.
   const seen = new Set([key(CAMP.x, CAMP.y)]), queue = [CAMP];
   for (let i = 0; i < queue.length; i++) for (const [dx, dy] of directions) {

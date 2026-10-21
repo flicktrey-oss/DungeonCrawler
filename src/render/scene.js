@@ -29,6 +29,7 @@ export class DungeonScene extends Phaser.Scene {
     if(t===';'){g.fillStyle(0x92a271,a);g.fillRect(x+5,y+5,2,14);g.fillRect(x+11,y+2,2,18);g.fillRect(x+16,y+8,2,12);}
     if(t==='^'){g.fillStyle(0x777d76,a);g.fillTriangle(x+2,y+21,x+12,y+3,x+23,y+21);g.fillStyle(0xa5a998,a);g.fillTriangle(x+8,y+10,x+12,y+3,x+15,y+10);}
     if(t==='D'){g.fillStyle(0x858675,a);g.fillRect(x+2,y+3,20,21);g.fillStyle(0x0e171c,a);g.fillRect(x+6,y+7,12,17);g.fillStyle(0xb88a69,a);g.fillRect(x+2,y+3,20,3);}
+    if(t==='M'){g.fillStyle(0x614d39,a);g.fillRect(x+2,y+15,20,8);g.fillStyle(0xc3a364,a);g.fillRect(x+1,y+2,22,5);g.fillStyle(0x824e5b,a);g.fillRect(x+2,y+3,7,3);g.fillRect(x+15,y+3,7,3);g.fillStyle(0x6ba9b0,a);g.fillRect(x+9,y+9,7,7);g.fillStyle(0xe2bf92,a);g.fillRect(x+10,y+6,5,5);g.fillStyle(0xe6cb6d,a);g.fillRect(x+4,y+17,4,3);}
     if(t==='R'){g.fillStyle(0x8c9384,a);g.fillRect(x+3,y+8,5,15);g.fillRect(x+16,y+3,5,20);g.fillRect(x+3,y+3,5,3);}
     if(t==='C'){g.fillStyle(0xad8050,a);g.fillTriangle(x+1,y+22,x+11,y+2,x+21,y+22);g.fillStyle(0x3a3128,a);g.fillTriangle(x+7,y+22,x+11,y+9,x+16,y+22);g.fillStyle(0xffd180,a);g.fillRect(x+20,y+15,3,6);g.fillStyle(0xf18f53,a);g.fillRect(x+19,y+19,5,3);}
   }

@@ -1,3 +1,4 @@
+import { MERCHANT, createMerchantStock, buyFromMerchant } from './merchant.js';
 import { Game } from './game.js';
 import { Random } from './random.js';
 import { generateDungeon, walkable, key, WIDTH, HEIGHT } from './dungeon.js';
@@ -10,12 +11,12 @@ export class Expedition extends Game {
   constructor(seed = Date.now()) {
     // Retain the original dungeon-only Game for regression tests and future modes.
     super(seed);
-    this.regions = new Map(); this.location = null; this.stash = [];
+    this.regions = new Map(); this.location = null; this.stash = []; this.shop = createMerchantStock();
     this.state.log = []; this.state.expedition = true; this.state.cryptsCleared = 0;
     this.state.regionsDiscovered = 0; this.state.transition = false;
     this.visitWorld(0, 0, CAMP); this.state.transition = false;
     this.message('Your expedition begins at Lantern Camp. Follow trails into the unknown.');
-    this.message('The camp region is safe. A crypt entrance lies east; prepare before entering.');
+    this.message('The camp region is safe. A merchant trades just northeast of the tent. A crypt entrance lies east.');
   }
   makeEnemy(kind, position, danger, id) {
     const base = enemyTypes[kind];
@@ -80,8 +81,10 @@ export class Expedition extends Game {
     this.message(`Entered ${data.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · depth ${depth}/2. Use < or Q on the upward stair to retreat.`);
   }
   atCamp() { const s = this.state; return this.location.kind === 'world' && s.home && s.player.x === CAMP.x && s.player.y === CAMP.y; }
+  atMerchant() { const s = this.state; return this.location.kind === 'world' && s.home && Math.abs(s.player.x - MERCHANT.x) + Math.abs(s.player.y - MERCHANT.y) === 1; }
   resolvePlayer(action) {
     const s = this.state, p = s.player, loc = this.location;
+    if (action.type === 'buy') return buyFromMerchant(this, action.id);
     if (action.type === 'store' || action.type === 'retrieve') {
       if (!this.atCamp()) { this.message('Return to the campfire to use storage.'); return false; }
       const source = action.type === 'store' ? p.inventory : this.stash;
@@ -109,6 +112,7 @@ export class Expedition extends Game {
       const result = super.resolvePlayer(action);
       if (result) {
         const tile = s.map[p.y][p.x];
+        if (this.atMerchant()) this.message('Mara the Wayfarer: press E or Trade to browse potions and equipment.');
         if (tile === 'D') this.message('Crypt entrance — dangerous, two depths. Enter to descend; retreat with Q on an upward stair.');
         if (tile === 'C') this.message('Lantern Camp. Press E to open storage. Supplies last only for this run.');
         if (tile === '<') this.message('Upward stair. Press Q or < to retreat.');
