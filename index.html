@@ -13,10 +13,16 @@
     <section id="stats" aria-label="Character status"></section>
     <div id="game" aria-label="Dungeon map">
       <details id="minimap-widget" open>
-        <summary aria-label="Toggle minimap">Map <span id="minimap-location"></span></summary>
+        <summary aria-label="Toggle minimap" title="Minimize map">Map <span id="minimap-location"></span><span id="map-collapse-icon" aria-hidden="true">−</span></summary>
+        <div id="map-tabs" role="tablist" aria-label="Map view">
+          <button id="map-local-tab" role="tab" aria-controls="minimap-panel" aria-selected="true" data-map-view="local">Local</button>
+          <button id="map-world-tab" role="tab" aria-controls="minimap-panel" aria-selected="false" tabindex="-1" data-map-view="world">World</button>
+        </div>
+        <div id="minimap-panel" role="tabpanel" aria-labelledby="map-local-tab">
         <canvas id="minimap" width="160" height="120" role="img" aria-label="Explored region map"></canvas>
-        <p class="map-legend">● You · C Camp · M Merchant<br>&gt; Down · &lt; Up · R Ruins</p>
+        <p id="map-legend" class="map-legend">● You · C Camp · M Merchant<br>&gt; Down · &lt; Up · R Ruins</p>
         <p id="camp-bearing"></p>
+        </div>
       </details>
     </div>
     <p id="latest-event" role="status" aria-live="polite"></p>
@@ -44,7 +50,7 @@
       <p class="hint">WASD / Arrows: step or attack<br>E: collect / camp chest · H: potion<br>M: Mind Vision · Q: ascend<br>.: wait · Enter: enter / descend<br>I: inventory · Esc: pause</p>
     </aside>
   </main>
-  <footer>Explore · Discover · Return home — v0.4.0 · Merchant &amp; minimap</footer>
+  <footer>Explore · Discover · Return home — v0.4.1 · Local &amp; world maps</footer>
 </div>
 <div id="overlay"></div>
 <script type="module" src="/src/main.js"></script>

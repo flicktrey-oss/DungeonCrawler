@@ -32,3 +32,35 @@ export function drawMinimap(canvas, state, location) {
   ctx.fillStyle = '#4cf3dc'; ctx.fillRect(p.x * sx, p.y * sy, sx, sy);
   canvas.setAttribute('aria-label', `Explored map, ${location.kind === 'crypt' ? `crypt depth ${location.depth}` : `region ${location.rx}, ${location.ry}`}. You are at tile ${p.x}, ${p.y}. ${campBearing(location)}.`);
 }
+
+// Saved regions exclude the active, newly generated region until departure.
+// Overlay that region here without saving or otherwise changing the game.
+export function worldMapCells(game) {
+  const regions = new Map([...game.regions].filter(([id]) => id.startsWith('world:')));
+  if (game.location.kind === 'world') regions.set(game.location.id, game.state);
+  return [...regions.values()].map(region => ({
+    rx: region.rx, ry: region.ry, biome: region.biome, home: region.home,
+    current: region.rx === game.location.rx && region.ry === game.location.ry,
+    entranceKnown: Boolean(region.entrance && region.explored.has(key(region.entrance.x, region.entrance.y))),
+  })).sort((a, b) => a.ry - b.ry || a.rx - b.rx);
+}
+export function worldMapLayout(cells, width = 160, height = 120) {
+  const xs = cells.map(c => c.rx), ys = cells.map(c => c.ry);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const size = Math.min(width / Math.max(5, maxX - minX + 3), height / Math.max(5, maxY - minY + 3));
+  return { size, x: width / 2 - (minX + maxX + 1) / 2 * size, y: height / 2 - (minY + maxY + 1) / 2 * size };
+}
+export function drawWorldMinimap(canvas, game) {
+  const cells = worldMapCells(game), ctx = canvas.getContext('2d');
+  ctx.globalAlpha = 1; ctx.fillStyle = '#080c12'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!cells.length) { canvas.setAttribute('aria-label', 'World map: no visited regions.'); return; }
+  const layout = worldMapLayout(cells, canvas.width, canvas.height), size = layout.size;
+  for (const cell of cells) {
+    const x = layout.x + cell.rx * size, y = layout.y + cell.ry * size;
+    ctx.fillStyle = cell.biome === 'marsh' ? '#47717b' : '#547749'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
+    if (cell.entranceKnown) { ctx.fillStyle = '#d4a5ff'; const mark = Math.max(1, size / 5); ctx.fillRect(x + size - mark - 2, y + 2, mark, mark); }
+    if (cell.home && size >= 10) { ctx.font = `bold ${Math.min(13, size * .6)}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe0a0'; ctx.fillText('C', x + size / 2, y + size / 2); }
+    if (cell.current) { ctx.strokeStyle = '#4cf3dc'; ctx.lineWidth = Math.min(2, size / 5); ctx.strokeRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2)); }
+  }
+  canvas.setAttribute('aria-label', `World map: ${cells.length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks camp; purple marks discovered entrances. Unvisited regions are blank.`);
+}

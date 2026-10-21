@@ -4,14 +4,14 @@ import { BIOMES } from './game/world.js';
 import { attack, defense, threshold } from './game/items.js';
 import { DungeonScene } from './render/scene.js';
 import './style.css';
-import { drawMinimap, campBearing } from './minimap.js';
+import { drawMinimap, drawWorldMinimap, campBearing } from './minimap.js';
 import { bindTouchControls } from './touch-controls.js';
 
 const scene = new DungeonScene();
 const phaser = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: 768, height: 624, pixelArt: true,
   backgroundColor: '#090c12', scene: [scene], scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   callbacks: { postBoot() { setTimeout(() => { if (model) scene.setGame(model); }, 0); } } });
-let model = null, paused = true, panel = null;
+let model = null, paused = true, panel = null, mapView = 'local';
 new ResizeObserver(() => {
   const parent = document.getElementById('game');
   if (parent.clientWidth && parent.clientHeight) phaser.scale.resize(parent.clientWidth, parent.clientHeight);
@@ -26,17 +26,17 @@ function modal(title, body, buttons) {
   for (const [text, fn] of buttons) { const b = document.createElement('button'); b.textContent = text; b.onclick = fn; $('overlay').querySelector('.buttons').append(b); }
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls(); }
-function start() { model = new Expedition(); closePanel(); render(); }
+function start() { mapView = 'local'; model = new Expedition(); closePanel(); render(); }
 function help() {
   paused = true; panel = 'help';
-  modal('Beyond the campfire', `<p>Explore an endless, seeded wilderness. Follow trails to new regions. Forests and marshes have different creatures. Lantern Camp at <b>(0, 0)</b> is safe; stand on its tent to store supplies. Mara the merchant waits just northeast of the tent. Stand beside her and press E or Trade. Browsing is free; a purchase costs one turn. Stock is limited for this run. The minimap shows explored terrain only; C marks camp, M the merchant, and arrows mark stairs. Tap Map to hide/show it.</p>
+  modal('Beyond the campfire', `<p>Explore an endless, seeded wilderness. Follow trails to new regions. Forests and marshes have different creatures. Lantern Camp at <b>(0, 0)</b> is safe; stand on its tent to store supplies. Mara the merchant waits just northeast of the tent. Stand beside her and press E or Trade. Browsing is free; a purchase costs one turn. Stock is limited for this run. The minimap shows explored terrain only; C marks camp, M the merchant, and arrows mark stairs. Local and World tabs switch the same minimap: Local shows tiles, World shows one square per visited region. Unvisited regions stay blank. The Map header minimizes/restores the widget; neither operation takes a turn.</p>
     <p><b>On a phone:</b> tap an arrow to move or bump attack. Each tap is one step; holding never repeats. Collect opens storage at camp and becomes Trade beside the merchant. Enter ↓ enters crypts, Leave ↑ retreats on upward stairs, Vision costs 25 Mana, and Wait spends one turn. Swipe elsewhere to scroll. Refreshing ends the run; there is no saving yet.</p><p><b>WASD / arrows</b>: step or bump attack · <b>E</b>: collect / open camp storage<br><b>Enter / &gt;</b>: enter crypt / descend · <b>Q / &lt;</b>: ascend on upward stairs<br><b>M</b>: Mind Vision (25 Mana, reveals through walls for 3 turns)<br><b>H</b>: tonic · <b>.</b>: wait · <b>I</b>: inventory help · <b>Esc</b>: pause</p>
     <p>Crypts have two depths and a dangerous guardian. You may retreat and return: creatures, loot, and exploration are remembered during this run. Crossing regions or using stairs costs one turn, with no enemy action on arrival. Only enemies in the current region act.</p>
     <p>Move or melee to regain 5 Mana. Idle time never advances the world. Death ends the entire run, including stored supplies. No crafting, gathering, or building.</p>`, [[model ? 'Resume' : 'Back', () => model ? closePanel() : menu()]]);
 }
 function menu() {
   paused = true;
-  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath<br>v0.4.0 — Merchant & minimap</p>', [['New Game', start], ['Instructions', help]]);
+  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath<br>v0.4.1 — Local & world maps</p>', [['New Game', start], ['Instructions', help]]);
 }
 function storage() {
   if (!model?.atCamp()) return;
@@ -64,12 +64,24 @@ function merchant() {
     row.append(name, description, button); $('shop-offers').append(row);
   }
 }
+function renderMinimap() {
+  if (!model) return;
+  const loc = model.location;
+  if (mapView === 'world') drawWorldMinimap($('minimap'), model);
+  else drawMinimap($('minimap'), model.state, loc);
+  $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
+  $('camp-bearing').textContent = campBearing(loc);
+  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · C: camp · Purple: entrance · Outline: you' : '● You · C Camp · M Merchant · > Down · < Up · R Ruins';
+  $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
+  for (const tab of document.querySelectorAll('[data-map-view]')) {
+    const selected = tab.dataset.mapView === mapView;
+    tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;
+  }
+}
 function render() {
   if (!model) return;
   scene.setGame(model);
-  drawMinimap($('minimap'), model.state, model.location);
-  $('minimap-location').textContent = model.location.kind === 'world' ? `${model.location.rx},${model.location.ry}` : `Depth ${model.location.depth}`;
-  $('camp-bearing').textContent = campBearing(model.location);
+  renderMinimap();
   const s = model.state, p = s.player, loc = model.location;
   const place = loc.kind === 'world' ? `${BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
   $('stats').innerHTML = `<div class="floor">${loc.kind === 'world' ? 'WILDLANDS' : 'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2>${escape(place)}</h2><p class="hint location">${s.home ? 'Safe region · Camp (0, 0)' : `Danger ${s.danger}/5 · Camp (0, 0)`}<br>${s.regionsDiscovered} regions discovered · ${s.cryptsCleared} crypts cleared</p>
@@ -124,6 +136,18 @@ bindTouchControls($('touch-controls'), control => {
 const phoneLayout = matchMedia('(max-width: 700px), (pointer: coarse)');
 function setPanels() { for (const id of ['satchel-panel', 'chronicle-panel']) $(id).open = !phoneLayout.matches; }
 phoneLayout.addEventListener('change', setPanels); setPanels();
+for (const tab of document.querySelectorAll('[data-map-view]')) tab.addEventListener('click', event => { mapView = tab.dataset.mapView; renderMinimap(); if (event.detail > 0) tab.blur(); });
+$('map-tabs').addEventListener('keydown', event => {
+  if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
+  event.preventDefault(); event.stopPropagation();
+  const next = event.key === 'Home' ? 'local' : event.key === 'End' ? 'world' : mapView === 'local' ? 'world' : 'local';
+  $(`map-${next}-tab`).click(); $(`map-${next}-tab`).focus();
+});
+$('minimap-widget').addEventListener('toggle', () => {
+  const open = $('minimap-widget').open;
+  $('map-collapse-icon').textContent = open ? '−' : '+';
+  $('minimap-widget').querySelector('summary').title = open ? 'Minimize map' : 'Restore map';
+});
 $('minimap-widget').querySelector('summary').addEventListener('click', event => { if (event.detail > 0) document.activeElement?.blur(); });
 $('help').onclick = help;
 window.addEventListener('keydown', event => {

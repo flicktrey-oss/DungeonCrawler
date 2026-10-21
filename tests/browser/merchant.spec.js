@@ -44,3 +44,21 @@ test('minimap stays fogged, follows the player, switches regions and can be coll
   for (let i = 0; i < 12; i++) await page.keyboard.press('d');
   await expect(page.locator('#minimap-location')).toHaveText('1,0'); await expect(page.locator('#camp-bearing')).toHaveText('Camp: 1 W');
 });
+
+test('one widget switches local/world in place, grows with travel and remembers its tab when minimized', async ({ page }) => {
+  await page.goto('/'); await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  const map = page.locator('#minimap'), world = page.getByRole('tab', { name: 'World', exact: true });
+  await expect(page.locator('#minimap-widget')).toHaveCount(1); await expect(map).toHaveCount(1);
+  const before = await map.boundingBox(); await world.click();
+  await expect(world).toHaveAttribute('aria-selected', 'true');
+  await expect(map).toHaveAttribute('aria-label', /1 visited regions/);
+  expect(await map.boundingBox()).toEqual(before); await expect(page.locator('.floor')).toContainText('TURN 0');
+  await page.getByLabel('Toggle minimap', { exact: true }).click(); await expect(map).not.toBeVisible(); await expect(world).not.toBeVisible();
+  await expect(page.locator('#map-collapse-icon')).toHaveText('+');
+  await page.getByLabel('Toggle minimap', { exact: true }).click(); await expect(world).toHaveAttribute('aria-selected', 'true');
+  for (let i = 0; i < 20; i++) await page.keyboard.press('d');
+  await expect(map).toHaveAttribute('aria-label', /2 visited regions.*Current region 1, 0/);
+  await page.keyboard.press('a'); await expect(map).toHaveAttribute('aria-label', /2 visited regions.*Current region 0, 0/);
+  await world.focus(); await page.keyboard.press('ArrowLeft'); await expect(page.getByRole('tab', { name: 'Local', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('.floor')).toContainText('TURN 21'); await expect(map).toHaveAttribute('aria-label', /Explored map/);
+});

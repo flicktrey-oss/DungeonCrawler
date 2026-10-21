@@ -84,3 +84,16 @@ test('phone can browse the merchant and toggle the minimap without extra turns',
   await expect(page.locator('.floor')).toContainText('TURN 2');
   await page.screenshot({ path: 'test-results/merchant-minimap-phone.png', fullPage: true });
 });
+
+test('phone switches the same minimap and minimizes it to a header without using a turn', async ({ page }) => {
+  await begin(page); const map = page.locator('#minimap');
+  await page.getByRole('tab', { name: 'World', exact: true }).tap();
+  await expect(map).toHaveAttribute('aria-label', /1 visited regions/);
+  await page.getByLabel('Toggle minimap', { exact: true }).tap();
+  await expect(map).not.toBeVisible(); await expect(page.getByRole('tab', { name: 'World', exact: true })).not.toBeVisible();
+  const collapsed = await page.locator('#minimap-widget').boundingBox(); expect(collapsed.height).toBeLessThan(60);
+  await page.getByLabel('Toggle minimap', { exact: true }).tap();
+  await expect(page.getByRole('tab', { name: 'World', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('tab', { name: 'Local', exact: true }).tap(); await expect(map).toHaveAttribute('aria-label', /Explored map/);
+  await expect(page.locator('.floor')).toContainText('TURN 0');
+});

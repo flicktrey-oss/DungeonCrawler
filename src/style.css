@@ -64,3 +64,11 @@ summary{font:18px Georgia,serif;color:#e0c59e;cursor:pointer;padding:8px 0}
 }
 
 #minimap-widget summary{touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+
+#map-tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:4px}
+#map-tabs button{font:11px system-ui;min-width:0;padding:4px 2px;border-color:#445e6d}
+#map-tabs button[aria-selected=true]{background:#46635d;border-color:#c6b78a;color:#fff0cb}
+#minimap-widget summary{display:flex;align-items:center;gap:5px}
+#map-collapse-icon{margin-left:auto;font:bold 17px system-ui;color:#ffe0a0}
+#minimap-location{float:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:700px),(pointer:coarse){#map-tabs button{min-height:44px;min-width:44px;font-size:11px;padding:3px 1px}}

@@ -4,7 +4,7 @@ An original, strictly turn-based exploration game in Phaser 3 and JavaScript. Se
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.4.0 — Merchant & minimap** on the title screen. The source is currently on `feature/playable-roguelike`, pending merge to `main`. The previous dungeon-only game remains in Git history and in the original `Game` simulation for regression tests.
+Look for **v0.4.1 — Local & world maps** on the title screen. The source is currently on `feature/playable-roguelike`, pending merge to `main`. The previous dungeon-only game remains in Git history and in the original `Game` simulation for regression tests.
 
 ## Play locally
 
@@ -69,7 +69,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-The 41 simulation tests cover original combat/turn rules plus seeded world connectivity, biome spawn validity, negative coordinates, world transitions, inactive-region freezing, persistent crypt returns, guardian rewards, arrival safety, camp storage, and permadeath. Twelve browser tests exercise desktop input, touch movement, canceled gestures, multiple fingers, held touches, phone layouts, Mana, storage, region travel, and crypt entry/exit. Phone tests use Chromium touch emulation, not a physical iPhone. The expected large-bundle warning comes from bundled Phaser.
+The 45 simulation tests cover original combat/turn rules plus seeded world connectivity, biome spawn validity, negative coordinates, world transitions, inactive-region freezing, persistent crypt returns, guardian rewards, arrival safety, camp storage, and permadeath. Fourteen browser tests exercise desktop input, touch movement, canceled gestures, multiple fingers, held touches, phone layouts, Mana, storage, region travel, and crypt entry/exit. Phone tests use Chromium touch emulation, not a physical iPhone. The expected large-bundle warning comes from bundled Phaser.
 
 ## Architecture
 
@@ -115,6 +115,12 @@ Mara the Wayfarer stands **two tiles east and one north of the tent**. Her stall
 
 Browsing is free and pauses input; a successful purchase spends one turn and adds the item to your satchel. Equip or drink it separately. Unaffordable or sold-out purchases are disabled; rejected purchases never spend gold or turns. Stock persists across travel and resets on a new run. There is no selling or restocking in this version.
 
-The **minimap in the map’s upper-right corner** shows the entire current region or crypt depth, with unexplored tiles hidden and remembered terrain dimmed. Your marker is turquoise with a white border. Known features use **C** for camp, **M** for merchant, **R** for ruins, and **> / <** for entrances and stairs. It never shows enemies or loose items. Region coordinates and a bearing toward camp help you navigate the overworld; underground, return to the surface first. Tap/click **Map** to hide or show it without taking a turn. This is a local region map, not a whole-world atlas.
+The **minimap in the map’s upper-right corner** shows the entire current region or crypt depth, with unexplored tiles hidden and remembered terrain dimmed. Your marker is turquoise with a white border. Known features use **C** for camp, **M** for merchant, **R** for ruins, and **> / <** for entrances and stairs. It never shows enemies or loose items. Region coordinates and a bearing toward camp help you navigate the overworld; underground, return to the surface first. Tap/click **Map** to hide or show it without taking a turn. The Local tab shows tiles in this region; the World tab shows the visited regions of your expedition.
 
 Validation includes earning gold through actual UI movement, collecting it, buying a tonic, checking gold/stock, touch trading, minimap fog, region/depth changes, and free minimap toggling.
+
+## Two views in one minimap (v0.4.1)
+
+Use **Local** and **World** tabs inside the existing minimap widget. They replace the same canvas rather than adding another panel. Local shows explored tiles within the current region or crypt depth. World shows **one square per visited outdoor region**: green for forest, blue for marsh, C for camp, a turquoise outline for your current region, and purple corners for discovered entrances. North is up; east is right. Newly entered regions appear automatically, repeated visits do not duplicate squares, and unvisited regions stay blank. The view scales to fit the discovered world. Underground, it marks the region containing your entrance rather than adding dungeon floors as world squares.
+
+Tap/click the **Map −** header to minimize the entire widget to its header, and **Map +** to restore it. The selected tab is retained while minimized and across travel. Tabs and minimizing never spend turns, reveal terrain, or move enemies. On a keyboard, Tab focuses the active tab and arrow keys switch tabs without moving the player. A new run starts on Local with a fresh world overview. No cross-session saving was added.
