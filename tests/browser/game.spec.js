@@ -10,7 +10,7 @@ test('renders and enforces turn-based keyboard, idle, pause and inventory behavi
  await page.waitForTimeout(500);await expect(page.locator('.floor')).toContainText('TURN 1');
  await page.keyboard.press('.');await expect(page.locator('.floor')).toContainText('TURN 2');
  await page.keyboard.press('Escape');await page.keyboard.press('.');await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(page.locator('.floor')).toContainText('TURN 2');
- await page.getByRole('button',{name:'Ember tonic',exact:true}).first().click();await expect(page.locator('.floor')).toContainText('TURN 2');
+ await page.locator('#satchel-panel summary').click();await page.getByRole('button',{name:'Ember tonic',exact:true}).first().click();await expect(page.locator('.floor')).toContainText('TURN 2');
  await page.keyboard.press('i');await expect(page.getByText('Your equipment')).toBeVisible();await page.getByRole('button',{name:'Return',exact:true}).click();expect(errors).toEqual([]);
 });
 

@@ -182,7 +182,7 @@ bindTouchControls($('touch-controls'), control => {
   else act({ type: ({ collect: 'pickup', vision: 'mindVision' })[control] ?? control });
 });
 const phoneLayout = matchMedia('(max-width: 700px), (pointer: coarse)');
-function setPanels() { for (const id of ['satchel-panel', 'chronicle-panel']) $(id).open = !phoneLayout.matches; }
+function setPanels() { $('chronicle-panel').open = !phoneLayout.matches; }
 phoneLayout.addEventListener('change', setPanels); setPanels();
 for (const tab of document.querySelectorAll('[data-map-view]')) tab.addEventListener('click', event => { mapView = tab.dataset.mapView; renderMinimap(); if (event.detail > 0) tab.blur(); });
 $('map-tabs').addEventListener('keydown', event => {
@@ -197,6 +197,10 @@ $('minimap-widget').addEventListener('toggle', () => {
   $('minimap-widget').querySelector('summary').title = open ? 'Minimize map' : 'Restore map';
 });
 $('minimap-widget').querySelector('summary').addEventListener('click', event => { if (event.detail > 0) document.activeElement?.blur(); });
+$('satchel-panel').addEventListener('toggle', () => {
+  $('satchel-collapse-icon').textContent = $('satchel-panel').open ? '−' : '+';
+});
+$('satchel-panel').querySelector('summary').addEventListener('click', event => { if (event.detail > 0) document.activeElement?.blur(); });
 $('help').onclick = help;
 $('manage-bag').onclick=()=>{if(!paused)bag();};
 $('open-equipment').onclick=()=>{if(!paused)bag('equipment','amulet');};

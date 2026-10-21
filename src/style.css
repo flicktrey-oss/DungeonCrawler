@@ -91,3 +91,29 @@ summary{font:18px Georgia,serif;color:#e0c59e;cursor:pointer;padding:8px 0}
 .slot-weapon{right:8px;top:150px}.slot-armor{left:8px;top:145px}.slot-amulet{right:8px;top:62px}
 #bag-editor section p{font:13px/1.6 system-ui;color:#c6d0d3}#open-equipment{width:100%;margin-top:6px}
 @media(max-width:700px),(pointer:coarse){.equipment-portrait{height:260px}.portrait-slot{min-width:54px;min-height:54px}.slot-armor{left:5px}.slot-weapon,.slot-amulet{right:5px}}
+
+/* Map-side panels stay out of the Chronicle column and expand independently. */
+#map-tools{position:absolute;z-index:2;top:7px;right:7px;display:flex;align-items:flex-start;gap:6px;max-width:calc(100% - 14px);font:12px system-ui}
+#map-tools #minimap-widget{position:static;flex:none}
+#map-tools #satchel-panel{width:220px;max-width:100%;margin:0;padding:0 7px 6px;background:#0c1420f5;border:1px solid #617381;border-radius:4px;max-height:calc(100% - 14px);overflow-y:auto}
+#map-tools #satchel-panel:not([open]){width:auto;padding-bottom:5px}
+#satchel-panel summary{display:flex;align-items:center;gap:6px;font:12px/1.4 system-ui;min-height:26px;padding:5px 0;touch-action:manipulation;user-select:none;color:#e6d6b7}
+#satchel-collapse-icon{margin-left:auto;font:bold 17px system-ui;color:#ffe0a0}
+#satchel-panel #manage-bag{width:100%}#satchel-panel .hint{font-size:11px;line-height:1.5}
+#satchel-panel #inventory{max-height:150px;overflow-y:auto}
+#map-tools{max-height:calc(100% - 14px)}
+#chronicle-panel #log{height:180px}
+@media(min-width:701px) and (pointer:fine){
+  #app{padding-top:12px;padding-bottom:12px}header{padding-bottom:10px;margin-bottom:12px}
+  #game{height:clamp(420px,calc(100dvh - 115px),700px)}
+  aside{display:flex;flex-direction:column;gap:0}
+  #quest-panel{order:4}aside>p.hint{margin:5px 0}
+  #chronicle-panel #log{height:clamp(90px,calc(100dvh - 560px),200px)}
+}
+@media(max-width:700px),(pointer:coarse){
+  #map-tools{top:4px;right:4px;max-width:calc(100% - 8px);max-height:calc(100% - 8px);gap:4px}
+  #map-tools #satchel-panel{width:172px;max-height:calc(35svh - 10px);padding:0 5px 4px}
+  #satchel-panel summary{min-height:44px;font-size:11px}
+  #satchel-panel #inventory{max-height:110px}#satchel-panel .item{font-size:12px}
+  #satchel-panel button{font-size:12px;padding:6px}
+}
