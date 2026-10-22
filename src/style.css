@@ -59,3 +59,5 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 
 @media(max-width:700px),(pointer:coarse){.journal-body{max-height:calc(100dvh - var(--dock-height) - 220px)}}
 @media(max-height:500px) and (pointer:coarse){.journal-body{left:var(--left);right:auto;top:132px;width:min(280px,calc(100vw - 410px));max-height:calc(100dvh - 150px)}}
+
+.danger-status{color:#f1b58b!important;max-width:230px;font-weight:600}

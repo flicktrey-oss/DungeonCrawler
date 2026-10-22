@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Expedition } from '../src/game/expedition.js';
-import { CAMP } from '../src/game/world.js';
+import { CAMP, biomeAt } from '../src/game/world.js';
 import { MERCHANT } from '../src/game/merchant.js';
 import { walkable } from '../src/game/dungeon.js';
 import { minimapCells, campBearing } from '../src/minimap.js';
@@ -82,7 +82,7 @@ describe('world overview', () => {
     const g = new Expedition(9); g.visitWorld(-1, 0, { x: 39, y: 15 });
     g.visitCrypt(-1, 0, 1); g.visitCrypt(-1, 0, 2);
     const cells = worldMapCells(g); expect(cells).toHaveLength(2);
-    expect(cells.find(c => c.current)).toMatchObject({ rx: -1, ry: 0, biome: 'forest' });
+    expect(cells.find(c => c.current)).toMatchObject({ rx: -1, ry: 0, biome: biomeAt(-1,0,9) });
   });
   it('places east right and north above, fitting negative and distant visited coordinates into the same canvas', () => {
     const cells = [{ rx: -20, ry: -10 }, { rx: 0, ry: 0 }, { rx: 25, ry: 17 }], layout = worldMapLayout(cells);

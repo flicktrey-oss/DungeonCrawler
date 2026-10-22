@@ -8,7 +8,7 @@ export function mountQuestJournal(container,game,onTrack=()=>{}){
  const section=document.createElement('section');section.className='journal-quest';section.dataset.questId=q.id;
  const title=document.createElement('h3');title.textContent=(q.claimed?'✓ ':game.trackedQuest===q.id?'◆ ':'')+q.title;
  const goal=document.createElement('p');goal.textContent=q.claimed?'Reward claimed.':questProgress(q);
- const where=document.createElement('p');where.textContent=`Objective: ${BIOMES[biomeAt(q.region.rx,q.region.ry)].name} (${q.region.rx}, ${q.region.ry}) · recommended level ${BIOMES[biomeAt(q.region.rx,q.region.ry)].recommended}`;
+ const where=document.createElement('p');where.textContent=`Objective: ${BIOMES[biomeAt(q.region.rx,q.region.ry,game.state.seed)].name} (${q.region.rx}, ${q.region.ry}) · recommended level ${BIOMES[biomeAt(q.region.rx,q.region.ry,game.state.seed)].recommended}`;
  const giver=document.createElement('p');giver.textContent=`Return to ${q.giver} in region (${q.giverRegion.rx}, ${q.giverRegion.ry}).`;
  section.append(title,goal,where,giver);
  if(!q.claimed){const button=document.createElement('button');button.textContent=game.trackedQuest===q.id?'Stop tracking':'Track quest';button.setAttribute('aria-label',button.textContent+' '+q.title);button.onclick=()=>{game.trackedQuest=game.trackedQuest===q.id?null:q.id;mountQuestJournal(container,game,onTrack);onTrack();};section.append(button);}

@@ -4,7 +4,7 @@ import { MERCHANT, createMerchantStock, buyFromMerchant } from './merchant.js';
 import { Game } from './game.js';
 import { Random } from './random.js';
 import { generateDungeon, walkable, key, WIDTH, HEIGHT } from './dungeon.js';
-import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeAt } from './world.js';
+import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeAt, regionInfo, threatLabel } from './world.js';
 import { actCreature } from './enemy-actions.js';
 import { techniqueTarget } from './techniques.js';
 import { enemyTypes } from './combat.js';
@@ -26,8 +26,8 @@ export class Expedition extends Game {
   }
   actEnemy(enemy){actCreature(this,enemy);}
   makeEnemy(kind,p,danger,id){
-    const base=enemyTypes[kind],extra=Math.max(0,danger-1);
-    return {...base,...p,kind,id,hp:base.hp+extra*2,maxHp:base.hp+extra*2,attack:base.attack+Math.floor(extra/2),xp:({skeleton:3,goblin:3,leech:3,wolf:5,boar:5,guardian:10})[kind]??base.xp,actions:0};
+    const base=enemyTypes[kind],extra=Math.max(0,danger-1),den=kind==='elite'&&p.eventId;
+    return {...base,...p,kind,id,hp:base.hp+extra*2+(den?4:0),maxHp:base.hp+extra*2+(den?4:0),attack:base.attack+Math.floor(extra/2)+(den?2:0),...(den?{territory:{x:p.x,y:p.y,radius:5,name:'Bristleback territory'}}:{}),xp:({skeleton:3,goblin:3,leech:3,wolf:5,boar:5,guardian:10})[kind]??base.xp,actions:0};
   }
   saveRegion(){if(!this.location)return;const data={};for(const field of fields)data[field]=this.state[field];this.regions.set(this.location.id,data);}
   nextVisit(id){const n=this.visits.get(id)??0;this.visits.set(id,n+1);return n;}
@@ -61,7 +61,7 @@ export class Expedition extends Game {
     const info=BIOMES[data.biome];this.message(`${info.name} (${rx}, ${ry}) · ${home?'safe camp':`recommended level ${info.recommended}${this.state.player.level<info.recommended?' — DANGER: you are underleveled!':''}`}.`);
   }
   visitCrypt(rx,ry,depth,arrival='upstairs'){
-    const id=cryptId(rx,ry,depth),visit=this.nextVisit(id),rng=new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:${visit}`)),d=generateDungeon(visit===0?rng:new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:0`))),biome=biomeAt(rx,ry),danger=BIOMES[biome].danger+depth;
+    const id=cryptId(rx,ry,depth),visit=this.nextVisit(id),rng=new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:${visit}`)),d=generateDungeon(visit===0?rng:new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:0`))),biome=biomeAt(rx,ry,this.state.seed),danger=BIOMES[biome].danger+depth;
     const data={...d,rx,ry,biome,danger,recommended:BIOMES[biome].recommended+2,home:false,depth,visit,upstairs:{...d.start},cleared:false,baseMap:null,encounterSeen:new Set(),explored:new Set(this.regions.get(id)?.explored??[]),enemies:[],items:[],encounters:[],scenery:[],quest:null,entrance:null,landmark:null};
     data.map[d.start.y][d.start.x]='<';if(depth===2)data.map[d.stairs.y][d.stairs.x]='A';
     const free=[];for(const room of d.rooms.slice(1))for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(key(x,y)!==key(d.stairs.x,d.stairs.y))free.push({x,y});
@@ -72,6 +72,7 @@ export class Expedition extends Game {
     this.activate({id,kind:'crypt',rx,ry,depth},data,data[arrival]);
     this.message(`Crypt depth ${depth}/2 · recommended level ${data.recommended}. The layout and explored map persist; enemies return. Q on an upward stair retreats.`);
   }
+  borderPreview(){const p=this.state.player,l=this.location;if(l.kind!=='world')return null;const dx=p.x===0?-1:p.x===39?1:0,dy=p.y===0?-1:p.y===29?1:0;if(!dx&&!dy)return null;return regionInfo(this.state.seed,l.rx+dx,l.ry+dy);}
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
   activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
@@ -169,7 +170,7 @@ export class Expedition extends Game {
         const event=this.activeEncounter();if(event)this.message(`${event.quest?(event.type==='villager'?event.quest.giver:'Broken waystone'):(event.name??ENCOUNTERS[event.type]?.name)}: ${event.quest?event.quest.title:(event.description??ENCOUNTERS[event.type]?.description)}${['villager','shrine','woodland'].includes(event.type)?' Press E or Interact.':''}`);
         if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The map is remembered; enemies return.');
         if(loc.kind==='world'&&(p.x===0||p.x===39||p.y===0||p.y===29)){
-          const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0))];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended}${p.level<next.recommended?' — dangerous for you!':''}.`);
+          const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0),s.seed)];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended} — ${threatLabel(next.recommended,p.level)}. You can turn back.`);
         }
       }
       return moved;
@@ -181,7 +182,7 @@ export class Expedition extends Game {
   kill(enemy){
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
     const loot=ordinaryDrop(this.rng,this.state.danger,enemy.kind,Boolean(enemy.eventId));if(loot)this.state.items.push({...loot,x:enemy.x,y:enemy.y});
-    if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger,'den'),x:enemy.x,y:enemy.y});}}
+    if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger+2,'den'),x:enemy.x,y:enemy.y});}}
     if(enemy.questId&&this.state.quest){const q=this.state.quest;q.remaining=this.questRemaining();q.complete=q.remaining===0;if(q.complete&&q.accepted)this.message('The frogs are cleared. Return to the Mirekeeper whenever you are ready.');}
     if(enemy.questKey){const q=this.quests.get(enemy.questKey)??this.state.encounters.find(e=>e.quest?.id===enemy.questKey)?.quest;if(q&&q.kind!=='recovery'&&!this.state.enemies.some(e=>e.hp>0&&e.questKey===q.id)){q.complete=true;if(q.accepted)this.message(q.title+': objective complete. Return for your reward.');}}
     if(enemy.kind==='guardian'&&!this.state.cleared){this.state.cleared=true;this.state.cryptsCleared++;this.state.items.push({kind:'chest',name:'Warden’s reliquary',reward:treasure(this.rng,this.state.danger,'boss'),x:enemy.x,y:enemy.y});this.message('Crypt cleared. A rare equipment reliquary remains.');}

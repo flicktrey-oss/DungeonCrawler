@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.12.0 · Woodland discoveries';
+export const RELEASE = 'v0.13.0 · Uncharted trails';

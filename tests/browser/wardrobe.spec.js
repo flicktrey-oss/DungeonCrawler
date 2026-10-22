@@ -1,3 +1,4 @@
+import {attack,defense,gearBonus} from '../../src/game/items.js';
 import {test,expect} from '@playwright/test';
 import {expeditionDriver} from './expedition-driver.js';
 for(const touch of [false,true])test.describe(touch?'phone wardrobe':'desktop wardrobe',()=>{
@@ -16,6 +17,8 @@ for(const touch of [false,true])test.describe(touch?'phone wardrobe':'desktop wa
  await click(page.getByRole('button',{name:'Equip '+name,exact:true}));d.game.action({type:'equip',index});
  await expect(page.locator('[data-portrait-slot='+slot+']')).toHaveAttribute('data-equipped','true');
  await expect(page.locator('[data-'+slot+'-icon]')).toBeVisible();expect(await page.locator('#character-shortcut svg').innerHTML()).not.toBe(plain);
+ await expect(page.locator('.equipment-stats')).toContainText(attack(d.game.state.player)+' attack · '+defense(d.game.state.player)+' defense');
+ if(slot==='boots'){expect(defense(d.game.state.player)).toBe(0);expect(gearBonus(d.game.state.player,'stealthBonus')).toBe(1);await expect(page.getByText('Enemy detection range is reduced by 1 tile',{exact:false})).toBeVisible();}
  await page.screenshot({path:'test-results/wardrobe-'+slot+'-'+(touch?'phone':'desktop')+'.png',fullPage:true});
  await click(page.getByRole('button',{name:'Unequip '+name,exact:true}));d.game.action({type:'unequip',slot});
  await expect(page.locator('[data-'+slot+'-icon]')).toHaveCount(0);expect(errors).toEqual([]);
@@ -33,6 +36,7 @@ for(const touch of [false,true])test.describe(touch?'phone rings':'desktop rings
  await click(page.locator('[data-portrait-slot='+slot+']'));const index=d.game.state.player.inventory.findIndex(i=>i.kind==='ring');
  await click(page.getByRole('button',{name:'Equip Iron Band',exact:true}));d.game.action({type:'equip',index,slot});
  await expect(page.locator('[data-'+slot+'-icon]')).toBeVisible();await expect(page.locator('[data-portrait-slot='+slot+']')).toHaveAttribute('data-equipped','true');
+ await expect(page.locator('.equipment-stats')).toContainText('0 defense');expect(gearBonus(d.game.state.player,'wardedBonus')).toBe(1);
  await click(page.getByRole('button',{name:'Unequip Iron Band',exact:true}));d.game.action({type:'unequip',slot});
  await expect(page.locator('[data-'+slot+'-icon]')).toHaveCount(0);
  }

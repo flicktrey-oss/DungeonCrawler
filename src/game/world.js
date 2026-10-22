@@ -12,10 +12,27 @@ export const BIOMES={
 export function regionSeed(seed,x,y,salt='world'){let hash=2166136261;for(const c of `${seed}:${x}:${y}:${salt}`)hash=Math.imul(hash^c.charCodeAt(0),16777619);return hash>>>0;}
 export const worldId=(x,y)=>`world:${x},${y}`;
 export const cryptId=(x,y,depth)=>`crypt:${x},${y}:${depth}`;
-export function biomeAt(rx,ry){const distance=Math.abs(rx)+Math.abs(ry);return distance<=1?'forest':distance<=3?'marsh':distance<=6?'highlands':'ashlands';}
+const CARDINAL=[{rx:1,ry:0},{rx:0,ry:1},{rx:-1,ry:0},{rx:0,ry:-1}];
+export function startingForest(seed=0){return {...CARDINAL[new Random(regionSeed(seed,0,0,'safe-trail')).int(0,3)]};}
+export function startingFrontier(seed=0){
+ const f=startingForest(seed),rng=new Random(regionSeed(seed,0,0,'frontier'));
+ const offset=rng.pick([{rx:f.rx,ry:f.ry},{rx:-f.ry,ry:f.rx},{rx:f.ry,ry:-f.rx}]);
+ return {rx:f.rx+offset.rx,ry:f.ry+offset.ry,biome:rng.next()<.35?'forest':'marsh'};
+}
+export function biomeAt(rx,ry,seed=0){
+ if(rx===0&&ry===0)return 'forest';
+ const start=startingForest(seed);if(rx===start.rx&&ry===start.ry)return 'forest';
+ const next=startingFrontier(seed);if(rx===next.rx&&ry===next.ry)return next.biome;
+ // Coarse seeded patches plus local variation: stable regardless of visit order.
+ const local=new Random(regionSeed(seed,rx,ry,'biome-local'));
+ const roll=local.next()<.28?local.next():new Random(regionSeed(seed,Math.floor(rx/2),Math.floor(ry/2),'biome-cluster')).next();
+ return roll<.42?'forest':roll<.72?'marsh':roll<.93?'highlands':'ashlands';
+}
+export function regionInfo(seed,rx,ry){const biome=biomeAt(rx,ry,seed);return {rx,ry,biome,...BIOMES[biome]};}
+export function threatLabel(recommended,level){return recommended>=level+4?'OVERWHELMING':recommended>level?'DANGEROUS':'Prepare carefully';}
 export function generateWorldRegion(seed,rx,ry,visit=0){
   if(visit>0&&!(rx===0&&ry===0))return populateVisit(generateWorldRegion(seed,rx,ry,0),new Random(regionSeed(seed,rx,ry,`inhabitants:${visit}`)),visit);
-  const rng=new Random(regionSeed(seed,rx,ry,'world:0')),home=rx===0&&ry===0,biome=biomeAt(rx,ry),danger=BIOMES[biome].danger;
+  const rng=new Random(regionSeed(seed,rx,ry,'world:0')),home=rx===0&&ry===0,biome=biomeAt(rx,ry,seed),danger=BIOMES[biome].danger;
   const map=Array.from({length:HEIGHT},()=>Array(WIDTH).fill(','));
   const blocker=biome==='forest'?'T':biome==='marsh'?'~':biome==='ashlands'?'Y':'^';
   // Elliptical groves, pools, ridges and burned stands, rather than isolated noise.

@@ -4,7 +4,10 @@ export function equipment(kind, floor) {
 }
 export const potion = () => ({kind:'potion',name:'Ember tonic',description:'Restores 16 health. Using it costs one turn.'});
 export const attack = p => p.attack+(p.weapon?.bonus??0)+gearBonus(p,'attackBonus');
-export const defense = p => Math.max(0,p.defense+(p.armor?.bonus??0)+(p.amulet?.bonus??0)+gearBonus(p,'defenseBonus')-(p.corrosion>0?1:0));
+export const rawDefense = p => Math.max(0,(p.defense??0)+(p.armor?.bonus??0)+(p.amulet?.bonus??0)+gearBonus(p,'defenseBonus'));
+// Ordinary protection softens after 3: every two further points grant one DEF.
+// Corrosion applies last so the advertised -1 DEF remains meaningful at the cap.
+export const defense = p => {const raw=rawDefense(p);return Math.max(0,(raw<=3?raw:3+Math.floor((raw-3)/2))-(p.corrosion>0?1:0));};
 export const threshold = p => p.level*(p.slowProgression?20:12);
 
 export function travelGear(kind,tier=1) {
@@ -38,9 +41,9 @@ const gear=(id,kind,name,description,properties={})=>({id,kind,name,description,
 export const hatchet=()=>gear('hatchet','weapon','Woodcutter’s Hatchet','Ignores 1 point of enemy defense on melee strikes.',{weaponType:'axe',armorPierce:1,size:[4,3]});
 export const gambeson=()=>gear('gambeson','armor','Quilted Gambeson','+2 defense. Bulky quilted protection.',{bonus:2,size:[4,4]});
 export const reedShield=()=>gear('reedShield','offhand','Reed Shield','55% block against ranged attacks, 15% against melee. No action needed.',{blockChance:.15,rangedBlock:.55,size:[3,3],appearance:0x769665});
-export const trailBoots=()=>gear('trailBoots','boots','Trail Boots','+1 defense. Sturdy brown leather boots.',{defenseBonus:1,size:[2,2],appearance:0x8a6847});
+export const trailBoots=()=>gear('trailBoots','boots','Trail Boots','Enemy detection range is reduced by 1 tile. Sturdy brown leather boots; no armor bonus.',{stealthBonus:1,size:[2,2],appearance:0x8a6847});
 export const softstepBoots=()=>gear('softstepBoots','boots','Softstep Shoes','Enemy detection range is reduced by 2 tiles. No armor bonus.',{stealthBonus:2,appearance:0x526879});
-export const ironRing=()=>gear('ironRing','ring','Iron Band','+1 defense.',{defenseBonus:1,size:[1,1],appearance:0xb4c4ca});
+export const ironRing=()=>gear('ironRing','ring','Iron Band','+1 defense against telegraphed special attacks. No protection against ordinary strikes.',{wardedBonus:1,size:[1,1],appearance:0xb4c4ca});
 export const huntersRing=()=>gear('huntersRing','ring','Hunter’s Ring','+1 attack.',{attackBonus:1,size:[1,1],appearance:0xd5a66c});
 export const moonRing=()=>gear('moonRing','ring','Moonstone Ring','+20 maximum Mana. Equipping does not restore Mana.',{maxManaBonus:20,size:[1,1],appearance:0x8eb6eb});
 export const lanternRelic=()=>gear('lanternRelic','offhand','Lantern Relic','Off-hand relic: +1 sight and +2 Mana recovered on movement/melee. Replaces a shield.',{relic:true,sightBonus:1,manaBonus:2,appearance:0x8fe2cb});

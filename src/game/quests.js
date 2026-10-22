@@ -1,5 +1,5 @@
 import {Random} from './random.js';
-import {regionSeed,worldId} from './world.js';
+import {regionSeed,worldId,startingForest} from './world.js';
 import {key,walkable} from './dungeon.js';
 import {modifyItem} from './loot.js';
 import {trailBoots,ironRing,lanternRelic} from './items.js';
@@ -23,7 +23,7 @@ function createQuest(g,kind,id,region,giver,camp=false){
  return {id,kind,...info,giver:camp?'Trailwarden Iona':info.giver,region,giverRegion:camp?{rx:0,ry:0}:region,giverPosition:{...giver},camp,accepted:false,claimed:false,complete:false,activated:[],reward:modifyItem(factory(),rng,'quest')};
 }
 export function campQuest(g,data){
- const rng=new Random(regionSeed(g.state.seed,0,0,'trailwarden')),target=rng.pick([{rx:1,ry:0},{rx:-1,ry:0},{rx:0,ry:1},{rx:0,ry:-1}]);
+ const rng=new Random(regionSeed(g.state.seed,0,0,'trailwarden')),target=startingForest(g.state.seed);rng.next();
  const q=createQuest(g,rng.pick(Object.keys(QUEST_TYPES)),'trailwarden',target,TRAILWARDEN,true);
  g.quests.set(q.id,q);data.map[TRAILWARDEN.y][TRAILWARDEN.x]='V';
  data.encounters.push({...TRAILWARDEN,type:'villager',id:'trailwarden',quest:q,name:q.giver});
@@ -36,13 +36,17 @@ function freeSites(data,rng){
 }
 function objectives(g,data,q,sites){
  const take=()=>sites.pop();
+ const takePocket=()=>{
+  const index=sites.findIndex(p=>Math.abs(p.x-20)>=6&&Math.abs(p.y-15)>=5&&Math.abs(p.x-q.giverPosition.x)+Math.abs(p.y-q.giverPosition.y)>=7);
+  return index<0?take():sites.splice(index,1)[0];
+ };
  if(q.kind==='hunt'){
- const p=take(),e=g.makeEnemy(data.biome==='marsh'?'frog':'beetle',p,data.danger,1000+data.enemies.length);
- Object.assign(e,{name:data.biome==='marsh'?'Old Miretongue':'Thornback',hp:e.hp+6,maxHp:e.maxHp+6,attack:e.attack+1,questKey:q.id});data.enemies.push(e);
+ const p=takePocket(),e=g.makeEnemy(data.biome==='marsh'?'frog':'beetle',p,data.danger,1000+data.enemies.length);
+ Object.assign(e,{name:data.biome==='marsh'?'Old Miretongue':'Thornback',hp:e.hp+6,maxHp:e.maxHp+6,attack:e.attack+3,territory:{x:p.x,y:p.y,radius:5,name:'Marked beast territory'},questKey:q.id});data.enemies.push(e);
  }else if(q.kind==='recovery'){
  const p=take();data.items.push({...p,kind:'questToken',name:'Stolen keepsake',questKey:q.id});
  sites.sort((a,b)=>(Math.abs(b.x-p.x)+Math.abs(b.y-p.y))-(Math.abs(a.x-p.x)+Math.abs(a.y-p.y)));
- for(let i=0;i<2;i++)data.enemies.push({...g.makeEnemy(data.biome==='marsh'?'frog':'rat',take(),data.danger,1000+data.enemies.length),questKey:q.id});
+ for(let i=0;i<2;i++)data.enemies.push({...g.makeEnemy(data.biome==='marsh'?'frog':'rat',take(),data.danger,1000+data.enemies.length),territory:{x:p.x,y:p.y,radius:5,name:'Guarded keepsake'},questKey:q.id});
  }else for(let i=0;i<3;i++){
  const p=take();data.map[p.y][p.x]='S';data.encounters.push({...p,type:'shrine',id:q.id+':stone:'+i,quest:q,wardIndex:i,used:false});
  }
@@ -87,7 +91,7 @@ export function questAction(g,a){
  if(q.activated.length===3){
  const occupied=new Set(s.enemies.filter(e=>e.hp>0).map(e=>key(e.x,e.y)));let spot;
  for(let r=2;r<15&&!spot;r++)for(let y=Math.max(1,p.y-r);y<=Math.min(28,p.y+r)&&!spot;y++)for(let x=Math.max(1,p.x-r);x<=Math.min(38,p.x+r);x++)if(Math.abs(x-p.x)+Math.abs(y-p.y)===r&&walkable(s.map,x,y)&&!occupied.has(key(x,y))&&![...s.encounters,...s.items].some(e=>e.x===x&&e.y===y)){spot={x,y};break;}
- if(spot){const e=g.makeEnemy('beetle',spot,s.danger,2000+s.enemies.length);s.enemies.push({...e,hp:e.hp+8,maxHp:e.maxHp+8,attack:e.attack+1,name:'Briar Sentinel',questKey:q.id});g.message('The Briar Sentinel awakens!');}
+ if(spot){const e=g.makeEnemy('beetle',spot,s.danger,2000+s.enemies.length);s.enemies.push({...e,hp:e.hp+8,maxHp:e.maxHp+8,attack:e.attack+3,name:'Briar Sentinel',territory:{x:p.x,y:p.y,radius:5,name:'Awakened waystone'},questKey:q.id});g.message('The Briar Sentinel awakens!');}
  }
  return true;
  }

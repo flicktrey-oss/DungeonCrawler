@@ -3,7 +3,8 @@ import { questProgress } from './game/quests.js';
 import { adventurerSvg } from './render/adventurer.js';
 import Phaser from 'phaser';
 import { Expedition } from './game/expedition.js';
-import { BIOMES } from './game/world.js';
+import { dangerAt } from './game/danger.js';
+import { BIOMES, threatLabel } from './game/world.js';
 import { attack, defense, threshold, projectileCount as stoneCount, EQUIPMENT_SLOTS, salePrice } from './game/items.js';
 import { DungeonScene } from './render/scene.js';
 import './style.css';
@@ -45,10 +46,10 @@ function closePanel() { paused = false; panel = null; document.activeElement?.bl
 function start() { lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
-  modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
+  modal('Beyond the campfire', `<p>Biomes vary by run; mountains can border camp. At least one neighboring forest offers a starting foothold. Read trail warnings before crossing. Start with rats and beetles in those woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Forests also have a 50% chance of an herbalist, wounded traveler or milestone with a crypt clue. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
   <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
-  <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
+  <p>Ordinary defense has diminishing returns above 3. Trail Boots reduce detection; Iron Bands protect against special attacks. Amber boundary marks warn of territorial guardians; retreat outside their territory to disengage. Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
@@ -162,6 +163,8 @@ function render() {
     <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${p.mana} / ${p.maxMana}</span></div>
     <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
     <div class="numbers">Lv ${p.level} · ${attack(p)} ATK · ${defense(p)} DEF · <b>${p.gold} gold</b></div>`;
+  const ahead=model.borderPreview(),pocket=dangerAt(s);
+  if(ahead||pocket){const warning=document.createElement('p');warning.id='travel-warning';warning.className='vision-status danger-status';warning.textContent=ahead?`${ahead.name} ahead · Lv ${ahead.recommended} · ${threatLabel(ahead.recommended,p.level)}`:`⚠ ${pocket.name} · guarded territory`;$('stats').append(warning);}
   $('portrait-level').textContent=p.level;
   const conditions=[p.corrosion>0?'Corroded −1 DEF · '+p.corrosion+' turns':null,p.smokeTurns>0?'Smoke · '+p.smokeTurns+' turns':null,p.rationTurns>0?'Rations · '+p.rationTurns+' turns':null].filter(Boolean);
   if(conditions.length){const status=document.createElement('p');status.className='vision-status';status.textContent=conditions.join(' / ');$('stats').append(status);}
@@ -238,7 +241,15 @@ function completeTarget(x,y){
   cancelTargeting();render();
 }
 $('cancel-targeting').onclick=()=>{cancelTargeting();syncTouchControls();document.activeElement?.blur();};
-function act(action) { if (!model || paused || targetMode) return; if (document.activeElement?.tagName === 'SUMMARY') document.activeElement.blur(); model.action(action); render(); }
+function act(action) {
+ if(!model||paused||targetMode)return;
+ if(document.activeElement?.tagName==='SUMMARY')document.activeElement.blur();
+ const location=model.location.id,before=model.borderPreview(),oldPocket=dangerAt(model.state);
+ model.action(action);
+ const ahead=model.borderPreview(),pocket=dangerAt(model.state);
+ if(model.location.id!==location||ahead&&ahead.recommended>model.state.player.level&&(!before||before.rx!==ahead.rx||before.ry!==ahead.ry)||pocket&&!oldPocket)stopMovement();
+ render();
+}
 function syncTouchControls() {
   const ready = model && !paused && model.state.status === 'playing';
   const s = model?.state, p = s?.player;

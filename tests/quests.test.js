@@ -1,11 +1,12 @@
 import {describe,it,expect} from 'vitest';
 import {Expedition} from '../src/game/expedition.js';
+import {startingForest} from '../src/game/world.js';
 import {TRAILWARDEN} from '../src/game/quests.js';
 import {walkable,key,directions} from '../src/game/dungeon.js';
 import {settleInventory} from '../src/game/inventory.js';
 import {potion} from '../src/game/items.js';
 function stand(g,event){Object.assign(g.state.player,{x:event.x,y:event.y+(event.type==='villager'?1:0)});g.state.enemies.forEach(e=>e.range=0);g.state.transition=false;}
-function fixture(kind){for(let seed=1;seed<=30;seed++){const g=new Expedition(seed);g.visitWorld(1,0);const event=g.state.encounters.find(e=>e.quest?.kind===kind&&!e.quest.camp);if(event){stand(g,event);return {g,q:event.quest,event};}}throw Error('Missing fixture '+kind);}
+function fixture(kind){for(let seed=1;seed<=30;seed++){const g=new Expedition(seed),region=startingForest(seed);g.visitWorld(region.rx,region.ry);const event=g.state.encounters.find(e=>e.quest?.kind===kind&&!e.quest.camp);if(event){stand(g,event);return {g,q:event.quest,event};}}throw Error('Missing fixture '+kind);}
 function slay(g,q){for(const enemy of g.state.enemies.filter(e=>e.questKey===q.id&&e.hp>0)){enemy.hp=0;g.kill(enemy);}}
 describe('open world quest lifetime',()=>{
  it('offers a seeded varying camp goal and leaves the player free to ignore it',()=>{
@@ -15,14 +16,14 @@ describe('open world quest lifetime',()=>{
  it('preserves an accepted hunt, wounded target and giver while normal enemies respawn',()=>{
  const {g,q,event}=fixture('hunt');expect(g.action({type:'acceptQuest'})).toBe(true);
  const foe=g.state.enemies.find(e=>e.questKey===q.id);foe.hp-=2;const hp=foe.hp;g.state.enemies.find(e=>!e.questKey&&!e.questId&&!e.eventId).hp=0;
- g.visitWorld(0,0);g.visitWorld(1,0);expect(g.state.encounters.find(e=>e.quest?.id===q.id)).toMatchObject({x:event.x,y:event.y});expect(g.state.enemies.find(e=>e.questKey===q.id).hp).toBe(hp);
+ g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);expect(g.state.encounters.find(e=>e.quest?.id===q.id)).toMatchObject({x:event.x,y:event.y});expect(g.state.enemies.find(e=>e.questKey===q.id).hp).toBe(hp);
  expect(g.state.enemies.filter(e=>!e.questKey&&!e.questId&&!e.eventId).every(e=>e.hp>0)).toBe(true);
- slay(g,q);g.visitWorld(0,0);g.visitWorld(1,0);stand(g,event);expect(q.complete).toBe(true);expect(g.action({type:'claimQuest'})).toBe(true);expect(g.action({type:'claimQuest'})).toBe(false);
+ slay(g,q);g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);stand(g,event);expect(q.complete).toBe(true);expect(g.action({type:'claimQuest'})).toBe(true);expect(g.action({type:'claimQuest'})).toBe(false);
  });
  it('keeps frog kill progress and a completed reward when leaving before claiming',()=>{
  const {g,q,event}=fixture('frogs');g.action({type:'acceptQuest'});let e=g.state.enemies.find(e=>e.questId);e.hp=0;g.kill(e);
- g.visitWorld(0,0);g.visitWorld(1,0);expect(g.questRemaining()).toBe(2);for(const e of g.state.enemies.filter(e=>e.questId&&e.hp>0)){e.hp=0;g.kill(e);}
- g.visitWorld(0,0);g.visitWorld(1,0);stand(g,event);expect(g.action({type:'claimQuest'})).toBe(true);expect(q.claimed).toBe(true);g.visitWorld(0,0);g.visitWorld(1,0);stand(g,event);expect(g.action({type:'claimQuest'})).toBe(false);
+ g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);expect(g.questRemaining()).toBe(2);for(const e of g.state.enemies.filter(e=>e.questId&&e.hp>0)){e.hp=0;g.kill(e);}
+ g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);stand(g,event);expect(g.action({type:'claimQuest'})).toBe(true);expect(q.claimed).toBe(true);g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);stand(g,event);expect(g.action({type:'claimQuest'})).toBe(false);
  });
  it('supports several active quests with no expiry even after long idle and travel',()=>{
  const {g,q}=fixture('hunt');g.action({type:'acceptQuest'});g.visitWorld(0,0);stand(g,{...TRAILWARDEN,type:'villager'});g.action({type:'acceptQuest'});
@@ -42,11 +43,11 @@ describe('distinct objectives',()=>{
  it('requires guards to be defeated, recovers a keepsake without satchel space, and preserves it on travel',()=>{
  const {g,q,event}=fixture('recovery');const token=g.state.items.find(e=>e.questKey===q.id);Object.assign(g.state.player,token);expect(g.action({type:'pickup'})).toBe(false);stand(g,event);g.action({type:'acceptQuest'});Object.assign(g.state.player,{x:token.x,y:token.y});expect(g.action({type:'pickup'})).toBe(false);
  slay(g,q);g.state.player.inventory=Array.from({length:100},potion);settleInventory(g.state.player.inventory);expect(g.action({type:'pickup'})).toBe(true);expect(q.complete).toBe(true);expect(g.state.player.inventory).toHaveLength(100);
- g.visitWorld(0,0);g.visitWorld(1,0);expect(g.state.items.some(e=>e.questKey===q.id)).toBe(false);expect(q.complete).toBe(true);
+ g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);expect(g.state.items.some(e=>e.questKey===q.id)).toBe(false);expect(q.complete).toBe(true);
  });
  it('rekindles three stones once each, preserves partial progress and requires the sentinel kill',()=>{
  const {g,q,event}=fixture('ward');let stones=g.state.encounters.filter(e=>e.quest?.id===q.id&&e.wardIndex!==undefined);stand(g,stones[0]);expect(g.action({type:'activateWard'})).toBe(false);stand(g,event);g.action({type:'acceptQuest'});stand(g,stones[0]);expect(g.action({type:'activateWard'})).toBe(true);expect(g.action({type:'activateWard'})).toBe(false);
- g.visitWorld(0,0);g.visitWorld(1,0);expect(q.activated).toHaveLength(1);
+ g.visitWorld(0,0);g.visitWorld(q.region.rx,q.region.ry);expect(q.activated).toHaveLength(1);
  stones=g.state.encounters.filter(e=>e.quest?.id===q.id&&e.wardIndex!==undefined);for(const stone of stones.filter(e=>!e.used)){stand(g,stone);expect(g.action({type:'activateWard'})).toBe(true);}
  expect(q.complete).toBe(false);expect(g.state.enemies.find(e=>e.questKey===q.id).name).toBe('Briar Sentinel');slay(g,q);expect(q.complete).toBe(true);
  });
@@ -62,8 +63,8 @@ describe('distinct objectives',()=>{
 describe('quest return safety',()=>{
  it('keeps regenerated ordinary enemies separate from persistent targets and NPCs',()=>{
  for(let seed=1;seed<=70;seed++){
- const g=new Expedition(seed);g.visitWorld(1,0);const event=g.state.encounters.find(e=>e.quest&&!e.quest.legacy);stand(g,event);g.action({type:'acceptQuest'});
- for(let visit=0;visit<3;visit++){g.visitWorld(0,0);g.visitWorld(1,0);const living=g.state.enemies.filter(e=>e.hp>0),occupied=living.map(e=>key(e.x,e.y));expect(new Set(occupied).size).toBe(occupied.length);for(const e of living){expect(walkable(g.state.map,e.x,e.y)).toBe(true);expect(e.x===g.state.player.x&&e.y===g.state.player.y).toBe(false);}}
+ const g=new Expedition(seed),region=startingForest(seed);g.visitWorld(region.rx,region.ry);const event=g.state.encounters.find(e=>e.quest&&!e.quest.legacy);stand(g,event);g.action({type:'acceptQuest'});
+ for(let visit=0;visit<3;visit++){g.visitWorld(0,0);g.visitWorld(event.quest.region.rx,event.quest.region.ry);const living=g.state.enemies.filter(e=>e.hp>0),occupied=living.map(e=>key(e.x,e.y));expect(new Set(occupied).size).toBe(occupied.length);for(const e of living){expect(walkable(g.state.map,e.x,e.y)).toBe(true);expect(e.x===g.state.player.x&&e.y===g.state.player.y).toBe(false);}}
  }
  });
  it('always places accepted camp objectives across varied starting worlds',()=>{

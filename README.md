@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.12.0 — Woodland discoveries** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.13.0 — Uncharted trails** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -34,20 +34,26 @@ Open Vite’s printed address. Existing checkouts can skip cloning. In the restr
 | I | Satchel | Arrange, rotate, use, equip, or drop items |
 | Esc | Pause / Help | Instructions / pause |
 
-The world waits indefinitely for you. Each valid action costs exactly one turn, followed by one action per living enemy in the current region. Slimes and beetles can spend actions resting. Walking into obstacles or invalid actions is free. Crossing regions and using stairs costs a turn but gives **arrival grace**, so enemies cannot attack before you inspect the destination. Hold a movement key to repeat turns; releasing it stops. Touch controls and other actions do not repeat. Only the current region is active.
+The world waits indefinitely for you. Each valid action costs exactly one turn, followed by one action per living enemy in the current region. Slimes and beetles can spend actions resting. Walking into obstacles or invalid actions is free. Crossing regions and using stairs costs a turn but gives **arrival grace**, so enemies cannot attack before you inspect the destination. Hold a movement key to repeat turns; releasing it stops. Held movement stops before an underleveled border and after crossing any region boundary. Read the warning, then release and press again if you choose to continue. Touch controls and other actions do not repeat. Only the current region is active.
 
 ## Slower progression and danger
 
 Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, three throwing stones, and 8 gold. Ordinary woodland rats and beetles award 2 XP; the first level needs 20 XP (ten ordinary kills). Later thresholds increase with level. Levels grant a little health, occasional attack/defense, and a small heal. Quests and stronger foes can accelerate progress.
 
-| Region distance from camp | Biome | Suggested level |
-| --- | --- | ---: |
-| 0–1 | Whisperwood | 1 |
-| 2–3 | Lantern Marsh | 4 |
-| 4–6 | Broken Highlands | 8 |
-| 7+ | Ashen Reach | 12 |
+| Biome | Suggested level |
+| --- | ---: |
+| Whisperwood | 1 |
+| Lantern Marsh | 4 |
+| Broken Highlands | 8 |
+| Ashen Reach | 12 |
 
-Distance is Manhattan distance: `abs(regionX) + abs(regionY)`. Farther biomes contain substantially stronger creatures. Area levels remain visible on phones and trail exits warn before crossing. Being able to enter a biome does not mean you can survive it. Forests form groves and meadows; marshes contain pools/reeds, highlands rocky ridges, and ashlands burned trees. Fallen logs, graves, flowers, bones and other scenery provide visual variation without gathering or crafting.
+Biomes form seeded patches with local variation; distance from camp no longer determines the biome. Mountains or ashlands can border camp, while forests can appear farther away. The same run seed and coordinates always produce the same biome, regardless of travel order. Creature strength comes from the biome and encounter, with no automatic scaling to the player's level.
+
+Camp remains safe. Every run guarantees one adjacent forest and a connected next region of forest or marsh, providing a starting route without revealing the surrounding world or promising an easy expedition. Iona's first goal points toward that guaranteed forest. Area levels remain visible on phones, and the border HUD names the neighboring biome and its threat before crossing. Arrival grace lets you inspect a destination and retreat. Being able to enter a biome does not mean you can survive it.
+
+Forests form groves and meadows; marshes contain pools/reeds, highlands rocky ridges, and ashlands burned trees. Fallen logs, graves, flowers, bones and other scenery provide visual variation without gathering or crafting.
+
+Ordinary defense has diminishing returns above 3 raw points: every two further points grant one effective DEF. The HUD displays effective protection. Body armor and Reedheart provide ordinary protection; Trail Boots reduce enemy detection by one tile, and Iron Bands add one defense only against telegraphed special attacks. Two Iron Bands can stack that specialized protection. Weathered buckler remains a 35% passive block. Corrosion subtracts one effective DEF after diminishing returns.
 
 ## Six discoverable encounters
 
@@ -56,7 +62,7 @@ Each wilderness visit rolls **one or two discoveries**, with an additional trave
 | Encounter | Interaction |
 | --- | --- |
 | Forgotten crypt | Discover its archway, then enter a two-depth dungeon with a dangerous Warden and a rare gear reward |
-| Creature den | Fight a stronger named beast for its hoard |
+| Creature den | Challenge a territorial named beast for a hoard using the region’s danger +2 when selecting eligible gear |
 | Mirekeeper | Accept a quest to clear three troublesome frogs, return for a Reedheart amulet (+1 defense) and 6 XP |
 | Abandoned caravan | Find a coffer guarded by scavengers |
 | Wayfarer shrine | Choose one exchange: 5 gold for 12 HP, or 6 HP for 25 Mana; each costs a turn |
@@ -80,7 +86,7 @@ The World map remembers visited coordinates and discovered, fixed crypt entrance
 
 Creatures do not always drop loot: 50% drop nothing, 25% roll 2–4 coins, 17% drop a low-value trophy, and 8% roll the weighted item table (locked items become coins). Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
 
-Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 8 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (35% passive block, 12 gold), throwing stones (3 for 4 gold), patched vest (+1 defense, 10 gold), Trail Boots (8 gold), or Iron Bands (12 gold, two available). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
+Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 8 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (35% passive block, 12 gold), throwing stones (3 for 4 gold), patched vest (+1 defense, 10 gold), Trail Boots (reduced detection, 8 gold), or Iron Bands (special-attack protection, 12 gold, two available). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
 
 ## The 10×10 satchel
 
@@ -116,7 +122,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 135 simulation tests and 42 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 157 simulation tests and 45 Chromium browser tests pass for v0.13.0. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -151,7 +157,7 @@ Panels and menus scroll internally when needed. Opening them stops held movement
 
 ## Held keyboard movement (v0.5.3)
 
-Hold WASD or an arrow key to keep stepping: one immediate action, a 300 ms initial delay, then one action every 150 ms. Each valid step or bump attack advances exactly one turn; walls still cost no turn. Release to stop. Menus, clicking controls, switching tabs, and losing window focus cancel held movement. After cancellation, release and press again to move. Only the most recently pressed direction repeats; other actions and touch controls remain one action per press/tap.
+Hold WASD or an arrow key to keep stepping: one immediate action, a 300 ms initial delay, then one action every 150 ms. Each valid step or bump attack advances exactly one turn; walls still cost no turn. Release to stop. Menus, clicking controls, switching tabs, and losing window focus cancel held movement. Underleveled border warnings and crossing a region boundary also cancel held movement. After cancellation, release and press again to move. Only the most recently pressed direction repeats; other actions and touch controls remain one action per press/tap.
 
 ## Enemy health bars (v0.5.4)
 
@@ -178,7 +184,7 @@ Selecting Reach/Throw highlights legal enemies. Click/tap a highlighted creature
 
 An equipped Weathered buckler rolls a seeded **35% block chance per incoming attack**. A block prevents all damage from that hit; an unblocked hit uses normal armor/defense. Attacking, moving or using items does not disable the shield. Unequipping immediately removes the chance. Blocks flash the portrait and show “Blocked!” in the event log. There is no Brace action or B shortcut. Moving/bump attacks and spear attacks restore 5 Mana (increased by relevant relics/charms); throwing does not.
 
-Stones that survive land on the target tile (even if the creature dies); collect them after the fight. Pickups and purchases merge stacks up to nine, preserving both items and gold if overflow cannot fit. Selling a bundle pays one gold per remaining stone. Basic gear can appear rarely on enemies and in early coffers, while higher-tier rewards remain in dangerous areas. No axe/recovery mechanic, helmets, gloves, boots or extra ring slots were added in this first slice.
+Stones that survive land on the target tile (even if the creature dies); collect them after the fight. Pickups and purchases merge stacks up to nine, preserving both items and gold if overflow cannot fit. Selling a bundle pays one gold per remaining stone. Basic gear can appear rarely on enemies and in early coffers, while higher-tier rewards remain in dangerous areas. Later releases add hatchets, boots and two ring slots; see the current item table for their effects. Helmets and gloves remain deferred.
 
 ![Phone targeting with field equipment](docs/field-techniques.png)
 
@@ -213,7 +219,7 @@ See [the full item table, source odds and mechanics](docs/loot-and-wardrobe.md).
 
 ## Wandering quests (v0.11.0)
 
-Walk two tiles west from the starting campfire, stand beside **Trailwarden Iona**, and use E / Interact. Each seeded run gives her a different hunt, recovery or waystone goal in one of the four neighboring forest regions. Her reward is collected back at camp.
+Walk two tiles west from the starting campfire, stand beside **Trailwarden Iona**, and use E / Interact. Each seeded run gives her a different hunt, recovery or waystone goal in the guaranteed neighboring forest. Other neighboring regions can be much more dangerous. Her reward is collected back at camp.
 
 Forest and marsh travelers offer:
 - **Beast on the Trail:** defeat a named, stronger creature and return for Trail Boots.
@@ -222,7 +228,7 @@ Forest and marsh travelers offer:
 
 Quest equipment uses the existing quest modifier odds (70% modified, with exceptional combinations uncommon). The existing frog-clearing quest also persists once accepted. Several quests may stay active together, with no timers, level gates or travel penalties. Each successful acceptance, activation, collection or claim takes one turn; browsing and Journal tracking are free. Rewards are granted once, and a full satchel leaves the exact reward claimable later.
 
-Open **Journal** to see progress, objective region, suggested biome level, and where to return. Track one quest to highlight it within the Journal; this does not reveal terrain or put unseen markers on the minimap. Quest targets have a small gold marker when visible. Quest-givers have colored clothing and inspection names.
+Open **Journal** to see progress, objective region, suggested biome level, and where to return. Track one quest to highlight it within the Journal and brighten its World minimap marker; unvisited quest destinations remain neutral and reveal no terrain. Quest targets have a small gold marker when visible. Quest-givers have colored clothing and inspection names.
 
 Quest persistence lasts only for the current run. Death or refreshing still ends it; no cross-session save/load has been added. Escort quests, cross-region search chains and additional templates are deferred.
 
@@ -239,3 +245,14 @@ Each non-camp forest region rolls an independent **50% chance** of one extra non
 Stand beside the people, or on the milestone, and use **E / Interact**. Browsing costs no turns; a successful exchange, helping action or reading costs one turn. Declining is free. These sites and outcomes last for the run, with no repeat rewards. Regions with an extra encounter retain their encounter layer on return; ordinary enemies still respawn.
 
 The **World** minimap now places gold **!** markers inside regions with accepted quest objectives. On completion, the marker moves to the reward giver's region and becomes **✓**. Claiming removes that quest's marker. Multiple quests in a region are grouped; tracking brightens its marker. A quest pointing to an unvisited region adds a neutral square without revealing terrain, creatures or entrances. Purple entrance indicators and the current-region border remain separate.
+
+
+## Uncharted trails (v0.13.0)
+
+World geography is no longer a sequence of biome rings. Seeded patches and local variation create different routes each run, including dangerous regions beside camp. One adjacent forest and a connected forest/marsh frontier guarantee a foothold. The rest of the route must be discovered and judged through border warnings, terrain, enemy inspection and the World minimap.
+
+Special encounters remain dangerous within familiar biomes. Named quest hunts and awakened waystone sentinels have two more attack than before; den guardians gain two attack and four health. Den hoards roll eligible equipment at the region's danger plus two, rewarding the extra risk without handing stronger equipment to every ordinary creature.
+
+Dens, marked beasts, keepsake guards and awakened sentinels occupy warning territories with a five-tile Manhattan radius. Warning boundaries identify local danger when their guardians are visible, and the HUD warns when you enter a pocket. These guardians disengage and return toward their territory when you step beyond it; a pending special attack does not follow you outside. Ordinary roaming enemies still behave normally. You can choose another route, improve your equipment, or return later.
+
+Equipment defense is less cumulative: armor supplies the main flat protection, boots help avoid detection, rings can specialize against special attacks, and ordinary defense softens above three. Strong geography and encounters retain their strength as your character levels. Reading warnings and preserving an escape route matter throughout the run.

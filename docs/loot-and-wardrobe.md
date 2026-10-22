@@ -28,9 +28,9 @@ Ordinary item rolls use the weights below out of 115. A roll below its minimum a
 | Smoke Flask | smoke | 1 | 3 | For 3 enemy phases, enemies beyond adjacent range cannot pursue or fire at you. Adjacent enemies still attack. |
 | Thunderstone | thunder | 1 | 6 | Throw within 4 tiles to interrupt an enemy and make it lose its next action. No damage; consumed on impact. |
 | Last-Light Medallion | amulet | 1 | 9 | Prevents one fatal hit, leaving 1 HP, then permanently shatters. Later hits can still kill you. |
-| Trail Boots | boots | 4 | 1 | +1 defense. Sturdy brown leather boots. |
+| Trail Boots | boots | 4 | 1 | Enemy detection range is reduced by 1 tile. No armor bonus. |
 | Softstep Shoes | boots | 2 | 3 | Enemy detection range is reduced by 2 tiles. No armor bonus. |
-| Iron Band | ring | 3 | 1 | +1 defense. |
+| Iron Band | ring | 3 | 1 | +1 defense against telegraphed special attacks; no ordinary armor bonus. |
 | Hunter’s Ring | ring | 2 | 3 | +1 attack. |
 | Moonstone Ring | ring | 2 | 3 | +20 maximum Mana. Equipping does not restore Mana. |
 | Lantern Relic | offhand | 1 | 2 | Off-hand relic: +1 sight and +2 Mana recovered on movement/melee. Replaces a shield. |
@@ -53,7 +53,9 @@ These are conditional odds for equipment, not the chance that an enemy drops a p
 
 ## Equipment and use
 
-Seven slots: main hand, off hand, body, boots, neck, ring 1 and ring 2. Two rings may share a type and stack. The equipment popup lets you select which ring slot to replace. Inventory Equip fills an empty ring slot first. Failed swaps/unequips preserve gear and take no turn.
+Seven slots: main hand, off hand, body, boots, neck, ring 1 and ring 2. Two rings may share a type and stack. Body armor and the Reedheart amulet supply ordinary protection; boots emphasize avoiding detection, while Iron Bands specialize in protection against telegraphed attacks. The equipment popup lets you select which ring slot to replace. Inventory Equip fills an empty ring slot first. Failed swaps/unequips preserve gear and take no turn.
+
+Ordinary defense has diminishing returns after 3 raw points: every two further raw defense points grant one effective DEF. Raw totals 3, 4, 5, 6, 7 give effective DEF 3, 3, 4, 4, 5. The HUD shows effective ordinary defense; Iron Band/Warding protection applies only against special attacks and is additional. Corrosion subtracts one effective DEF after this calculation. Gear modifiers still improve protection, but filling every slot no longer guarantees one-damage incoming hits.
 
 Relics compete with shields in the off hand. Mana-capacity equipment never restores Mana on equip; removal clamps current Mana to the lower cap. New runs have 8 gold: a plain shortsword or boots are immediately affordable. Camp stock is finite per run.
 

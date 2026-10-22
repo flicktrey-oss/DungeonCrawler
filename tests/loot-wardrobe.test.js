@@ -9,7 +9,7 @@ const equip=(g,item,slot)=>{g.state.player.inventory=[item];return g.action({typ
 describe('seven equipment slots',()=>{
  it('wears two separate rings, selects replacements, and rejects mismatched slots without a turn',()=>{
  const g=game(),p=g.state.player;expect(equip(g,I.ironRing())).toBe(true);expect(equip(g,I.huntersRing())).toBe(true);
- expect(p.ring1.name).toBe('Iron Band');expect(p.ring2.name).toBe('Hunter’s Ring');expect(I.defense(p)).toBe(1);expect(I.attack(p)).toBe(4);
+ expect(p.ring1.name).toBe('Iron Band');expect(p.ring2.name).toBe('Hunter’s Ring');expect(I.defense(p)).toBe(0);expect(I.gearBonus(p,'wardedBonus')).toBe(1);expect(I.attack(p)).toBe(4);
  expect(equip(g,I.moonRing(),'ring1')).toBe(true);expect(p.inventory[0].name).toBe('Iron Band');expect(p.maxMana).toBe(120);expect(p.mana).toBe(100);
  const turn=g.state.turn;expect(equip(g,I.ironRing(),'boots')).toBe(false);expect(g.state.turn).toBe(turn);
  });
@@ -21,9 +21,9 @@ describe('seven equipment slots',()=>{
  const g=game(),p=g.state.player;equip(g,I.buckler());equip(g,I.lanternRelic());expect(p.offhand.relic).toBe(true);expect(p.inventory[0].kind).toBe('offhand');expect(I.shieldChance(p)).toBe(0);expect(I.recovery(p)).toBe(7);expect(I.gearBonus(p,'sightBonus')).toBe(1);
  equip(g,I.waystoneFocus());expect(p.maxMana).toBe(120);g.action({type:'mindVision'});expect(g.state.mindVisionUntil-g.state.turn).toBe(3);
  });
- it('boots modify defense and appearance; plain characters have no phantom equipment',()=>{
+ it('boots modify detection and appearance; plain characters have no phantom equipment',()=>{
  const g=game(),p=g.state.player;const plain=adventurerSvg(p);expect(plain).not.toContain('data-weapon-icon');expect(plain).not.toContain('data-boots-icon');
- equip(g,I.trailBoots());expect(I.defense(p)).toBe(1);expect(adventurerSvg(p)).toContain('data-boots-icon');
+ equip(g,I.trailBoots());expect(I.defense(p)).toBe(0);expect(I.gearBonus(p,'stealthBonus')).toBe(1);expect(adventurerSvg(p)).toContain('data-boots-icon');
  expect(adventurerPixels(p)).not.toEqual(adventurerPixels({}));
  });
  it('keeps both rings on a failed full-bag swap or unequip',()=>{

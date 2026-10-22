@@ -1,11 +1,12 @@
 import { adventurerSvg } from './render/adventurer.js';
-import { attack, defense, isEquipment, slotsFor, shieldChance } from './game/items.js';
+import { attack, defense, isEquipment, slotsFor, shieldChance, gearBonus, rawDefense } from './game/items.js';
 const slots={weapon:{label:'Main hand',icon:'⚔'},armor:{label:'Body',icon:'▣'},amulet:{label:'Neck',icon:'◇'},offhand:{label:'Off hand',icon:'⬡'},boots:{label:'Boots',icon:'♧'},ring1:{label:'Ring 1',icon:'○'},ring2:{label:'Ring 2',icon:'○'}};
 export function mountEquipment(container,game,perform,initialSlot='weapon') {
   let selected=initialSlot;
   function draw(){
     const p=game.state.player;container.replaceChildren();
     const stats=document.createElement('p');stats.className='equipment-stats';stats.textContent=`Level ${p.level} · ${attack(p)} attack · ${defense(p)} defense`;container.append(stats);
+    const protection=document.createElement('p');protection.className='hint';protection.textContent='Ordinary DEF '+defense(p)+' from '+rawDefense(p)+' raw protection. Above 3, each 2 raw points adds 1 DEF. Special-attack protection: +'+gearBonus(p,'wardedBonus')+'. Boots help avoid detection.';container.append(protection);
     if(p.offhand?.blockChance){const note=document.createElement('p');note.className='hint';note.textContent='Shield: '+Math.round(shieldChance(p)*100)+'% melee / '+Math.round(shieldChance(p,true)*100)+'% ranged block';container.append(note);}
     const portrait=document.createElement('div');portrait.className='equipment-portrait';
     portrait.innerHTML=adventurerSvg(p);
