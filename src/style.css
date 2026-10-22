@@ -61,3 +61,7 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 @media(max-height:500px) and (pointer:coarse){.journal-body{left:var(--left);right:auto;top:132px;width:min(280px,calc(100vw - 410px));max-height:calc(100dvh - 150px)}}
 
 .danger-status{color:#f1b58b!important;max-width:230px;font-weight:600}
+
+.bag-item{display:grid;place-items:center;position:relative}
+.bag-item-icon{font:var(--item-icon-size,20px)/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;pointer-events:none}
+.bag-item-count{position:absolute;right:0;bottom:0;padding:0 2px;border-radius:3px;background:#101923eb;color:#fff1c9;font:bold 9px/12px system-ui;pointer-events:none}

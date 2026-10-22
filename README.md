@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.13.0 — Uncharted trails** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.13.1 — Satchel icons** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -256,3 +256,7 @@ Special encounters remain dangerous within familiar biomes. Named quest hunts an
 Dens, marked beasts, keepsake guards and awakened sentinels occupy warning territories with a five-tile Manhattan radius. Warning boundaries identify local danger when their guardians are visible, and the HUD warns when you enter a pocket. These guardians disengage and return toward their territory when you step beyond it; a pending special attack does not follow you outside. Ordinary roaming enemies still behave normally. You can choose another route, improve your equipment, or return later.
 
 Equipment defense is less cumulative: armor supplies the main flat protection, boots help avoid detection, rings can specialize against special attacks, and ordinary defense softens above three. Strong geography and encounters retain their strength as your character levels. Reading warnings and preserving an escape route matter throughout the run.
+
+## Satchel icons (v0.13.1)
+
+Items in the 10×10 satchel use emoji artwork: swords, spears, shields, boots, rings, necklaces, tonics, food, stones, trophies and relics. Stack counts appear as small badges. Tap an icon for the full name, description and item controls; desktop hover also shows its name and quantity. Icons follow the item family even when loot has a modifier. Emoji appearance varies with the device font.

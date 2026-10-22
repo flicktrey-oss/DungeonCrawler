@@ -1,3 +1,4 @@
+import { itemEmoji } from './item-icons.js';
 import { inventoryLayout, footprint } from './game/inventory.js';
 export function mountInventory(container, game, perform) {
   let selected=null, rotated=false, notice='Select an item, then tap an empty cell or set its row and column. Arranging is free; using or dropping takes a turn.';
@@ -8,8 +9,10 @@ export function mountInventory(container, game, perform) {
     const place=(x,y)=>{if(selected===null){notice='Select an item first.';draw();return;}notice=game.arrange(selected,x,y,rotated)?'Item moved. No turn spent.':'That footprint overlaps another item or leaves the bag.';draw();};
     for(let y=0;y<10;y++)for(let x=0;x<10;x++){const cell=document.createElement('div');cell.className='bag-cell';cell.style.gridArea=`${y+1} / ${x+1}`;cell.onclick=()=>place(x,y);grid.append(cell);}
     for(const p of layout){
-      const item=items[p.index],b=document.createElement('button');b.className=`bag-item ${selected===p.index?'selected':''}`;b.style.gridArea=`${p.y+1} / ${p.x+1} / span ${p.h} / span ${p.w}`;b.textContent=p.w*p.h===1?(item.kind==='stone'?String(item.quantity):item.name[0]):item.name;
-      b.setAttribute('aria-label',`Select ${item.name}, ${p.w} by ${p.h}`);b.title=`${item.name} (${p.w}×${p.h})`;
+      const item=items[p.index],b=document.createElement('button');b.className=`bag-item ${selected===p.index?'selected':''}`;b.style.gridArea=`${p.y+1} / ${p.x+1} / span ${p.h} / span ${p.w}`;b.style.setProperty('--item-icon-size',Math.min(44,Math.min(p.w,p.h)*20)+'px');
+      const icon=document.createElement('span');icon.className='bag-item-icon';icon.setAttribute('aria-hidden','true');icon.textContent=itemEmoji(item);b.append(icon);
+      if(item.quantity){const count=document.createElement('span');count.className='bag-item-count';count.setAttribute('aria-hidden','true');count.textContent=item.quantity;b.append(count);}
+      b.setAttribute('aria-label',`Select ${item.name}, ${p.w} by ${p.h}`);b.title=`${item.name}${item.quantity?` ×${item.quantity}`:''} (${p.w}×${p.h})`;
       b.onclick=()=>{selected=p.index;rotated=Boolean(item.rotated);notice=`${item.name}${item.quantity?` ×${item.quantity}`:''}: ${item.description}`;draw();};grid.append(b);
     }
     container.append(grid);
