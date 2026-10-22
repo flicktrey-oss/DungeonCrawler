@@ -54,3 +54,8 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 .slot-ring1{left:8px;top:235px}.slot-ring2{right:8px;top:235px}.slot-boots{left:calc(50% - 29px);bottom:5px}
 
 #target-options select{max-width:100%;min-height:44px;background:#20343d;color:#edf0d8;border:1px solid #869c95;border-radius:5px;font:14px system-ui;padding:6px}
+
+.journal-quest{border-bottom:1px solid #49635f;padding:8px 0 12px}.journal-quest h3{font:16px Georgia;color:#e7d5a0;margin:4px 0}.journal-quest p{margin:6px 0}.journal-quest button{min-height:44px;font:12px system-ui}
+
+@media(max-width:700px),(pointer:coarse){.journal-body{max-height:calc(100dvh - var(--dock-height) - 220px)}}
+@media(max-height:500px) and (pointer:coarse){.journal-body{left:var(--left);right:auto;top:132px;width:min(280px,calc(100vw - 410px));max-height:calc(100dvh - 150px)}}

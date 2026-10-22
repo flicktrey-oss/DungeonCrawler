@@ -35,9 +35,12 @@ export class DungeonScene extends Phaser.Scene {
     }
     if(s.location?.kind==='crypt'){const u=s.upstairs; if(s.explored.has(key(u.x,u.y))){g.lineStyle(2,0x86d6c0,s.visible.has(key(u.x,u.y))?1:.3);g.strokeTriangle(u.x*T+6,u.y*T+17,u.x*T+18,u.y*T+17,u.x*T+12,u.y*T+5);}}
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
+    for(const e of s.encounters??[])if(e.type==='villager'&&e.quest&&s.visible.has(key(e.x,e.y))){g.fillStyle(e.quest.camp?0xc8ab63:({hunt:0x8b9d6b,recovery:0xba8ca6,ward:0x8e9cd0})[e.quest.kind]??0x8fa682);g.fillRect(e.x*T+8,e.y*T+12,9,8);}
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.actor(e,e.kind);
+    for(const e of s.enemies)if(e.hp>0&&e.questKey&&this.gameModel.quests?.get(e.questKey)?.accepted&&s.visible.has(key(e.x,e.y))){g.fillStyle(0xffda85);g.fillRect(e.x*T+10,e.y*T-3,4,2);}
+    for(const e of s.encounters??[])if(e.wardIndex!==undefined&&e.used&&s.visible.has(key(e.x,e.y))){g.fillStyle(0x8fe2cb);g.fillRect(e.x*T+10,e.y*T+7,4,8);}
     this.actor(s.player,'player');
     // Draw bars last so neighboring actors and scenery cannot cover them.
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);

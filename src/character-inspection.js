@@ -8,7 +8,7 @@ export function characterAt(game,x,y){
  if(s.player.x===x&&s.player.y===y)return s.player;
  const enemy=s.enemies.find(e=>e.hp>0&&e.x===x&&e.y===y);if(enemy)return enemy;
  if(s.map[y]?.[x]==='M')return {x,y,kind:'merchant',name:'Mara the Wayfarer',friendly:true};
- if(s.map[y]?.[x]==='V')return {x,y,kind:'villager',name:'The Mirekeeper',friendly:true};
+ if(s.map[y]?.[x]==='V')return {x,y,kind:'villager',name:s.encounters.find(e=>e.x===x&&e.y===y)?.quest?.giver??'The Mirekeeper',friendly:true};
  return null;
 }
 export function characterDetails(game,target){

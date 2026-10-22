@@ -1,3 +1,5 @@
+import { mountQuestJournal } from './quest-ui.js';
+import { questProgress } from './game/quests.js';
 import { adventurerSvg } from './render/adventurer.js';
 import Phaser from 'phaser';
 import { Expedition } from './game/expedition.js';
@@ -44,10 +46,10 @@ function start() { lastShownBlock=0; $('block-feedback').textContent='';$('block
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
-  <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; enemies and local encounters refresh on return.</b> Creatures, loose loot and local quests reset; claim rewards before leaving. Camp storage and merchant stock stay stable. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
-  <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for local quests, or Chronicle for event history.</p>
+  <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
+  <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
-  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
+  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
@@ -111,11 +113,16 @@ function encounterDialog() {
   paused=true;panel='encounter';
   const perform=action=>{model.action(action);render();if(model.state.status==='playing'){encounterDialog();$('encounter-result').textContent=model.state.log.at(-1);}};
   if(event.type==='villager'){
-    const q=model.state.quest,remaining=model.questRemaining();
+    const q=event.quest??model.state.quest;
     const buttons=[['Return',closePanel]];
-    if(!q.accepted)buttons.unshift(['Accept frog quest',()=>perform({type:'acceptQuest'})]);
-    else if(!q.claimed&&remaining===0)buttons.unshift(['Claim Reedheart amulet',()=>perform({type:'claimQuest'})]);
-    modal('The Mirekeeper',`<p>“Help me clear my swamp. Three troublesome frogs have taken over this clearing.”</p><p>${q.claimed?'Reward claimed. Thank you, traveler.':q.accepted?`${remaining} frogs remain. Return here for a 2×2 Reedheart amulet (+1 defense).`:'Reward: Reedheart amulet (+1 defense), plus 6 XP.'}</p><p class="hint">Leaving this region resets this quest. Accepting and claiming each take one turn.</p><p id="encounter-result" role="status"></p>`,buttons);
+    if(!q.accepted)buttons.unshift([q.legacy?'Accept frog quest':'Accept quest',()=>perform({type:'acceptQuest'})]);
+    else if(!q.claimed&&(q.legacy?model.questRemaining()===0:q.complete))buttons.unshift([q.legacy?'Claim Reedheart amulet':'Claim reward',()=>perform({type:'claimQuest'})]);
+    const description=q.legacy?'“Help me clear my swamp. Three troublesome frogs have taken over this clearing.”':q.description;
+    modal(q.giver,`<h3>${escape(q.title)}</h3><p>${escape(description)}</p><p>${q.claimed?'Reward claimed. Thank you, traveler.':q.accepted?escape(questProgress(q)):escape('Reward: '+(q.legacy?'Reedheart amulet and 6 XP':q.reward.name+' and 6 XP'))}</p><p>Objective region: (${q.region.rx}, ${q.region.ry}). Return here whenever you are ready.</p><p class="hint">No time limit. Accepted quests and progress persist throughout this run, including when you leave the region.</p><p id="encounter-result" role="status"></p>`,buttons);
+  }else if(event.quest){
+    const q=event.quest,buttons=[['Return',closePanel]];
+    if(q.accepted&&!event.used)buttons.unshift(['Rekindle waystone',()=>perform({type:'activateWard'})]);
+    modal('A broken waystone',`<p>${q.accepted?escape(questProgress(q)):'A faint inscription points to a nearby warden. Accept their quest before rekindling these stones.'}</p><p>${event.used?'This stone is already lit.':'Rekindling takes one turn. The final stone awakens a sentinel.'}</p><p id="encounter-result" role="status"></p>`,buttons);
   }else{
     const buttons=[['Return',closePanel]];if(!event.used)buttons.unshift(['Heal 12 HP · 5 gold',()=>perform({type:'blessing',choice:'heal'})],['Restore 25 Mana · 6 HP',()=>perform({type:'blessing',choice:'mana'})]);
     modal('Wayfarer shrine',`<p>${event.used?'Its blessing is spent for this visit.':'Choose one exchange. Each uses a turn; enemies act afterward.'}</p><p id="encounter-result" role="status"></p>`,buttons);
@@ -164,8 +171,8 @@ function render() {
   $('bag-capacity').textContent=`${used}/100`;
   $('manage-bag').title=`Open 10×10 satchel [I] · ${used} / 100 cells used`;
   $('potion-count').textContent=p.inventory.filter(i=>i.kind==='potion').length;
-  $('quest-indicator').classList.toggle('hidden',!s.quest||s.quest.claimed);
-  $('quest-info').textContent = s.quest ? s.quest.claimed ? 'Frog quest completed this visit.' : `${s.quest.accepted?'Accepted':'Available'}: clear the frogs (${model.questRemaining()} remain). Reward: Reedheart amulet. Leaving resets this quest.` : 'Find a Mirekeeper in the wilderness for a local frog-clearing quest.';
+  $('quest-indicator').classList.toggle('hidden',![...model.quests.values()].some(q=>q.accepted&&!q.claimed));
+  mountQuestJournal($('quest-info'),model);
   $('latest-event').textContent = s.log.at(-1) ?? '';
   $('log').innerHTML = s.log.slice(-25).map(t => `<p>${escape(t)}</p>`).join(''); $('log').scrollTop = $('log').scrollHeight;
   renderInspection();

@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.10.0 — Loot & wardrobe** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.11.0 — Wandering quests** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -51,7 +51,7 @@ Distance is Manhattan distance: `abs(regionX) + abs(regionY)`. Farther biomes co
 
 ## Six discoverable encounters
 
-Each wilderness visit rolls **one or two different encounters**. None is guaranteed on every map. Camp is the exception: it remains a safe, fixed base with its trader.
+Each wilderness visit rolls **one or two discoveries**, with an additional traveler quest in forest and marsh regions. Camp is a safe, fixed base with Mara and Trailwarden Iona. Accepted quest regions retain their encounter sites; ordinary enemies still respawn.
 
 | Encounter | Interaction |
 | --- | --- |
@@ -62,17 +62,17 @@ Each wilderness visit rolls **one or two different encounters**. None is guarant
 | Wayfarer shrine | Choose one exchange: 5 gold for 12 HP, or 6 HP for 25 Mana; each costs a turn |
 | Hidden cache | Follow the grave/cloth marker to buried supplies |
 
-Stand next to the Mirekeeper and press E / Interact. Accepting and claiming are separate turns; reading dialogue is free. Only that encounter’s three frogs count. You can clear them before accepting, but must claim before leaving. Open Journal for local quest progress. The amulet is 2×2 and must be equipped to grant defense. A full satchel leaves the reward claimable.
+Stand next to the Mirekeeper and press E / Interact. Accepting and claiming are separate turns; reading dialogue is free. Only that encounter’s three frogs count. You can clear them before accepting. Once accepted, you may leave, explore elsewhere, and return later to finish or claim. Open Journal for all accepted quests. The amulet is 2×2 and must be equipped to grant defense. A full satchel leaves the reward claimable.
 
-Shrines reject exchanges you cannot afford, lethal HP payments, and restoring an already full resource. Once used, a shrine is spent for that visit. Common coffers contain a tonic or a small purse; equipment is rare and low tier in early regions. Better gear belongs to harder areas and Wardens.
+Shrines reject exchanges you cannot afford, lethal HP payments, and restoring an already full resource. Once used, a shrine is spent for that visit. Common coffers roll the weighted item table or a small purse. Quest, den, crypt and Warden rewards have better equipment modifier odds.
 
 ## Persistent maps, returning enemies (v0.8.0)
 
 Each region's terrain, paths, scenery and crypt entrances remain fixed for the run. **Explored tiles stay revealed on the local minimap after leaving and returning**, dimmed when outside current sight. Dungeon layouts, stairs and explored dungeon tiles persist too. New runs still create a newly randomized world.
 
-Re-entering a wilderness region respawns enemies and rerolls non-crypt discoveries: villagers, dens, caravans, shrines and caches can appear at different valid locations or be absent. Quest placement varies between regions, visits and run seeds; it is not locked to one sector. People and encounters are placed on existing reachable terrain without carving new trails. New encounters on previously explored ground are hidden until rediscovered, so remembered maps do not reveal fresh rewards remotely.
+In a region without an accepted quest, re-entering respawns enemies and rerolls non-crypt discoveries: villagers, dens, caravans, shrines and caches can appear at different valid locations or be absent. Quest placement varies between regions, visits and run seeds; it is not locked to one sector. People and encounters are placed on existing reachable terrain without carving new trails. New encounters on previously explored ground are hidden until rediscovered, so remembered maps do not reveal fresh rewards remotely.
 
-Local quest progress and loose loot reset when leaving, while claimed character rewards stay yours. Crypt foes and loot also respawn on re-entry. Stable surface entrances and dungeon stairs make return journeys predictable; arrival always chooses a vacant walkable tile with no immediate enemy turn. Camp terrain, stored supplies and merchant stock remain stable throughout the run.
+Accepted quests retain their givers, encounter sites, objectives, special enemies (including wounds/deaths), ground items and progress across travel, including after reward collection. Ordinary creatures in those regions still respawn. Unaccepted, unpinned regions refresh their local offers and loose loot. Claimed character rewards stay yours. Crypt foes and loot also respawn on re-entry. Stable surface entrances and dungeon stairs make return journeys predictable; arrival always chooses a vacant walkable tile with no immediate enemy turn. Camp terrain, stored supplies and merchant stock remain stable throughout the run.
 
 The World map remembers visited coordinates and discovered, fixed crypt entrances. **Memory lasts for the current run only**: death, refresh or closing the browser still ends the run; no save system was added.
 
@@ -116,7 +116,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 96 simulation tests and 30 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 126 simulation tests and 38 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -138,7 +138,7 @@ Touch actions commit once through the native click after a valid release, preven
 
 The world fills the browser viewport with no page scrolling. Status bars sit at upper left in Health → Mana → XP order, with level, combat stats, gold and area danger visible. The camera scales sprites for the device and keeps the adventurer centered, including near region edges.
 
-- **Top right:** Map (Local / World), Journal (local quest), and Menu (pause/help). Map and Journal open separately so their panels do not cover each other. The minimap starts expanded on desktop and collapsed on phones.
+- **Top right:** Map (Local / World), Journal (all accepted quests), and Menu (pause/help). Map and Journal open separately so their panels do not cover each other. The minimap starts expanded on desktop and collapsed on phones.
 - **Bottom:** a fixed action dock for context-sensitive Interact / Collect, Potion (with carried count), Mind Vision (with Mana cost), Satchel (with occupied cells), Gear and Wait. Enter / Leave appears when standing at the appropriate stairs. Keyboard shortcuts are shown on desktop.
 - **Events:** the latest event stays visible above the dock. Open Chronicle for scrollable history; it starts collapsed to keep the world clear.
 - **Touch:** a directional pad sits beside the dock in portrait and beside the action buttons in landscape. All active targets are at least 44 pixels. The layout accounts for iPhone safe areas. Touch gestures still commit once per valid tap.
@@ -209,3 +209,19 @@ Click/tap an enemy to read its traits and current preparation. Warning colors ar
 The 27-item roster adds boots, two ring slots, off-hand relics, consumables and alternate ammunition. Difficult encounters offer substantially better modifier odds than ordinary kills. Dens favor weapons/boots; crypts favor protection/relics. Start in ragged clothes; equipped gear changes your original pixel character in the world and popup. Plain equipment is affordable early; ideal combinations remain uncommon. The roughly 20-minute pacing target still needs player feedback.
 
 See [the full item table, source odds and mechanics](docs/loot-and-wardrobe.md). Choose supplies from the Satchel; use the Throw selector for stones, knives or thunderstones. Opening panels, selecting ammo and rearranging inventory remain free. No save/load is added.
+
+
+## Wandering quests (v0.11.0)
+
+Walk two tiles west from the starting campfire, stand beside **Trailwarden Iona**, and use E / Interact. Each seeded run gives her a different hunt, recovery or waystone goal in one of the four neighboring forest regions. Her reward is collected back at camp.
+
+Forest and marsh travelers offer:
+- **Beast on the Trail:** defeat a named, stronger creature and return for Trail Boots.
+- **The Stolen Keepsake:** defeat two guards, collect the keepsake, and return for an Iron Band. The keepsake is recorded in the Journal without using satchel cells.
+- **The Broken Ward:** rekindle three waystones (stand on each and Interact), defeat the awakened Briar Sentinel, and return for a Lantern Relic.
+
+Quest equipment uses the existing quest modifier odds (70% modified, with exceptional combinations uncommon). The existing frog-clearing quest also persists once accepted. Several quests may stay active together, with no timers, level gates or travel penalties. Each successful acceptance, activation, collection or claim takes one turn; browsing and Journal tracking are free. Rewards are granted once, and a full satchel leaves the exact reward claimable later.
+
+Open **Journal** to see progress, objective region, suggested biome level, and where to return. Track one quest to highlight it within the Journal; this does not reveal terrain or put unseen markers on the minimap. Quest targets have a small gold marker when visible. Quest-givers have colored clothing and inspection names.
+
+Quest persistence lasts only for the current run. Death or refreshing still ends it; no cross-session save/load has been added. Escort quests, cross-region search chains and additional templates are deferred.

@@ -1,3 +1,4 @@
+import {addQuestContent, restoreQuestRegion, questAction} from './quests.js';
 import { MERCHANT, createMerchantStock, buyFromMerchant } from './merchant.js';
 import { Game } from './game.js';
 import { Random } from './random.js';
@@ -13,13 +14,14 @@ import { ENCOUNTERS, treasure } from './encounters.js';
 const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
-    super(seed);this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
+    super(seed);this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
     Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
     Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
+    this.message('Trailwarden Iona stands west of the campfire. Speak to her for an optional expedition goal.');
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
     this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
-    this.message('Mara buys hunting trophies. Terrain and explored maps persist. Enemies and local encounters refresh on return; finish quests before leaving.');
+    this.message('Mara buys hunting trophies. Terrain and explored maps persist. Ordinary enemies return. Accepted quests and their progress stay with you for this run.');
   }
   actEnemy(enemy){actCreature(this,enemy);}
   makeEnemy(kind,p,danger,id){
@@ -47,8 +49,10 @@ export class Expedition extends Game {
       data={...generated,depth:0,start:CAMP,stairs:null,upstairs:null,cleared:false,explored:new Set(previous?.explored??[]),encounterSeen:new Set(),enemies:generated.spawns.map((e,i)=>this.makeEnemy(e.kind,e,generated.danger,i)),items:[],quest:null};
       for(const event of data.encounters){
         if(['caravan','cache'].includes(event.type))data.items.push({kind:'chest',name:ENCOUNTERS[event.type].name,...event,eventId:event.id});
-        if(event.type==='villager')data.quest={id:event.id,accepted:false,claimed:false};
+        if(event.type==='villager'){data.quest={id:worldId(rx,ry)+':'+event.id,legacy:true,kind:'frogs',title:'Clear the Frog Pond',giver:'The Mirekeeper',giverRegion:{rx,ry},region:{rx,ry},accepted:false,claimed:false,complete:false};event.quest=data.quest;}
       }
+      if(data.quest)for(const e of data.enemies)if(e.questId)e.questId=data.quest.id;
+      if(!restoreQuestRegion(this,data,previous,rx,ry))addQuestContent(this,data,rx,ry);
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
     this.activate({id,kind:'world',rx,ry,depth:0},data,spawn);
@@ -68,11 +72,13 @@ export class Expedition extends Game {
   }
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===(e.type==='villager'?1:0));}
+  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>e.type==='villager'&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
+  collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(['acceptQuest','claimQuest','activateWard'].includes(a.type))return questAction(this,a);
     if(a.type==='reach'||a.type==='throw'){
       const enemy=techniqueTarget(this,a.type,a.x,a.y);
       if(!enemy){this.message('No valid target: choose a visible enemy within a clear weapon range.');return false;}
@@ -96,7 +102,9 @@ export class Expedition extends Game {
     }
     if(a.type==='pickup'){
       const index=s.items.findIndex(i=>i.x===p.x&&i.y===p.y);if(index<0){this.message('Nothing here to collect.');return false;}
-      const ground=s.items[index],item=ground.kind==='chest'?(ground.reward??=treasure(this.rng,s.danger,ground.type??'cache')):ground;
+      const ground=s.items[index];
+      if(ground.kind==='questToken'){const q=this.quests.get(ground.questKey);if(!q?.accepted||q.claimed||q.complete){this.message('Find its owner and accept their quest first.');return false;}if(s.enemies.some(e=>e.hp>0&&e.questKey===q.id)){this.message('Defeat the keepsake’s guards first.');return false;}q.complete=true;s.items.splice(index,1);this.message('Recovered the keepsake. It is recorded in your Journal; return whenever you are ready.');return true;}
+      const item=ground.kind==='chest'?(ground.reward??=treasure(this.rng,s.danger,ground.type??'cache')):ground;
       if(item.kind==='gold')p.gold+=item.amount;
       else if(!addItem(p,item)){this.message('Satchel full or no fitting space. The item stays here.');return false;}
       s.items.splice(index,1);const event=s.encounters?.find(e=>e.id===ground.eventId);if(event)event.used=true;
@@ -132,21 +140,11 @@ export class Expedition extends Game {
       if(!Number.isInteger(a.index)||!p.inventory[a.index])return false;
       const item=p.inventory.splice(a.index,1)[0];s.items.push({...looseItem(item),x:p.x,y:p.y});this.message(`Dropped ${item.name}.`);return true;
     }
-    if(['acceptQuest','claimQuest','blessing'].includes(a.type)){
-      const event=this.activeEncounter();if(!event)return false;
-      if(a.type==='blessing'){
-        if(event.type!=='shrine'||event.used)return false;
-        if(a.choice==='heal'&&p.gold>=5&&p.hp<p.maxHp){p.gold-=5;p.hp=Math.min(p.maxHp,p.hp+12);}
-        else if(a.choice==='mana'&&p.hp>6&&p.mana<p.maxMana){p.hp-=6;p.mana=Math.min(p.maxMana,p.mana+25);}else{this.message('You cannot make that exchange right now.');return false;}
-        event.used=true;this.message('The shrine grows silent. Its blessing is spent for this visit.');return true;
-      }
-      if(event.type!=='villager'||!s.quest)return false;
-      if(a.type==='acceptQuest'&&!s.quest.accepted){s.quest.accepted=true;this.message('Quest accepted: clear the three troublesome frogs and return. Leaving resets this quest.');return true;}
-      if(a.type==='claimQuest'&&s.quest.accepted&&!s.quest.claimed&&this.questRemaining()===0){
-        if(!addItem(p,s.quest.reward??=modifyItem(reedAmulet(),this.rng,'quest'))){this.message('Make room for the 2×2 amulet before claiming.');return false;}
-        s.quest.claimed=true;this.awardExperience(6);this.message('The Mirekeeper gives you '+s.quest.reward.name+'! Inspect it in Equipment.');return true;
-      }
-      return false;
+    if(a.type==='blessing'){
+      const event=this.activeEncounter();if(event?.type!=='shrine'||event.quest||event.used)return false;
+      if(a.choice==='heal'&&p.gold>=5&&p.hp<p.maxHp){p.gold-=5;p.hp=Math.min(p.maxHp,p.hp+12);}
+      else if(a.choice==='mana'&&p.hp>6&&p.mana<p.maxMana){p.hp-=6;p.mana=Math.min(p.maxMana,p.mana+25);}else return false;
+      event.used=true;this.message('The shrine grows silent. Its blessing is spent.');return true;
     }
     if(a.type==='descend'){
       if(loc.kind==='world'&&s.map[p.y][p.x]==='D'){this.cryptReturn={rx:loc.rx,ry:loc.ry,x:p.x,y:p.y};this.visitCrypt(loc.rx,loc.ry,1);return true;}
@@ -165,7 +163,7 @@ export class Expedition extends Game {
       const moved=super.resolvePlayer(a);
       if(moved){
         if(this.atMerchant())this.message('Mara buys trophies and sells supplies. Press E or Trade.');
-        const event=this.activeEncounter();if(event)this.message(`${ENCOUNTERS[event.type].name}: ${ENCOUNTERS[event.type].description}${['villager','shrine'].includes(event.type)?' Press E or Interact.':''}`);
+        const event=this.activeEncounter();if(event)this.message(`${event.quest?(event.type==='villager'?event.quest.giver:'Broken waystone'):ENCOUNTERS[event.type].name}: ${event.quest?event.quest.title:ENCOUNTERS[event.type].description}${['villager','shrine'].includes(event.type)?' Press E or Interact.':''}`);
         if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The map is remembered; enemies return.');
         if(loc.kind==='world'&&(p.x===0||p.x===39||p.y===0||p.y===29)){
           const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0))];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended}${p.level<next.recommended?' — dangerous for you!':''}.`);
@@ -181,7 +179,8 @@ export class Expedition extends Game {
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
     const loot=ordinaryDrop(this.rng,this.state.danger,enemy.kind,Boolean(enemy.eventId));if(loot)this.state.items.push({...loot,x:enemy.x,y:enemy.y});
     if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger,'den'),x:enemy.x,y:enemy.y});}}
-    if(enemy.questId&&this.state.quest?.accepted&&this.questRemaining()===0)this.message('The frogs are cleared. Return to the Mirekeeper before leaving this region.');
+    if(enemy.questId&&this.state.quest){const q=this.state.quest;q.remaining=this.questRemaining();q.complete=q.remaining===0;if(q.complete&&q.accepted)this.message('The frogs are cleared. Return to the Mirekeeper whenever you are ready.');}
+    if(enemy.questKey){const q=this.quests.get(enemy.questKey)??this.state.encounters.find(e=>e.quest?.id===enemy.questKey)?.quest;if(q&&q.kind!=='recovery'&&!this.state.enemies.some(e=>e.hp>0&&e.questKey===q.id)){q.complete=true;if(q.accepted)this.message(q.title+': objective complete. Return for your reward.');}}
     if(enemy.kind==='guardian'&&!this.state.cleared){this.state.cleared=true;this.state.cryptsCleared++;this.state.items.push({kind:'chest',name:'Warden’s reliquary',reward:treasure(this.rng,this.state.danger,'boss'),x:enemy.x,y:enemy.y});this.message('Crypt cleared. A rare equipment reliquary remains.');}
   }
 }
