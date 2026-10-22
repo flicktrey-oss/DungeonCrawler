@@ -1,7 +1,7 @@
 import {creatureTraits} from './game/enemy-actions.js';
 import {key} from './game/dungeon.js';
 import {attack,defense} from './game/items.js';
-const races={rat:'Beast · Rat',beetle:'Insect · Beetle',pondFrog:'Amphibian · Frog',frog:'Amphibian · Frog',elite:'Beast · Boar',goat:'Beast · Ram',ashling:'Elemental · Ashborn',wolf:'Beast · Wolf',boar:'Beast · Boar',leech:'Worm · Leech',guardian:'Undead · Warden',slime:'Slime',skeleton:'Undead · Skeleton',goblin:'Goblin',boss:'Undead · Ash Warden'};
+const races={rabbit:'Beast · Rabbit',rat:'Beast · Rat',beetle:'Insect · Beetle',pondFrog:'Amphibian · Frog',frog:'Amphibian · Frog',elite:'Beast · Boar',goat:'Beast · Ram',ashling:'Elemental · Ashborn',wolf:'Beast · Wolf',boar:'Beast · Boar',leech:'Worm · Leech',guardian:'Undead · Warden',slime:'Slime',skeleton:'Undead · Skeleton',goblin:'Goblin',boss:'Undead · Ash Warden'};
 export function characterAt(game,x,y){
  const s=game.state;
  if(!s.visible.has(key(x,y)))return null;

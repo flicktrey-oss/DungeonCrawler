@@ -21,7 +21,7 @@ Ordinary item rolls use the weights below out of 115. A roll below its minimum a
 | Weathered buckler | offhand | 6 | 1 | Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells. |
 | Reed Shield | offhand | 3 | 3 | 55% block against ranged attacks, 15% against melee. No action needed. |
 | Reedheart amulet | amulet | 3 | 3 | +1 defense while equipped. A villager’s gratitude, bound in silver reeds. |
-| Amber Moth Pendant | amulet | 2 | 6 | +2 Mana recovered on movement/melee. |
+| Amber Moth Pendant | amulet | 2 | 6 | +0.2 Mana recovered on each completed turn. |
 | Wolf-Tooth Charm | amulet | 2 | 6 | +1 melee damage against an enemy with no living ally within 2 tiles. |
 | Bellflower Charm | amulet | 1 | 6 | Consumable healing is increased by 25%. |
 | Balanced Throwing Knives | knife | 1 | 3 | Throw within 4 tiles for 4 damage before defense. 50% recovery chance. Stacks of 9. |
@@ -33,7 +33,7 @@ Ordinary item rolls use the weights below out of 115. A roll below its minimum a
 | Iron Band | ring | 3 | 1 | +1 defense against telegraphed special attacks; no ordinary armor bonus. |
 | Hunter’s Ring | ring | 2 | 3 | +1 attack. |
 | Moonstone Ring | ring | 2 | 3 | +20 maximum Mana. Equipping does not restore Mana. |
-| Lantern Relic | offhand | 1 | 2 | Off-hand relic: +1 sight and +2 Mana recovered on movement/melee. Replaces a shield. |
+| Lantern Relic | offhand | 1 | 2 | Off-hand relic: +1 sight and +0.2 Mana recovered on each completed turn. Replaces a shield. |
 | Waystone Focus | offhand | 1 | 3 | Off-hand relic: +20 maximum Mana; Mind Vision lasts one additional turn. Replaces a shield. |
 
 ## Sources
@@ -53,14 +53,16 @@ These are conditional odds for equipment, not the chance that an enemy drops a p
 
 ## Equipment and use
 
-Seven slots: main hand, off hand, body, boots, neck, ring 1 and ring 2. Two rings may share a type and stack. Body armor and the Reedheart amulet supply ordinary protection; boots emphasize avoiding detection, while Iron Bands specialize in protection against telegraphed attacks. The equipment popup lets you select which ring slot to replace. Inventory Equip fills an empty ring slot first. Failed swaps/unequips preserve gear and take no turn.
+Seven slots: main hand, off hand, body, boots, neck, ring 1 and ring 2. Two rings may share a type and stack. Body armor and the Reedheart amulet supply ordinary protection; boots emphasize avoiding detection, while Iron Bands specialize in protection against telegraphed attacks. The equipment popup lets you select which ring slot to replace. Inventory Equip fills an empty ring slot first. Equipped items remain in the satchel and keep their full footprint, marked with a green check. Equipping and unequipping only change the character slot; they never remove, add or duplicate carried gear. Unequip before selling, storing or dropping.
 
 Ordinary defense has diminishing returns after 3 raw points: every two further raw defense points grant one effective DEF. Raw totals 3, 4, 5, 6, 7 give effective DEF 3, 3, 4, 4, 5. The HUD shows effective ordinary defense; Iron Band/Warding protection applies only against special attacks and is additional. Corrosion subtracts one effective DEF after this calculation. Gear modifiers still improve protection, but filling every slot no longer guarantees one-damage incoming hits.
 
-Relics compete with shields in the off hand. Mana-capacity equipment never restores Mana on equip; removal clamps current Mana to the lower cap. New runs have 8 gold: a plain shortsword or boots are immediately affordable. Camp stock is finite per run.
+Relics compete with shields in the off hand. Mana-capacity equipment grants no refill on equip; the normal turn regeneration still applies; removal clamps current Mana to the lower cap. New runs have 8 gold: a plain shortsword or boots are immediately affordable. Camp stock is finite per run.
 
 The shared original pixel silhouette appears in the world, HUD, inspection and equipment popup. It starts in a patched brown tunic without a weapon. Armor, boots, weapon type, shield/relic, necklace and both rings add visible details. Appearance is categorical rather than a unique drawing for every modifier.
 
 Use new consumables from the satchel. Rations heal over four turns, interrupted by damage. Sap corrosion lowers defense until it expires or is cleansed. Smoke blocks distant pursuit/special attacks for three phases, but adjacent enemies remain dangerous. Last-Light prevents one fatal hit and shatters; later attacks in that same turn can still kill you.
 
 Throwing uses the existing T quick slot. Choose ammunition in the targeting selector, or choose a specific stack in the satchel. Thunderstones interrupt one action; knives deal more damage than stones. Selection/cancellation stays free. Every successful use/equip/unequip/throw takes one turn.
+
+Base Mana regeneration is 0.3 each completed turn; Lantern Relic and Amber Moth add 0.2 each. Meat drops are separate from the weighted item table: rabbits and both frog types have a 35% raw-meat chance and no other ordinary drops. Raw meat cooks at the starting campfire into 10-HP meals, stacking to nine per cell.

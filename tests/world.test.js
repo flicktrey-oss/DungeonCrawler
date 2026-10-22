@@ -42,7 +42,7 @@ describe('expedition transitions and persistence', () => {
     const g = new Expedition(8), p = g.state.player; p.gold = 91; p.mana = 40; p.x = 39; p.y = 15;
     const bag = structuredClone(p.inventory);
     expect(g.action({ type: 'move', dx: 1, dy: 0 })).toBe(true);
-    expect(g.location.rx).toBe(1); expect(p.x).toBe(0); expect(p.y).toBe(15); expect(p.gold).toBe(91); expect(p.mana).toBe(45); expect(p.inventory).toEqual(bag);
+    expect(g.location.rx).toBe(1); expect(p.x).toBe(0); expect(p.y).toBe(15); expect(p.gold).toBe(91); expect(p.mana).toBe(40.3); expect(p.inventory).toEqual(bag);
     expect(g.state.enemies.every(e => e.actions === 0)).toBe(true);
     g.action({ type: 'move', dx: -1, dy: 0 }); expect(g.location.rx).toBe(0); expect(p.x).toBe(39);
   });
@@ -65,7 +65,7 @@ describe('expedition transitions and persistence', () => {
   it('returns from a crypt to remembered, safely reachable surface while preserving stats and bag', () => {
     const g=new Expedition(6);descend(g);expect(g.location.kind).toBe('crypt');expect(g.state.enemies.every(e=>e.actions===0)).toBe(true);
     g.state.player.mana=30;const bag=structuredClone(g.state.player.inventory),hp=g.state.player.hp;ascend(g);
-    expect(g.location.kind).toBe('world');expect(g.state.visit).toBe(1);expect(walkable(g.state.map,g.state.player.x,g.state.player.y)).toBe(true);expect(g.state.player.mana).toBe(30);expect(g.state.player.inventory).toEqual(bag);expect(g.state.player.hp).toBe(hp);
+    expect(g.location.kind).toBe('world');expect(g.state.visit).toBe(1);expect(walkable(g.state.map,g.state.player.x,g.state.player.y)).toBe(true);expect(g.state.player.mana).toBe(30.3);expect(g.state.player.inventory).toEqual(bag);expect(g.state.player.hp).toBe(hp);
   });
   it('connects both persistent depths and a tougher guardian that does not end the endless run', () => {
     const g = new Expedition(17); descend(g); const down = { ...g.state.stairs }; Object.assign(g.state.player, down);

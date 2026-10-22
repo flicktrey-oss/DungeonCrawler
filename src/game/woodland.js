@@ -35,7 +35,7 @@ export function woodlandAction(g,a){
  if(a.choice==='trophy'&&index<0){g.message('You have no hunting trophy to exchange.');return false;}
  if(!['gold','trophy'].includes(a.choice))return false;
  // Fit against a copy so a trophy exchange can use the cell it frees.
- const inventory=p.inventory.filter((_,i)=>a.choice!=='trophy'||i!==index).map(i=>({...i}));
+ const inventory=p.inventory.filter((_,i)=>a.choice!=='trophy'||i!==index);
  if(!addItem({inventory},potion())){g.message('Make room for the tonic first. Nothing was spent.');return false;}
  p.inventory=inventory;if(a.choice==='gold')p.gold-=6;g.message('Nessa gives you an Ember tonic. Her traveling stock is now spent.');
  }else if(event.kind==='traveler'){

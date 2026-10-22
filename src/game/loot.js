@@ -41,6 +41,7 @@ export function itemReward(rng,danger,source='ordinary'){
  return modifyItem({...entry.create(),id:entry.id},rng,source);
 }
 export function ordinaryDrop(rng,danger,kind,elite=false){
+ if(['rabbit','frog','pondFrog','toad'].includes(kind))return rng.next()<.35?I.rawMeat():null;
  const roll=rng.next(),itemChance=elite ? .24 : .08;
  if(roll<.25)return {kind:'gold',name:'Dropped coins',amount:rng.int(2,4)};
  if(roll<.42)return I.trophy(kind==='pondFrog'?'frog':kind);

@@ -8,7 +8,7 @@ import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeA
 import { actCreature } from './enemy-actions.js';
 import { techniqueTarget } from './techniques.js';
 import { enemyTypes } from './combat.js';
-import { EQUIPMENT_SLOTS, slotsFor, recalculateGear, healAmount, potion, projectileStack, reedAmulet, threshold, attack, throwingStones, salePrice } from './items.js';
+import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, slotsFor, recalculateGear, healAmount, potion, projectileStack, reedAmulet, threshold, attack, throwingStones, salePrice } from './items.js';
 import { ordinaryDrop, modifyItem } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
@@ -40,7 +40,7 @@ export class Expedition extends Game {
     let spawn=null;
     for(let r=0;r<WIDTH+HEIGHT&&!spawn;r++)for(let y=0;y<HEIGHT&&!spawn;y++)for(let x=0;x<WIDTH;x++)if(Math.abs(x-preferred.x)+Math.abs(y-preferred.y)===r&&walkable(data.map,x,y)&&!occupied.has(key(x,y))){spawn={x,y};break;}
     if(!spawn)throw Error('No safe arrival tile');
-    Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.transition=true;this.state.enemyEffects=[];this.refresh();
+    Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.detectCreaturesUntil=0;this.state.transition=true;this.state.enemyEffects=[];this.refresh();
   }
   visitWorld(rx,ry,spawn=CAMP){
     const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home?this.regions.get(id):null;
@@ -74,6 +74,7 @@ export class Expedition extends Game {
   }
   borderPreview(){const p=this.state.player,l=this.location;if(l.kind!=='world')return null;const dx=p.x===0?-1:p.x===39?1:0,dy=p.y===0?-1:p.y===29?1:0;if(!dx&&!dy)return null;return regionInfo(this.state.seed,l.rx+dx,l.ry+dy);}
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
+  atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
   activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
@@ -81,6 +82,16 @@ export class Expedition extends Game {
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='cook'){
+      if(!this.atCampfire()){this.message('Stand at the Lantern Camp fire to cook meat.');return false;}
+      const index=p.inventory.findIndex(i=>i.kind==='rawMeat');if(index<0){this.message('No raw meat to cook.');return false;}
+      const trial={inventory:p.inventory.map(i=>({...i}))};if(--trial.inventory[index].quantity===0)trial.inventory.splice(index,1);
+      if(!addItem(trial,cookedMeat())){this.message('Make room for the cooked meat first.');return false;}
+      // Commit only after the output fits; keep all equipped references intact.
+      if(--p.inventory[index].quantity===0)p.inventory.splice(index,1);addItem(p,cookedMeat());
+      this.message('Cooked one Campfire meat. It restores 10 health.');return true;
+    }
+    if(['sell','store','drop'].includes(a.type)&&equippedSlot(p,p.inventory[a.index])){this.message('Unequip that item before selling, storing or dropping it.');return false;}
     if(a.type==='woodland')return woodlandAction(this,a);
     if(['acceptQuest','claimQuest','activateWard'].includes(a.type))return questAction(this,a);
     if(a.type==='reach'||a.type==='throw'){
@@ -122,6 +133,7 @@ export class Expedition extends Game {
     if(a.type==='use'){
       const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item)return false;
       if(item.kind==='potion')return this.resolvePlayer({type:'potion',index:a.index});
+      if(item.kind==='cookedMeat'&&p.hp<p.maxHp){const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+healAmount(p,10));this.message('Campfire meat restores '+(p.hp-before)+' health.');if(--item.quantity===0)p.inventory.splice(a.index,1);return true;}
       if(item.kind==='mana'&&p.mana<p.maxMana)p.mana=Math.min(p.maxMana,p.mana+35);
       else if(item.kind==='ration'&&p.hp<p.maxHp&&!p.rationTurns)p.rationTurns=4;
       else if(item.kind==='cleanse'&&p.corrosion>0)p.corrosion=0;
@@ -131,14 +143,13 @@ export class Expedition extends Game {
     }
     if(a.type==='unequip'){
       if(!EQUIPMENT_SLOTS.includes(a.slot)||!p[a.slot])return false;
-      const item=p[a.slot];if(!addItem(p,item)){this.message('No fitting space in your satchel. The item stays equipped.');return false;}
-      p[a.slot]=null;recalculateGear(p);this.message(`Unequipped ${item.name}.`);return true;
+      const item=p[a.slot];p[a.slot]=null;recalculateGear(p);this.message(`Unequipped ${item.name}.`);return true;
     }
     if(a.type==='equip'){
       const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item||!slotsFor(item).length)return false;
       const slot=a.slot??slotsFor(item).find(slot=>!p[slot])??slotsFor(item)[0];if(!slotsFor(item).includes(slot))return false;
-      const inventory=p.inventory.filter((_,i)=>i!==a.index),old=p[slot];if(old&&!addItem({inventory},old)){this.message('No room for the equipment you would remove.');return false;}
-      p.inventory=inventory;p[slot]=looseItem(item);recalculateGear(p);this.message(`Equipped ${item.name}.`);return true;
+      if(equippedSlot(p,item)){this.message('That item is already equipped.');return false;}
+      p[slot]=item;recalculateGear(p);this.message(`Equipped ${item.name}.`);return true;
     }
     if(a.type==='drop'){
       if(!Number.isInteger(a.index)||!p.inventory[a.index])return false;

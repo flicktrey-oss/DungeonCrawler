@@ -23,7 +23,7 @@ export const trailSpear=()=>({kind:'weapon',name:'Trail spear',weaponType:'spear
 export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,blockChance:.35,size:[3,3],sellValue:5,description:'Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells.'});
 export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 2 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
 export const stoneCount=p=>p.inventory.filter(i=>i.kind==='stone').reduce((n,i)=>n+i.quantity,0);
-export const salePrice=item=>['stone','knife','thunder'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:1):item.sellValue??(item.kind==='potion'?3:1);
+export const salePrice=item=>['stone','knife','thunder','rawMeat','cookedMeat'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:item.sellValue??1):item.sellValue??(item.kind==='potion'?3:1);
 
 export const EQUIPMENT_SLOTS=['weapon','offhand','armor','boots','amulet','ring1','ring2'];
 export const equipped=p=>EQUIPMENT_SLOTS.map(slot=>p[slot]).filter(Boolean);
@@ -32,7 +32,10 @@ export const isEquipment=item=>['weapon','offhand','armor','boots','amulet','rin
 export const slotsFor=item=>item?.kind==='ring'?['ring1','ring2']:isEquipment(item)?[item.kind]:[];
 export function recalculateGear(p){p.maxMana=100+gearBonus(p,'maxManaBonus');p.mana=Math.min(p.mana,p.maxMana);}
 export const healAmount=(p,base)=>Math.ceil(base*(1+gearBonus(p,'healBonus')));
-export const recovery=p=>5+gearBonus(p,'manaBonus');
+export const recovery=p=>.3+gearBonus(p,'manaBonus');
+export const equippedSlot=(p,item)=>item?EQUIPMENT_SLOTS.find(slot=>p[slot]===item):undefined;
+export const rawMeat=(quantity=1)=>({kind:'rawMeat',name:'Raw meat',quantity,size:[1,1],sellValue:1,description:'Cook at the Lantern Camp fire. Cannot be eaten raw. Stacks of 9.'});
+export const cookedMeat=(quantity=1)=>({kind:'cookedMeat',name:'Campfire meat',quantity,size:[1,1],sellValue:2,description:'Restores 10 health. Eating costs one turn. Stacks of 9.'});
 export const shieldChance=(p,ranged=false)=>Math.min(.6,(ranged?(p.offhand?.rangedBlock??p.offhand?.blockChance??0):(p.offhand?.blockChance??0))+gearBonus(p,'blockBonus'));
 export const isProjectile=item=>['stone','knife','thunder'].includes(item?.kind);
 export const projectileStack=(p,index)=>index===undefined?p.inventory.find(isProjectile):Number.isInteger(index)&&isProjectile(p.inventory[index])?p.inventory[index]:null;
@@ -46,9 +49,9 @@ export const softstepBoots=()=>gear('softstepBoots','boots','Softstep Shoes','En
 export const ironRing=()=>gear('ironRing','ring','Iron Band','+1 defense against telegraphed special attacks. No protection against ordinary strikes.',{wardedBonus:1,size:[1,1],appearance:0xb4c4ca});
 export const huntersRing=()=>gear('huntersRing','ring','Hunter’s Ring','+1 attack.',{attackBonus:1,size:[1,1],appearance:0xd5a66c});
 export const moonRing=()=>gear('moonRing','ring','Moonstone Ring','+20 maximum Mana. Equipping does not restore Mana.',{maxManaBonus:20,size:[1,1],appearance:0x8eb6eb});
-export const lanternRelic=()=>gear('lanternRelic','offhand','Lantern Relic','Off-hand relic: +1 sight and +2 Mana recovered on movement/melee. Replaces a shield.',{relic:true,sightBonus:1,manaBonus:2,appearance:0x8fe2cb});
+export const lanternRelic=()=>gear('lanternRelic','offhand','Lantern Relic','Off-hand relic: +1 sight and +0.2 Mana recovered per turn. Replaces a shield.',{relic:true,sightBonus:1,manaBonus:.2,appearance:0x8fe2cb});
 export const waystoneFocus=()=>gear('waystoneFocus','offhand','Waystone Focus','Off-hand relic: +20 maximum Mana; Mind Vision lasts one additional turn. Replaces a shield.',{relic:true,maxManaBonus:20,visionBonus:1,appearance:0xbab0ec});
-export const amberMoth=()=>gear('amberMoth','amulet','Amber Moth Pendant','+2 Mana recovered on movement/melee.',{manaBonus:2,appearance:0xe4b96f});
+export const amberMoth=()=>gear('amberMoth','amulet','Amber Moth Pendant','+0.2 Mana recovered per turn.',{manaBonus:.2,appearance:0xe4b96f});
 export const wolfCharm=()=>gear('wolfCharm','amulet','Wolf-Tooth Charm','+1 melee damage against an enemy with no living ally within 2 tiles.',{isolatedBonus:1});
 export const bellflower=()=>gear('bellflower','amulet','Bellflower Charm','Consumable healing is increased by 25%.',{healBonus:.25,appearance:0xdfa8cd});
 export const lastLight=()=>gear('lastLight','amulet','Last-Light Medallion','Prevents one fatal hit, leaving 1 HP, then permanently shatters. Later hits can still kill you.',{lastLight:true,appearance:0xffdb7a,sellValue:18});
@@ -58,4 +61,4 @@ export const moonwell=()=>({id:'moonwell',kind:'mana',name:'Moonwell Sip',sellVa
 export const smokeFlask=()=>({id:'smoke',kind:'smoke',name:'Smoke Flask',sellValue:4,description:'For 3 enemy phases, enemies beyond adjacent range cannot pursue or fire at you. Adjacent enemies still attack.'});
 export const throwingKnives=(quantity=2)=>({id:'knives',kind:'knife',name:'Balanced Throwing Knives',quantity,size:[1,1],projectileDamage:4,sellValue:6,description:'Throw within 4 tiles for 4 damage before defense. 50% recovery chance. Stacks of 9.'});
 export const thunderstone=(quantity=1)=>({id:'thunder',kind:'thunder',name:'Thunderstone',quantity,size:[1,1],projectileDamage:0,description:'Throw within 4 tiles to interrupt an enemy and make it lose its next action. No damage; consumed on impact.'});
-export const consumableKinds=['potion','ration','cleanse','mana','smoke'];
+export const consumableKinds=['potion','ration','cleanse','mana','smoke','cookedMeat'];

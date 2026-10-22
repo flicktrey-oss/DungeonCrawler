@@ -5,6 +5,7 @@ import {pathStep} from './ai.js';
 import {clearShot} from './techniques.js';
 
 export const creatureTraits={
+ rabbit:'Quick bite · adjacent melee. May drop raw meat; no coins or trophies.',
  pondFrog:'Tongue lash · range 2 in a cardinal line. Winds up for one turn; sidestep the pink tiles.',
  frog:'Tongue lash · range 2 in a cardinal line. Winds up for one turn; sidestep the pink tiles.',
  beetle:'Sap spit · range 3. Marks your tile, then fires next turn. Move off the amber cross. Bites when adjacent.',

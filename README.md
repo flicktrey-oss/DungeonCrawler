@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.14.0 — Click to explore** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.15.0 — Campfire provisions** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -25,11 +25,12 @@ Open Vite’s printed address. Existing checkouts can skip cloning. In the restr
 | Desktop | Touch | Action |
 | --- | --- | --- |
 | WASD / arrows | Direction pad | One tile; bump enemies to attack |
-| E | Collect / Trade / Interact | Loot, camp storage, merchant, or local encounter |
+| E | Collect / Trade / Interact / Cook | Loot, camp storage, merchant, encounter, or campfire |
 | Enter / `>` | Enter ↓ | Enter a discovered crypt / descend on stairs |
 | Q / `<` | Leave ↑ | Retreat while on an upward stair |
 | H | Potion | Drink a tonic for up to 16 health |
 | M | Vision · 25 | Reveal through walls for three turns, costing 25 Mana |
+| G | Map → Local → Detect Creatures | Level 3: mark creatures for two turns, costing 25 Mana |
 | Period | Wait | Spend one turn |
 | I | Satchel | Arrange, rotate, use, equip, or drop items |
 | Esc | Pause / Help | Instructions / pause |
@@ -105,7 +106,7 @@ Capacity depends on contiguous shape, not just the number of free cells. Pickups
 
 Local and World tabs switch the same minimap canvas. Local shows explored tiles and discovered features. World shows visited regions, biome colors, camp, your region, discovered entrances, and accepted quest destinations (unvisited destinations stay neutral). Minimize/restore with Map − / +; switching costs no turns.
 
-Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Moving/melee restore 5 Mana; waiting and casting do not. Transitions end the effect. Revealed terrain stays mapped for the rest of the run, including when you leave a region.
+Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Every completed turn restores 0.3 Mana, including waiting and casting; invalid actions and idle time restore none. Recovery bonuses on the Lantern Relic and Amber Moth add 0.2 each. Detect Creatures unlocks at level 3: press G or use its button in the Map panel to spend 25 Mana and mark all living creatures on the current local minimap for the casting turn plus one further turn, without revealing terrain or hidden actors. Transitions end the effect. Revealed terrain stays mapped for the rest of the run, including when you leave a region.
 
 **There is no save system.** Death ends the run, including camp storage. Refreshing, closing the page or Safari unloading it also loses the run. The slower progression is intended for longer runs, not cross-session persistence yet. No construction, crafting, hunger, gathering, farming systems, multiplayer, or paid services were added.
 
@@ -122,7 +123,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 157 simulation tests and 45 Chromium browser tests pass for v0.13.0. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation is run with `npm test`, `npm run test:browser`, and `npm run build`. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -136,7 +137,7 @@ GitHub Pages uses **Source: GitHub Actions**, with `feature/playable-roguelike` 
 
 Open **I → Equipment**, or choose **Gear** in the bottom dock (the portrait at upper left opens equipment too). Satchel and Equipment are separate tabs in the same popup. A character portrait shows your equipped weapon in hand, buckler in the off hand, armor on the torso, and an amulet at the neck. Tap a slot to inspect its item and bonus, then use its Unequip button. Carried equipment is listed below the portrait with Equip buttons. The same character changes appearance in the world, HUD and inspection. Boots and two ring slots are included; off-hand relics replace shields. Select either ring slot before equipping to choose which ring to replace.
 
-Equipped items leave the satchel because they occupy the character’s main-hand, off-hand, body or neck slot—not because they were discarded. Unequipping places the item back into a fitting bag space, including rotation when needed. A full or fragmented bag rejects unequipping without losing the item or spending a turn. Equipment changes update attack/defense and consume one turn; looking and switching tabs are free. If enemies are nearby, they act after each successful equipment change.
+Equipped items remain in their satchel cells with a green highlight and check mark. They still count toward the 100-cell capacity. Unequipping clears the equipment slot without adding another copy or changing the bag footprint, even when the bag is full. One item cannot fill two slots. Unequip before dropping, selling or storing an item. Equipment changes update attack/defense and consume one turn; looking and switching tabs are free. If enemies are nearby, they act after each successful equipment change.
 
 Touch actions commit once through the native click after a valid release, preventing a compatibility click from immediately activating newly opened dialogs. Dragged, canceled and ambiguous two-finger gestures spend no turns. Keyboard and assistive activation are supported. The desktop and phone browser suites complete a real frog quest, equip its amulet, verify the neck icon and defense bonus, then unequip and verify that the bag item returns.
 
@@ -182,7 +183,7 @@ Use the **Reach** and **Throw** quick slots beside the action dock; on desktop *
 
 Selecting Reach/Throw highlights legal enemies. Click/tap a highlighted creature or select its named target button. A valid attack spends exactly one turn; invalid targets, opening the chooser, Cancel and Escape are free. Movement is blocked during targeting. Walls, trees, rocks, NPCs and intervening living enemies block the shot; diagonal throws cannot cut solid corners. Mind Vision does not let weapons strike through walls. Targeting closes after a successful attack.
 
-An equipped Weathered buckler rolls a seeded **35% block chance per incoming attack**. A block prevents all damage from that hit; an unblocked hit uses normal armor/defense. Attacking, moving or using items does not disable the shield. Unequipping immediately removes the chance. Blocks flash the portrait and show “Blocked!” in the event log. There is no Brace action or B shortcut. Moving/bump attacks and spear attacks restore 5 Mana (increased by relevant relics/charms); throwing does not.
+An equipped Weathered buckler rolls a seeded **35% block chance per incoming attack**. A block prevents all damage from that hit; an unblocked hit uses normal armor/defense. Attacking, moving or using items does not disable the shield. Unequipping immediately removes the chance. Blocks flash the portrait and show “Blocked!” in the event log. There is no Brace action or B shortcut. Every completed turn restores 0.3 Mana; relevant relics/charms add 0.2 each.
 
 Stones that survive land on the target tile (even if the creature dies); collect them after the fight. Pickups and purchases merge stacks up to nine, preserving both items and gold if overflow cannot fit. Selling a bundle pays one gold per remaining stone. Basic gear can appear rarely on enemies and in early coffers, while higher-tier rewards remain in dangerous areas. Later releases add hatchets, boots and two ring slots; see the current item table for their effects. Helmets and gloves remain deferred.
 
@@ -266,3 +267,12 @@ Items in the 10×10 satchel use emoji artwork: swords, spears, shields, boots, r
 On desktop, click a visible empty tile to walk there using explored paths. Click a loose item to walk over and collect it, a friendly person to approach and open their dialogue, or a camp, shrine or crypt entrance to use it on arrival. Walking takes one turn per tile; collecting an item takes another turn. Dialogue still lets you choose whether to buy or accept anything. Mint dots mark the remaining route.
 
 Travel stops for nearby threats, newly revealed enemies, attacks (including blocked attacks), blocked paths and region changes. Escape, manual input, opening a menu or leaving the browser tab also cancels it. It never automatically attacks. Click a creature to inspect it; Shift-click a friendly person to inspect instead of approaching. Phone taps retain character inspection and ability targeting; use the directional touch controls to move.
+
+## Campfire provisions (v0.15.0)
+
+- Equipment keeps occupying the same satchel cells while worn. Green tiles with a check mark identify equipped items. Select one to unequip it, or use the Equipment tab.
+- Bramble rabbits inhabit forests. Rabbits, Mire frogs and Troublesome frogs drop one raw meat with a 35% chance; otherwise nothing. They no longer drop coins, trophies or random equipment. Quest rewards remain separate.
+- The **F campfire** is one tile south of the starting tent. Stand on it and use **E / Cook**, or click it on desktop. Cook one raw meat per turn. Raw and cooked meat each stack to nine per 1×1 cell. Cooking fails without consuming ingredients if the result cannot fit.
+- Select **Campfire meat 🍖** in the Satchel and use it to restore 10 HP (tonics restore 16). Eating uses one piece and one turn; full health does not waste food. Raw meat must be cooked first.
+- Base Mana regeneration is **0.3 per completed turn**, including waiting. Ability costs are deducted before that turn’s regeneration; for example a 25-Mana cast from 100 leaves 75.3 Mana.
+- **Detect Creatures** unlocks at level 3. Press **G** or open **Map → Local → Detect Creatures**. It costs 25 Mana and marks living creatures in pink for two turns, including the casting turn. It reveals neither terrain nor creatures on the main canvas. Changing regions ends detection.

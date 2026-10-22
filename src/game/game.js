@@ -13,7 +13,7 @@ export class Game {
   message(text){this.state.log.push(text);if(this.state.log.length>80)this.state.log.shift();}
   loadFloor(){
     const s=this.state,d=generateDungeon(this.rng); Object.assign(s,d);Object.assign(s.player,d.start);
-    s.enemies=[];s.items=[];s.explored=new Set();s.visible=new Set();s.mindVisionUntil=0;
+    s.enemies=[];s.items=[];s.explored=new Set();s.visible=new Set();s.mindVisionUntil=0;s.detectCreaturesUntil=0;
     const used=new Set([key(d.start.x,d.start.y),key(d.stairs.x,d.stairs.y)]), tiles=[];
     for(const room of d.rooms.slice(1)) for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(!used.has(key(x,y)))tiles.push({x,y});
     const spot=()=>{while(tiles.length){const i=this.rng.int(0,tiles.length-1),p=tiles.splice(i,1)[0],k=key(p.x,p.y);if(!used.has(k)){used.add(k);return p;}}throw new Error('Dungeon has no free spawn tiles');};
@@ -35,8 +35,13 @@ export class Game {
       else {p.x=x;p.y=y;const item=s.items.find(i=>i.x===x&&i.y===y);if(item)this.message(`${item.name} here. Press E to collect or open.`);if(s.map[y][x]==='>')this.message(s.floor<5?'Stairs down. Press Enter to descend.':'The final stair is sealed. Defeat the Ash Warden.');}
       return true;
     }
+    if(a.type==='detectCreatures'){
+      if(p.level<3){this.message('Detect Creatures unlocks at level 3.');return false;}
+      if(p.mana<25){this.message('Detect Creatures needs 25 Mana.');return false;}
+      p.mana-=25;s.detectCreaturesUntil=s.turn+2;this.message('Detect Creatures: all living creatures on this local minimap for 2 turns.');return true;
+    }
     if(a.type==='mindVision'){
-      if(p.mana<25){this.message('Mind Vision needs 25 Mana. Move or fight to recharge.');return false;}
+      if(p.mana<25){this.message('Mind Vision needs 25 Mana. Take turns to recharge.');return false;}
       p.mana-=25;s.mindVisionUntil=s.turn+3+gearBonus(p,'visionBonus');this.message('Mind Vision pierces nearby walls for '+(3+gearBonus(p,'visionBonus'))+' turns. Terrain remains mapped.');return true;
     }
     if(a.type==='wait'){this.message('You listen to the darkness.');return true;}
@@ -76,7 +81,7 @@ export class Game {
     const s=this.state,p=s.player;
     if(shieldChance(p,options.ranged)>0&&this.rng.next()<shieldChance(p,options.ranged)){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand?.name??'ward'} stops ${e.name}'s attack.`);return;}
     const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${verb} for ${hit}.`);
-    if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');p.amulet=null;p.hp=1;recalculateGear(p);}
+    if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');const index=p.inventory.indexOf(p.amulet);if(index>=0)p.inventory.splice(index,1);p.amulet=null;p.hp=1;recalculateGear(p);}
     if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return hit;
   }
   actEnemy(e){

@@ -8,7 +8,7 @@ export class TurnManager {
     try {
       if(!g.resolvePlayer(action)) return false;
       g.state.enemyEffects=[];
-      if(action.type==='move'||action.type==='reach'){const p=g.state.player;p.mana=Math.min(p.maxMana,p.mana+recovery(p));}
+      {const p=g.state.player;p.mana=Math.min(p.maxMana,Math.round((p.mana+recovery(p))*10)/10);}
       g.state.turn++;
       // Snapshot the survivors after the player action; newly loaded floors also act once.
       if(g.state.status==='playing'&&!g.state.transition) for(const enemy of [...g.state.enemies]) {

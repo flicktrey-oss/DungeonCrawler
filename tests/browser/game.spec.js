@@ -17,10 +17,10 @@ test('renders and enforces turn-based keyboard, idle, pause and inventory behavi
 test('Mind Vision button and shortcut spend Mana, reject overspending and respect pause',async({page})=>{
  await page.goto('/');await page.getByRole('button',{name:'New Game',exact:true}).click();
  const mana=page.locator('.mana span'),turn=page.locator('.floor'),ability=page.getByRole('button',{name:'Vision · 25',exact:true});
- await ability.click();await expect(mana).toHaveText('Mana 75 / 100');await expect(turn).toContainText('TURN 1');await expect(page.getByText('Mind Vision active · 3 turns',{exact:true})).toBeVisible();
- await page.keyboard.press('Escape');await page.keyboard.press('m');await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(mana).toHaveText('Mana 75 / 100');
- for(let i=0;i<3;i++)await page.keyboard.press('m');await expect(mana).toHaveText('Mana 0 / 100');await expect(ability).toBeDisabled();await expect(turn).toContainText('TURN 4');
- await page.keyboard.press('m');await expect(turn).toContainText('TURN 4');await expect(mana).toHaveText('Mana 0 / 100');
+ await ability.click();await expect(mana).toHaveText('Mana 75.3 / 100');await expect(turn).toContainText('TURN 1');await expect(page.getByText('Mind Vision active · 3 turns',{exact:true})).toBeVisible();
+ await page.keyboard.press('Escape');await page.keyboard.press('m');await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(mana).toHaveText('Mana 75.3 / 100');
+ for(let i=0;i<3;i++)await page.keyboard.press('m');await expect(mana).toHaveText('Mana 1.2 / 100');await expect(ability).toBeDisabled();await expect(turn).toContainText('TURN 4');
+ await page.keyboard.press('m');await expect(turn).toContainText('TURN 4');await expect(mana).toHaveText('Mana 1.2 / 100');
 });
 
 test('explores the overworld, stores supplies, enters a discovered crypt and retreats to a remembered region', async ({page}) => {

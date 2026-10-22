@@ -1,5 +1,5 @@
 import { adventurerSvg } from './render/adventurer.js';
-import { attack, defense, isEquipment, slotsFor, shieldChance, gearBonus, rawDefense } from './game/items.js';
+import { attack, defense, isEquipment, slotsFor, shieldChance, gearBonus, rawDefense, equippedSlot } from './game/items.js';
 const slots={weapon:{label:'Main hand',icon:'⚔'},armor:{label:'Body',icon:'▣'},amulet:{label:'Neck',icon:'◇'},offhand:{label:'Off hand',icon:'⬡'},boots:{label:'Boots',icon:'♧'},ring1:{label:'Ring 1',icon:'○'},ring2:{label:'Ring 2',icon:'○'}};
 export function mountEquipment(container,game,perform,initialSlot='weapon') {
   let selected=initialSlot;
@@ -22,7 +22,7 @@ export function mountEquipment(container,game,perform,initialSlot='weapon') {
     detail.append(h,description);
     const unequip=document.createElement('button');unequip.textContent=`Unequip ${item?.name??slots[selected].label}`;unequip.disabled=!item;unequip.onclick=()=>perform({type:'unequip',slot:selected});detail.append(unequip);container.append(detail);
     const heading=document.createElement('h3');heading.textContent='Equip from satchel';container.append(heading);let count=0;
-    p.inventory.forEach((item,index)=>{if(!isEquipment(item))return;count++;const b=document.createElement('button');b.className='item';b.textContent=`Equip ${item.name}`;const note=document.createElement('small');note.className='item-description';note.textContent=item.description;b.setAttribute('aria-label',b.textContent);b.append(note);b.onclick=()=>perform({type:'equip',index,...(slotsFor(item).includes(selected)?{slot:selected}:{})});container.append(b);});
+    p.inventory.forEach((item,index)=>{if(!isEquipment(item)||equippedSlot(p,item))return;count++;const b=document.createElement('button');b.className='item';b.textContent=`Equip ${item.name}`;const note=document.createElement('small');note.className='item-description';note.textContent=item.description;b.setAttribute('aria-label',b.textContent);b.append(note);b.onclick=()=>perform({type:'equip',index,...(slotsFor(item).includes(selected)?{slot:selected}:{})});container.append(b);});
     if(!count){const empty=document.createElement('p');empty.className='hint';empty.textContent='No spare equipment in your satchel.';container.append(empty);}
   }
   draw();

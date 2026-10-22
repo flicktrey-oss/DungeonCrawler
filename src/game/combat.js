@@ -1,5 +1,6 @@
 export const damage = (attack, defense) => Math.max(1, attack-defense);
 export const enemyTypes = {
+  rabbit:{name:'Bramble rabbit',hp:4,attack:2,defense:0,xp:2,range:3},
   rat:{name:'Brush rat',hp:5,attack:2,defense:0,xp:2,range:4},
   beetle:{name:'Sap beetle',hp:7,attack:2,defense:0,xp:2,range:4,slow:true},
   pondFrog:{name:'Troublesome frog',hp:6,attack:3,defense:0,xp:2,range:4},

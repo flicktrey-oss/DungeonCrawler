@@ -6,7 +6,7 @@ import Phaser from 'phaser';
 import { Expedition } from './game/expedition.js';
 import { dangerAt } from './game/danger.js';
 import { BIOMES, threatLabel } from './game/world.js';
-import { attack, defense, threshold, projectileCount as stoneCount, EQUIPMENT_SLOTS, salePrice } from './game/items.js';
+import { attack, defense, threshold, projectileCount as stoneCount, EQUIPMENT_SLOTS, equippedSlot, salePrice } from './game/items.js';
 import { DungeonScene } from './render/scene.js';
 import './style.css';
 import { drawMinimap, drawWorldMinimap, campBearing } from './minimap.js';
@@ -51,19 +51,25 @@ function modal(title, body, buttons) {
   for (const [text, fn] of buttons) { const b = document.createElement('button'); b.textContent = text; b.onclick = fn; $('overlay').querySelector('.buttons').append(b); }
   $('overlay').querySelector('article').focus({preventScroll:true});
 }
-function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls(); }
+function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls();if(model)renderMinimap(); }
 function start() { travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Biomes vary by run; mountains can border camp. At least one neighboring forest offers a starting foothold. Read trail warnings before crossing. Start with rats and beetles in those woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Forests also have a 50% chance of an herbalist, wounded traveler or milestone with a crypt clue. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
-  <p>Desktop: click a visible empty tile to walk; click an item to walk and pick it up, or a friendly site to approach and interact. Each step and pickup is a turn. Travel stops for danger, new enemies, attacks and region changes. Press Escape or give manual input to cancel. Click creatures to inspect; Shift-click friendly people to inspect. WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
-  <p>Ordinary defense has diminishing returns above 3. Trail Boots reduce detection; Iron Bands protect against special attacks. Amber boundary marks warn of territorial guardians; retreat outside their territory to disengage. Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
+  <p>Desktop: click a visible empty tile to walk; click an item to walk and pick it up, or a friendly site to approach and interact. Each step and pickup is a turn. Travel stops for danger, new enemies, attacks and region changes. Press Escape or give manual input to cancel. Click creatures to inspect; Shift-click friendly people to inspect. WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); G casts Detect Creatures at level 3 (25 Mana, two turns on the local minimap). Mana recovers 0.3 each completed turn; H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
+  <p>Ordinary defense has diminishing returns above 3. Trail Boots reduce detection; Iron Bands protect against special attacks. Amber boundary marks warn of territorial guardians; retreat outside their territory to disengage. Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Equipped items remain highlighted in the satchel and still take space. Unequip before selling, dropping or storing. Rabbits and frogs drop raw meat 35% of the time, otherwise nothing. Cook meat at the F campfire just south of the tent; eat it from the satchel for 10 HP. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
   modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p>', [['New Game', start], ['Instructions', help]]);
+}
+function campfire(){
+ if(!model?.atCampfire())return;paused=true;panel='campfire';
+ const raw=model.state.player.inventory.filter(i=>i.kind==='rawMeat').reduce((n,i)=>n+i.quantity,0);
+ modal('Lantern Camp fire',`<p>Cook raw meat into a meal that restores 10 health. Each piece takes one turn. Raw and cooked meat stack to nine per cell.</p><p>Raw meat: ${raw}</p><p id="cooking-result" role="status"></p>`,[['Cook one meat',()=>{model.action({type:'cook'});render();campfire();$('cooking-result').textContent=model.state.log.at(-1);}],['Return',closePanel]]);
+ $('overlay').querySelector('.buttons button').disabled=raw===0;
 }
 function storage() {
   if (!model?.atCamp()) return;
@@ -72,7 +78,7 @@ function storage() {
   for (const [title, items, type] of [['Your satchel', model.state.player.inventory, 'store'], ['Camp chest', model.stash, 'retrieve']]) {
     const section = document.createElement('section'), h = document.createElement('h3'); h.textContent = title; section.append(h);
     if (!items.length) { const p = document.createElement('p'); p.textContent = 'Empty'; section.append(p); }
-    items.forEach((item, index) => { const b = document.createElement('button'); b.className = 'item'; b.textContent = `${type === 'store' ? 'Store' : 'Take'} ${item.name}`; b.onclick = () => { model.action({ type, index }); render(); storage(); $('storage-result').textContent=model.state.log.at(-1); }; section.append(b); });
+    items.forEach((item, index) => { const b = document.createElement('button'); b.className = 'item'; b.textContent = `${type === 'store' ? 'Store' : 'Take'} ${item.name}`;b.disabled=type==='store'&&Boolean(equippedSlot(model.state.player,item)); b.onclick = () => { model.action({ type, index }); render(); storage(); $('storage-result').textContent=model.state.log.at(-1); }; section.append(b); });
     $('storage-lists').append(section);
   }
 }
@@ -90,7 +96,7 @@ function merchant() {
     button.onclick = () => { model.action({ type: 'buy', id: offer.id }); render(); merchant(); $('shop-result').textContent=model.state.log.at(-1); };
     row.append(name, description, button); $('shop-offers').append(row);
   }
-  model.state.player.inventory.forEach((item,index)=>{const b=document.createElement('button');b.className='item';b.textContent=`Sell ${item.name} · ${salePrice(item)} gold`;b.onclick=()=>{model.action({type:'sell',index});render();merchant();};$('shop-sales').append(b);});
+  model.state.player.inventory.forEach((item,index)=>{const b=document.createElement('button');b.className='item';b.textContent=`Sell ${item.name} · ${salePrice(item)} gold`;b.disabled=Boolean(equippedSlot(model.state.player,item));b.onclick=()=>{model.action({type:'sell',index});render();merchant();};$('shop-sales').append(b);});
 }
 function bag(view='satchel',slot='weapon') {
   if(!model||model.state.status!=='playing')return;
@@ -146,7 +152,7 @@ function encounterDialog() {
     modal('Wayfarer shrine',`<p>${event.used?'Its blessing is spent for this visit.':'Choose one exchange. Each uses a turn; enemies act afterward.'}</p><p id="encounter-result" role="status"></p>`,buttons);
   }
 }
-function interact() { if(!model||paused)return;if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else act({type:'pickup'}); }
+function interact() { if(!model||paused)return;if(model.atCampfire())campfire();else if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else act({type:'pickup'}); }
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
@@ -154,7 +160,8 @@ function renderMinimap() {
   else drawMinimap($('minimap'), model.state, loc);
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
   $('camp-bearing').textContent = campBearing(loc);
-  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : '● You · C Camp · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
+  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : '● You · C Camp · F Fire · Pink: detected creatures · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
+  const detect=$('detect-creatures'),p=model.state.player;detect.disabled=paused||p.level<3||p.mana<25||model.state.status!=='playing'||Boolean(targetMode);detect.textContent=p.level<3?'Detect Creatures · Lv 3':'Detect Creatures · 25 MP [G]';detect.classList.toggle('hidden',mapView!=='local');
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
   for (const tab of document.querySelectorAll('[data-map-view]')) {
     const selected = tab.dataset.mapView === mapView;
@@ -169,7 +176,7 @@ function render() {
   const place = loc.kind === 'world' ? `${BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
   $('stats').innerHTML = `<div class="floor">${s.home?'SAFE CAMP':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
     <div class="bar"><div style="width:${p.hp/p.maxHp*100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
-    <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${p.mana} / ${p.maxMana}</span></div>
+    <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${Number(p.mana.toFixed(1))} / ${p.maxMana}</span></div>
     <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
     <div class="numbers">Lv ${p.level} · ${attack(p)} ATK · ${defense(p)} DEF · <b>${p.gold} gold</b></div>`;
   const ahead=model.borderPreview(),pocket=dangerAt(s);
@@ -178,6 +185,7 @@ function render() {
   const conditions=[p.corrosion>0?'Corroded −1 DEF · '+p.corrosion+' turns':null,p.smokeTurns>0?'Smoke · '+p.smokeTurns+' turns':null,p.rationTurns>0?'Rations · '+p.rationTurns+' turns':null].filter(Boolean);
   if(conditions.length){const status=document.createElement('p');status.className='vision-status';status.textContent=conditions.join(' / ');$('stats').append(status);}
 
+  if(s.detectCreaturesUntil>0&&s.turn<=s.detectCreaturesUntil){const status=document.createElement('p');status.className='vision-status';status.textContent=`Detect Creatures · ${s.detectCreaturesUntil-s.turn+1} turns · local map`; $('stats').append(status);}
   if(s.mindVisionUntil>=s.turn&&s.mindVisionUntil>0){const status=document.createElement('p');status.className='vision-status';status.textContent=`Mind Vision active · ${s.mindVisionUntil-s.turn+1} turns`;$('stats').append(status);}
   $('character-shortcut').querySelector('svg').outerHTML=adventurerSvg(p).replace(/ data-[a-z0-9]+-icon=""/g,'');
   $('stone-count').textContent=stoneCount(p);
@@ -283,7 +291,7 @@ function syncTouchControls() {
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
       if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
-      if (control === 'collect') { const label = model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
+      if (control === 'collect') { const label = model.atCampfire()?'Cook':model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atCampfire() || model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
     }
     button.disabled = !allowed||Boolean(targetMode);
     if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);
@@ -321,6 +329,7 @@ for(const id of ['minimap-widget','quest-panel','chronicle-panel'])$(id).addEven
   if(id==='minimap-widget')$('quest-panel').open=false;
   if(id==='quest-panel')$('minimap-widget').open=false;
 });
+$('detect-creatures').onclick=()=>act({type:'detectCreatures'});
 $('help').onclick = help;
 $('manage-bag').onclick=()=>{if(!paused)bag();};
 $('open-equipment').onclick=()=>{if(!paused)bag('equipment','amulet');};
@@ -351,7 +360,7 @@ window.addEventListener('keydown', event => {
   if(!paused&&k==='t'){beginTargeting('throw');return;}
   if(k==='e'&&!paused){interact();return;}
   if (k === '.') act({ type: 'wait' });
-  else if (k === 'h') act({ type: 'potion' }); else if (k === 'm') act({ type: 'mindVision' });
+  else if (k === 'h') act({ type: 'potion' }); else if (k === 'm') act({ type: 'mindVision' }); else if(k==='g')act({type:'detectCreatures'});
   else if (k === 'enter' || k === '>') act({ type: 'descend' }); else if (k === 'q' || k === '<') act({ type: 'ascend' });
 });
 menu();

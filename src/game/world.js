@@ -4,7 +4,7 @@ import { WIDTH, HEIGHT, key, directions, walkable } from './dungeon.js';
 import { ENCOUNTERS } from './encounters.js';
 export const CAMP={x:20,y:15};
 export const BIOMES={
-  forest:{name:'Whisperwood',enemies:['rat','beetle'],danger:1,recommended:1},
+  forest:{name:'Whisperwood',enemies:['rat','beetle','rabbit'],danger:1,recommended:1},
   marsh:{name:'Lantern Marsh',enemies:['frog','leech'],danger:3,recommended:4},
   highlands:{name:'Broken Highlands',enemies:['goat','wolf'],danger:6,recommended:8},
   ashlands:{name:'Ashen Reach',enemies:['ashling','boar'],danger:9,recommended:12},
@@ -54,7 +54,7 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
     carve(CAMP,p);clearing(p,2);map[p.y][p.x]=ENCOUNTERS[type].tile;
     encounters.push({...p,type,id:`${type}:${i}`,used:false});
   }
-  if(home){for(let y=11;y<=19;y++)for(let x=15;x<=25;x++)map[y][x]=',';map[15][20]='C';map[MERCHANT.y][MERCHANT.x]='M';}
+  if(home){for(let y=11;y<=19;y++)for(let x=15;x<=25;x++)map[y][x]=',';map[15][20]='C';map[16][20]='F';map[MERCHANT.y][MERCHANT.x]='M';}
   if(biome==='forest'){
     // Independent stream keeps encounter selection stable while opening the terrain.
     const meadow=new Random(regionSeed(seed,rx,ry,'meadows'));

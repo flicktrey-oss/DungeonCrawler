@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 async function begin(page){
  await page.clock.install();await page.clock.setFixedTime(new Date(5));await page.goto('/');
- await page.getByRole('button',{name:'New Game',exact:true}).click();await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
+ await page.getByRole('button',{name:'New Game',exact:true}).click();if(await page.locator('#minimap-widget').evaluate(e=>e.open))await page.locator('#minimap-widget summary').click();await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));
 }
 async function tile(page,dx,dy,options={}){
  const canvas=page.locator('#game > canvas'),b=await canvas.boundingBox(),zoom=b.height<500?1.25:b.width<900?1.5:2;
