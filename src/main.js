@@ -7,6 +7,8 @@ import './style.css';
 import { drawMinimap, drawWorldMinimap, campBearing } from './minimap.js';
 import { mountEquipment } from './equipment-ui.js';
 import { mountInventory } from './inventory-ui.js';
+import { RELEASE } from './version.js';
+import { mountIcons } from './ui-icons.js';
 import { inventoryLayout } from './game/inventory.js';
 import { ENCOUNTERS } from './game/encounters.js';
 import { bindTouchControls } from './touch-controls.js';
@@ -24,27 +26,29 @@ new ResizeObserver(() => {
   scene.draw();
 }).observe(document.getElementById('game'));
 const $ = id => document.getElementById(id);
+mountIcons();
 const escape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function modal(title, body, buttons) {
   stopMovement();
   syncTouchControls();
   $('overlay').classList.remove('hidden');
-  $('overlay').innerHTML = `<article><p class="eyebrow">DUNGEONCRAWLER · WILDLANDS</p><h2>${title}</h2>${body}<div class="buttons"></div></article>`;
+  $('overlay').innerHTML = `<article role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabindex="-1"><p class="eyebrow">THE WILDLANDS</p><h2 id="dialog-title">${title}</h2>${body}<div class="buttons"></div><p class="hint release">${RELEASE}</p></article>`;
   for (const [text, fn] of buttons) { const b = document.createElement('button'); b.textContent = text; b.onclick = fn; $('overlay').querySelector('.buttons').append(b); }
+  $('overlay').querySelector('article').focus({preventScroll:true});
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls(); }
-function start() { inspected=null; mapView = 'local'; model = new Expedition(); closePanel(); render(); }
+function start() { inspected=null; setPanels(); mapView = 'local'; model = new Expedition(); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Every non-camp region and crypt floor regenerates on return.</b> Creatures, loot, quests, terrain and local fog reset; claim rewards before leaving. Camp storage and merchant stock stay stable. World-map squares remember travel history, not permanent terrain.</p>
-  <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions.</p>
+  <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for local quests, or Chronicle for event history.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
-  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath<br>v0.5.1 — Equipment screen</p>', [['New Game', start], ['Instructions', help]]);
+  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p>', [['New Game', start], ['Instructions', help]]);
 }
 function storage() {
   if (!model?.atCamp()) return;
@@ -133,24 +137,19 @@ function render() {
   renderMinimap();
   const s = model.state, p = s.player, loc = model.location;
   const place = loc.kind === 'world' ? `${BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
-  $('stats').innerHTML = `<div class="floor">${loc.kind === 'world' ? 'WILDLANDS' : 'UNDERGROUND'}${s.home?'':` · AREA LV ${s.recommended}`} <span>TURN ${s.turn}</span></div><h2>${escape(place)}</h2><p class="hint location">${s.home ? 'Safe region · Camp (0, 0)' : `Recommended Lv ${s.recommended}${p.level<s.recommended?' — DANGER':''} · Camp (0, 0)`}<br>${s.regionsDiscovered} regions discovered · ${s.cryptsCleared} crypts cleared</p>
-    <div class="bar"><div style="width:${p.hp / p.maxHp * 100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
-    <div class="bar mana"><div style="width:${p.mana / p.maxMana * 100}%"></div><span>Mana ${p.mana} / ${p.maxMana}</span></div>
-    <div class="bar xp"><div style="width:${p.xp / threshold(p) * 100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
-    <div class="numbers">Lv ${p.level} · ⚔ ${attack(p)} ATK · ◈ ${defense(p)} DEF · <b>${p.gold} gold</b></div>
-    <p class="hint equipped-summary">Weapon: ${escape(p.weapon?.name ?? 'Bare blade')}<br>Armor: ${escape(p.armor?.name ?? 'Travel clothes')}</p>`;
-  const ability = document.createElement('button'); ability.className = 'ability'; ability.textContent = 'Mind Vision [M] · 25 Mana'; ability.disabled = p.mana < 25;
-  ability.title = 'Reveal within 7 tiles through walls for 3 turns. Costs one turn.'; ability.onclick = () => act({ type: 'mindVision' }); $('stats').append(ability);
-  if (s.mindVisionUntil >= s.turn && s.mindVisionUntil > 0) { const status = document.createElement('p'); status.className = 'hint'; status.textContent = `Mind Vision active · ${s.mindVisionUntil - s.turn + 1} turns`; $('stats').append(status); }
-  if (model.atCamp()) { const b = document.createElement('button'); b.className = 'item'; b.textContent = 'Camp storage [E]'; b.onclick = storage; $('stats').append(b); }
-  if (model.atMerchant()) { const b = document.createElement('button'); b.className = 'item'; b.textContent = 'Trade [E]'; b.onclick = merchant; $('stats').append(b); }
-  if(['villager','shrine'].includes(model.activeEncounter()?.type)){const b=document.createElement('button');b.className='item';b.textContent='Interact [E]';b.onclick=encounterDialog;$('stats').append(b);}
-  $('equipment-info').textContent = `Weapon: ${p.weapon?.name ?? 'Bare blade'} · Armor: ${p.armor?.name ?? 'Travel clothes'} · Amulet: ${p.amulet?.name??'none'}`;
-  $('bag-capacity').textContent = `${(inventoryLayout(p.inventory)??[]).reduce((n,i)=>n+i.w*i.h,0)} / 100 cells used`;
+  $('stats').innerHTML = `<div class="floor">${s.home?'SAFE CAMP':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
+    <div class="bar"><div style="width:${p.hp/p.maxHp*100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
+    <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${p.mana} / ${p.maxMana}</span></div>
+    <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
+    <div class="numbers">Lv ${p.level} · ${attack(p)} ATK · ${defense(p)} DEF · <b>${p.gold} gold</b></div>`;
+  $('portrait-level').textContent=p.level;
+  if(s.mindVisionUntil>=s.turn&&s.mindVisionUntil>0){const status=document.createElement('p');status.className='vision-status';status.textContent=`Mind Vision active · ${s.mindVisionUntil-s.turn+1} turns`;$('stats').append(status);}
+  const used=(inventoryLayout(p.inventory)??[]).reduce((n,i)=>n+i.w*i.h,0);
+  $('bag-capacity').textContent=`${used}/100`;
+  $('manage-bag').title=`Open 10×10 satchel [I] · ${used} / 100 cells used`;
+  $('potion-count').textContent=p.inventory.filter(i=>i.kind==='potion').length;
+  $('quest-indicator').classList.toggle('hidden',!s.quest||s.quest.claimed);
   $('quest-info').textContent = s.quest ? s.quest.claimed ? 'Frog quest completed this visit.' : `${s.quest.accepted?'Accepted':'Available'}: clear the frogs (${model.questRemaining()} remain). Reward: Reedheart amulet. Leaving resets this quest.` : 'Find a Mirekeeper in the wilderness for a local frog-clearing quest.';
-  $('inventory').innerHTML = '';
-  p.inventory.forEach((item, index) => { const b = document.createElement('button'); b.className = 'item'; b.textContent = item.name + (item.bonus ? ` (+${item.bonus} ${item.kind === 'weapon' ? 'ATK' : 'DEF'})` : ''); b.setAttribute('aria-label', b.textContent); const description = document.createElement('small'); description.className = 'item-description'; description.textContent = item.description ?? (item.kind === 'weapon' ? 'Adds attack while equipped.' : 'Reduces incoming damage while equipped.'); b.append(description); b.disabled=!['potion','weapon','armor','amulet'].includes(item.kind); b.onclick = () => act({ type: item.kind === 'potion' ? 'potion' : 'equip', index }); $('inventory').append(b); });
-  if (!p.inventory.length) $('inventory').textContent = 'Your satchel is empty.';
   $('latest-event').textContent = s.log.at(-1) ?? '';
   $('log').innerHTML = s.log.slice(-25).map(t => `<p>${escape(t)}</p>`).join(''); $('log').scrollTop = $('log').scrollHeight;
   renderInspection();
@@ -187,21 +186,21 @@ function syncTouchControls() {
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
       if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
-      if (control === 'collect') { button.textContent = model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; allowed = model.atCamp() || model.atMerchant() || ['villager','shrine'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
+      if (control === 'collect') { const label = model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atCamp() || model.atMerchant() || ['villager','shrine'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
     }
     button.disabled = !allowed;
+    if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);
   }
 }
 bindTouchControls($('touch-controls'), control => {
   if (!model || paused || model.state.status !== 'playing') return;
   const directions = { north: [0,-1], south: [0,1], east: [1,0], west: [-1,0] };
   if (directions[control]) act({ type: 'move', dx: directions[control][0], dy: directions[control][1] });
-  else if (control === 'help') help();
   else if (control === 'collect') interact();
   else act({ type: ({ collect: 'pickup', vision: 'mindVision' })[control] ?? control });
 });
 const phoneLayout = matchMedia('(max-width: 700px), (pointer: coarse)');
-function setPanels() { $('chronicle-panel').open = !phoneLayout.matches; }
+function setPanels() { $('chronicle-panel').open=false; $('quest-panel').open=false; $('minimap-widget').open=!phoneLayout.matches; }
 phoneLayout.addEventListener('change', setPanels); setPanels();
 for (const tab of document.querySelectorAll('[data-map-view]')) tab.addEventListener('click', event => { mapView = tab.dataset.mapView; renderMinimap(); if (event.detail > 0) tab.blur(); });
 $('map-tabs').addEventListener('keydown', event => {
@@ -216,16 +215,25 @@ $('minimap-widget').addEventListener('toggle', () => {
   $('minimap-widget').querySelector('summary').title = open ? 'Minimize map' : 'Restore map';
 });
 $('minimap-widget').querySelector('summary').addEventListener('click', event => { if (event.detail > 0) document.activeElement?.blur(); });
-$('satchel-panel').addEventListener('toggle', () => {
-  $('satchel-collapse-icon').textContent = $('satchel-panel').open ? '−' : '+';
+for(const [id,other] of [['minimap-widget','quest-panel'],['quest-panel','minimap-widget']])$(id).querySelector('summary').addEventListener('click',()=>{if(!$(id).open)$(other).open=false;});
+for(const id of ['minimap-widget','quest-panel','chronicle-panel'])$(id).addEventListener('toggle',()=>{
+  if(!$(id).open)return;
+  stopMovement();
+  if(id==='minimap-widget')$('quest-panel').open=false;
+  if(id==='quest-panel')$('minimap-widget').open=false;
 });
-$('satchel-panel').querySelector('summary').addEventListener('click', event => { if (event.detail > 0) document.activeElement?.blur(); });
 $('help').onclick = help;
 $('manage-bag').onclick=()=>{if(!paused)bag();};
 $('open-equipment').onclick=()=>{if(!paused)bag('equipment','amulet');};
+$('character-shortcut').onclick=()=>{if(!paused)bag('equipment');};
 const stopMovement = bindKeyboardMovement(act, () => model && !paused && model.state.status === 'playing');
 window.addEventListener('keydown', event => {
-  if (event.target?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
+  if(event.key==='Tab'&&paused&&!$('overlay').classList.contains('hidden')){
+    const focusable=[...$('overlay').querySelectorAll('button:not(:disabled),input:not(:disabled),[tabindex="0"]')].filter(el=>el.getClientRects().length);
+    if(focusable.length){const current=focusable.indexOf(document.activeElement),next=event.shiftKey?(current<=0?focusable.length-1:current-1):(current+1)%focusable.length;event.preventDefault();focusable[next].focus();}
+    return;
+  }
+  if (event.key!=='Escape'&&event.target?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if ((event.target instanceof HTMLButtonElement || event.target?.tagName === 'SUMMARY' || event.target?.tagName==='INPUT') && (event.key === 'Enter' || event.key === ' ')) return;
   const k = event.key.toLowerCase();

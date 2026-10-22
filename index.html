@@ -4,60 +4,64 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1017">
-  <title>DungeonCrawler — The Wildlands</title>
+  <title>The Wildlands — DungeonCrawler</title>
 </head>
 <body>
 <div id="app">
-  <header><h1>THE WILDLANDS</h1><span>DungeonCrawler · an endless expedition</span></header>
-  <main>
-    <section id="stats" aria-label="Character status"></section>
-    <div id="game" aria-label="Dungeon map">
-      <section id="character-inspector" class="hidden" role="region" aria-label="Character inspection">
-        <button id="close-inspector" aria-label="Close character inspection">×</button>
-        <div id="inspection-details"></div>
-      </section>
-      <div id="map-tools" aria-label="Map and character panels">
+  <main aria-label="The Wildlands game">
+    <div id="game" aria-label="Dungeon map"></div>
+    <div id="hud-character">
+      <button id="character-shortcut" aria-label="Inspect your character" title="View character and equipment">
+        <svg viewBox="0 0 32 40" aria-hidden="true" shape-rendering="crispEdges"><path d="M8 19H24V35H8Z" fill="#558c88"/><path d="M10 32H15V40H10ZM19 32H24V40H19Z" fill="#455569"/><path d="M9 4H23V19H9Z" fill="#d8b58a"/><path d="M7 2H25V8H7ZM7 8H11V13H7Z" fill="#765343"/><path d="M12 11H14V13H12ZM19 11H21V13H19Z" fill="#15212a"/><path d="M6 20H10V31H6ZM24 20H28V31H24Z" fill="#b7bd9d"/><path d="M9 18H24V22H9Z" fill="#91cbc0"/></svg>
+        <span id="portrait-level">1</span>
+      </button>
+      <section id="stats" aria-label="Character status"></section>
+    </div>
+    <div id="map-tools" aria-label="World tools">
       <details id="minimap-widget" open>
-        <summary aria-label="Toggle minimap" title="Minimize map">Map <span id="minimap-location"></span><span id="map-collapse-icon" aria-hidden="true">−</span></summary>
-        <div id="map-tabs" role="tablist" aria-label="Map view">
-          <button id="map-local-tab" role="tab" aria-controls="minimap-panel" aria-selected="true" data-map-view="local">Local</button>
-          <button id="map-world-tab" role="tab" aria-controls="minimap-panel" aria-selected="false" tabindex="-1" data-map-view="world">World</button>
-        </div>
-        <div id="minimap-panel" role="tabpanel" aria-labelledby="map-local-tab">
-        <canvas id="minimap" width="160" height="120" role="img" aria-label="Explored region map"></canvas>
-        <p id="map-legend" class="map-legend">● You · C Camp · M Merchant<br>&gt; Down · &lt; Up · R Ruins</p>
-        <p id="camp-bearing"></p>
+        <summary aria-label="Toggle minimap" title="Minimize map"><span data-icon="compass" aria-hidden="true"></span><span>Map</span><span id="minimap-location"></span><span id="map-collapse-icon" aria-hidden="true">−</span></summary>
+        <div class="map-body">
+          <div id="map-tabs" role="tablist" aria-label="Map view">
+            <button id="map-local-tab" role="tab" aria-controls="minimap-panel" aria-selected="true" data-map-view="local">Local</button>
+            <button id="map-world-tab" role="tab" aria-controls="minimap-panel" aria-selected="false" tabindex="-1" data-map-view="world">World</button>
+          </div>
+          <div id="minimap-panel" role="tabpanel" aria-labelledby="map-local-tab">
+            <canvas id="minimap" width="160" height="120" role="img" aria-label="Explored region map"></canvas>
+            <p id="map-legend" class="map-legend"></p><p id="camp-bearing"></p>
+          </div>
         </div>
       </details>
-      <details id="satchel-panel"><summary>Satchel / equipment <span id="satchel-collapse-icon" aria-hidden="true">+</span></summary><div id="equipment-info" class="hint"></div><button id="manage-bag">Manage 10×10 satchel [I]</button><button id="open-equipment">Character / equipment</button><p id="bag-capacity" class="hint"></p><div id="inventory"></div></details>
-      </div>
+      <details id="quest-panel">
+        <summary title="Local quests"><span data-icon="journal" aria-hidden="true"></span><span>Journal</span><span id="quest-indicator" class="hidden" aria-label="Active quest">•</span></summary>
+        <div class="journal-body"><p class="eyebrow">LOCAL QUEST</p><div id="quest-info"></div><p class="hint">Finish local quests before leaving the region.</p></div>
+      </details>
+      <button id="help" class="tool-button" aria-label="Pause / Help" title="Pause / Help [Esc]"><span data-icon="menu" aria-hidden="true"></span><span>Menu</span></button>
     </div>
-    <p id="latest-event" role="status" aria-live="polite"></p>
-    <nav id="touch-controls" aria-label="Touch game controls">
+    <section id="character-inspector" class="hidden" role="region" aria-label="Character inspection">
+      <button id="close-inspector" aria-label="Close character inspection">×</button><div id="inspection-details"></div>
+    </section>
+    <div id="event-feed">
+      <details id="chronicle-panel"><summary><span data-icon="chronicle" aria-hidden="true"></span>Chronicle <span class="chronicle-toggle" aria-hidden="true">⌃</span></summary><div id="log" role="log" aria-live="off"></div></details>
+      <p id="latest-event" role="status" aria-live="polite"></p>
+    </div>
+    <nav id="touch-controls" aria-label="Game actions">
       <div class="dpad" aria-label="Movement">
-        <button data-control="north" aria-label="Move north">▲</button>
-        <button data-control="west" aria-label="Move west">◀︎</button>
-        <button data-control="wait" aria-label="Wait one turn">Wait</button>
-        <button data-control="east" aria-label="Move east">▶︎</button>
-        <button data-control="south" aria-label="Move south">▼</button>
+        <button data-control="north" aria-label="Move north"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,5 21,19 3,19" fill="currentColor"/></svg></button><button data-control="west" aria-label="Move west"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,12 19,3 19,21" fill="currentColor"/></svg></button>
+        <button data-control="wait" aria-label="Wait one turn" title="Wait [.]">Wait</button><button data-control="east" aria-label="Move east"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="19,12 5,3 5,21" fill="currentColor"/></svg></button><button data-control="south" aria-label="Move south"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,19 3,5 21,5" fill="currentColor"/></svg></button>
       </div>
       <div class="touch-actions">
-        <button data-control="collect">Collect</button>
-        <button data-control="descend">Enter ↓</button>
-        <button data-control="potion">Potion</button>
-        <button data-control="ascend">Leave ↑</button>
-        <button data-control="vision">Vision · 25</button>
-        <button data-control="help">Pause / Help</button>
+        <button data-control="collect" class="context-action" aria-label="Collect" title="Interact / Collect [E]"><span data-icon="hand" aria-hidden="true"></span><span class="action-label">Collect</span><kbd>E</kbd></button>
+        <button data-control="potion" aria-label="Potion" title="Drink healing potion [H]"><span data-icon="potion" aria-hidden="true"></span><span class="action-label">Potion</span><span id="potion-count" class="action-count"></span><kbd>H</kbd></button>
+        <button data-control="vision" aria-label="Vision · 25" title="Mind Vision · 25 Mana [M]"><span data-icon="vision" aria-hidden="true"></span><span class="action-label">Mind Vision</span><span class="action-cost">25 MP</span><kbd>M</kbd></button>
+        <button id="manage-bag" aria-label="Open satchel [I]" title="Open 10×10 satchel [I]"><span data-icon="bag" aria-hidden="true"></span><span class="action-label">Satchel</span><span id="bag-capacity" class="action-count"></span><kbd>I</kbd></button>
+        <button id="open-equipment" aria-label="Character / equipment" title="Character / equipment"><span data-icon="armor" aria-hidden="true"></span><span class="action-label">Gear</span></button>
+        <button data-control="wait" class="desktop-wait" aria-label="Wait one turn" title="Wait [.] "><span data-icon="wait" aria-hidden="true"></span><span class="action-label">Wait</span><kbd>.</kbd></button>
+        <button data-control="descend" class="hidden stair-action" aria-label="Enter ↓" title="Enter / descend [Enter]"><span data-icon="down" aria-hidden="true"></span><span class="action-label">Enter ↓</span><kbd>↵</kbd></button>
+        <button data-control="ascend" class="hidden stair-action" aria-label="Leave ↑" title="Ascend [Q]"><span data-icon="up" aria-hidden="true"></span><span class="action-label">Leave ↑</span><kbd>Q</kbd></button>
       </div>
     </nav>
-    <aside>
-      <details id="chronicle-panel" open><summary>Chronicle</summary><div id="log" role="log" aria-live="polite"></div></details>
-      <button id="help">Pause / Help (Esc)</button>
-      <details id="quest-panel"><summary>Local quest</summary><div id="quest-info"></div></details>
-      <p class="hint">WASD / Arrows: hold to move / attack<br>E: collect / camp chest · H: potion<br>M: Mind Vision · Q: ascend<br>.: wait · Enter: enter / descend<br>I: inventory · Esc: pause</p>
-    </aside>
+    <p id="keyboard-hint">WASD / arrows to move <span>·</span> Click a character to inspect</p>
   </main>
-  <footer>Explore · Discover · Return home — v0.5.5 · Character inspection</footer>
 </div>
 <div id="overlay"></div>
 <script type="module" src="/src/main.js"></script>

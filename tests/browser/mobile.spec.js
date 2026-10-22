@@ -51,18 +51,18 @@ test('phone can use Mana, storage, spatial inventory and discovered crypt stairs
  const d=await expeditionDriver(page,1,true);await d.send({type:'mindVision'});
  await page.getByRole('button',{name:'Camp chest',exact:true}).tap();await page.getByRole('button',{name:'Store Ember tonic',exact:true}).first().tap();d.game.action({type:'store',index:0});
  await page.getByRole('button',{name:'Take Ember tonic',exact:true}).tap();d.game.action({type:'retrieve',index:0});await page.getByRole('button',{name:'Return',exact:true}).tap();
- await page.locator('#satchel-panel summary').tap();await page.getByRole('button',{name:'Manage 10×10 satchel [I]',exact:true}).tap();
+ await page.getByRole('button',{name:'Open satchel [I]',exact:true}).tap();
  await expect(page.getByLabel('10 by 10 inventory grid',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Return',exact:true}).tap();
- await page.locator('#satchel-panel summary').tap();await d.east();await d.walk(d.game.state.entrance);await d.send({type:'descend'});await expect(page.locator('#minimap-location')).toHaveText('Depth 1');
+ await d.east();await d.walk(d.game.state.entrance);await d.send({type:'descend'});await expect(page.locator('#minimap-location')).toHaveText('Depth 1');
  await d.send({type:'ascend'});await expect(page.locator('#stats h2')).toHaveText('Whisperwood (1, 0)');
 });
 
 for (const [width, height] of [[375, 667], [390, 844], [844, 390]]) {
   test(`readable viewport and touch targets at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height }); await begin(page);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    for (const button of await page.locator('#touch-controls button').all()) { const box = await button.boundingBox(); expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44); }
-    const canvas = await page.locator('#game > canvas').boundingBox(); expect(canvas.width).toBeLessThanOrEqual(width); expect(canvas.height).toBeGreaterThan(170);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+    for (const button of await page.locator('#touch-controls button:visible').all()) { const box = await button.boundingBox(); expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44); }
+    const canvas = await page.locator('#game > canvas').boundingBox(); expect(canvas.width).toBe(width); expect(canvas.height).toBe(height);
     const controls = await page.locator('#touch-controls').boundingBox(); expect(controls.y + controls.height).toBeLessThanOrEqual(height);
     await page.screenshot({ path: `test-results/phone-${width}.png`, fullPage: true });
   });
@@ -74,14 +74,16 @@ test('phone can browse the merchant and toggle the minimap without extra turns',
   await expect(page.getByRole('heading', { name: 'Mara the Wayfarer', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Buy Ember tonic · 10 gold', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Return', exact: true }).tap();
-  await page.getByLabel('Toggle minimap', { exact: true }).tap(); await expect(page.locator('#minimap')).not.toBeVisible();
+  await expect(page.locator('#minimap')).not.toBeVisible();
   await page.getByLabel('Toggle minimap', { exact: true }).tap(); await expect(page.locator('#minimap')).toBeVisible();
+  await page.getByLabel('Toggle minimap', { exact: true }).tap(); await expect(page.locator('#minimap')).not.toBeVisible();
   await expect(page.locator('.floor')).toContainText('TURN 2');
   await page.screenshot({ path: 'test-results/merchant-minimap-phone.png', fullPage: true });
 });
 
 test('phone switches the same minimap and minimizes it to a header without using a turn', async ({ page }) => {
   await begin(page); const map = page.locator('#minimap');
+  await page.getByLabel('Toggle minimap', { exact: true }).tap();
   await page.getByRole('tab', { name: 'World', exact: true }).tap();
   await expect(map).toHaveAttribute('aria-label', /1 visited regions/);
   await page.getByLabel('Toggle minimap', { exact: true }).tap();
@@ -94,7 +96,7 @@ test('phone switches the same minimap and minimizes it to a header without using
 });
 
 test('phone rearranges the 10×10 satchel for free and drops/recovers an item at camp',async({page})=>{
- await begin(page);await page.locator('#satchel-panel summary').tap();await page.getByRole('button',{name:'Manage 10×10 satchel [I]',exact:true}).tap();
+ await begin(page);await page.getByRole('button',{name:'Open satchel [I]',exact:true}).tap();
  await page.getByRole('button',{name:'Select Ember tonic, 1 by 1',exact:true}).first().tap();
  await page.getByRole('spinbutton',{name:'Column',exact:true}).fill('10');await page.getByRole('spinbutton',{name:'Row',exact:true}).fill('10');await page.getByRole('button',{name:'Place item',exact:true}).tap();
  await expect(page.locator('.bag-item').first()).toHaveAttribute('style',/10 \/ 10/);await expect(page.locator('.floor')).toContainText('TURN 0');

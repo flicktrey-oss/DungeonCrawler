@@ -5,11 +5,11 @@ for(const touch of [false,true])test.describe(touch?'phone inspection':'desktop 
  test('inspect visible characters for free with an original portrait and live combat stats',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const d=await expeditionDriver(page,5,touch);
-  if(touch)await page.locator('#minimap-widget summary').tap();
   async function inspect(target){
    const canvas=page.locator('#game > canvas'),b=await canvas.boundingBox(),p=d.game.state.player;
-   const sx=Math.max(0,Math.min(960-b.width,p.x*24+12-b.width/2)),sy=Math.max(0,Math.min(720-b.height,p.y*24+12-b.height/2));
-   const position={x:target.x*24+12-sx,y:target.y*24+12-sy};
+   const zoom=b.height<500?1.25:b.width<900?1.5:2,viewWidth=b.width/zoom,viewHeight=b.height/zoom;
+   const sx=p.x*24+12-viewWidth/2,sy=p.y*24+12-viewHeight/2;
+   const position={x:(target.x*24+12-sx)*zoom,y:(target.y*24+12-sy)*zoom};
    if(touch)await canvas.tap({position});else await canvas.click({position});
   }
   await inspect(d.game.state.player);await expect(page.locator('#character-inspector')).toBeVisible();

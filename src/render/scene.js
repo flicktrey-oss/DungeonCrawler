@@ -19,6 +19,10 @@ export class DungeonScene extends Phaser.Scene {
   draw(){
     if(!this.ready||!this.gameModel)return;
     const s=this.gameModel.state,g=this.paint;g.clear();
+    const {width,height}=this.scale,zoom=height<500?1.25:width<900?1.5:2;
+    const camera=this.cameras.main;camera.setZoom(zoom);
+    // Padding keeps the adventurer centered near region edges, clear of the HUD.
+    camera.setBounds(-width/(2*zoom),-height/(2*zoom),s.map[0].length*T+width/zoom,s.map.length*T+height/zoom);
     for(let y=0;y<s.map.length;y++)for(let x=0;x<s.map[y].length;x++){
       const k=key(x,y);if(!s.explored.has(k))continue;const visible=s.visible.has(k),a=visible?1:0.32,t=s.map[y][x],xx=x*T,yy=y*T;
       if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,s.biome,x,y);continue;}
