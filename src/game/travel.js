@@ -7,12 +7,13 @@ export function planTravel(game,x,y){
  if(!Number.isInteger(x)||!Number.isInteger(y)||!s.visible.has(key(x,y)))return null;
  if(s.enemies.some(e=>e.hp>0&&e.x===x&&e.y===y))return null;
  const item=s.items.find(i=>i.x===x&&i.y===y),event=s.encounters?.find(e=>e.x===x&&e.y===y),tile=s.map[y]?.[x];
- const person=tile==='M'||tile==='V';
+ const companion=s.companion?.x===x&&s.companion?.y===y,person=tile==='M'||tile==='V'||companion;
  let intent=item?{type:'pickup',item}:person||event&&['shrine','woodland'].includes(event.type)||tile==='C'||tile==='F'?{type:'interact',event}:tile==='D'||tile==='>'?{type:'descend'}:tile==='<'?{type:'ascend'}:null;
  if(!person&&!walkable(s.map,x,y))return null;
  const target={x,y},reached=point=>person?adjacent(point,target):point.x===x&&point.y===y;
  const queue=[{x:p.x,y:p.y,path:[]}],seen=new Set([key(p.x,p.y)]);
  const occupied=new Set(s.enemies.filter(e=>e.hp>0&&s.visible.has(key(e.x,e.y))).map(e=>key(e.x,e.y)));
+ if(s.companion)occupied.add(key(s.companion.x,s.companion.y));
  for(let i=0;i<queue.length;i++){
   const node=queue[i];if(reached(node))return {steps:node.path,intent,target,map:s.map,game};
   for(const[dx,dy]of directions){

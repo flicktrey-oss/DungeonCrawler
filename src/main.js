@@ -1,3 +1,4 @@
+import {princeProgress} from './game/story.js';
 import { ClickTravel } from './click-travel.js';
 import { mountQuestJournal } from './quest-ui.js';
 import { questProgress } from './game/quests.js';
@@ -59,11 +60,11 @@ function help() {
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Forests also have a 50% chance of an herbalist, wounded traveler or milestone with a crypt clue. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
   <p>Desktop: click a visible empty tile to walk; click an item to walk and pick it up, or a friendly site to approach and interact. Each step and pickup is a turn. Travel stops for danger, new enemies, attacks and region changes. Press Escape or give manual input to cancel. Click creatures to inspect; Shift-click friendly people to inspect. WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); G casts Detect Creatures at level 3 (25 Mana, two turns on the local minimap). Mana recovers 0.3 each completed turn; H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
   <p>Ordinary defense has diminishing returns above 3. Trail Boots reduce detection; Iron Bands protect against special attacks. Amber boundary marks warn of territorial guardians; retreat outside their territory to disengage. Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Equipped items remain highlighted in the satchel and still take space. Unequip before selling, dropping or storing. Rabbits and frogs drop raw meat 35% of the time, otherwise nothing. Cook meat at the F campfire just south of the tent; eat it from the satchel for 10 HP. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
-  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
+  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. Prince Aldren waits southeast of the tent. Speak to him whenever you wish to begin the main story: escort him to Northwatch (0, -6), then reach its northern keep together. Follow / Stay and tonic aid are available in his dialogue. Stay means you must return for him; a downed prince needs a tonic. There is no departure timer. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
-  modal('The Wildlands', '<p>A campfire at your back. An unknown world ahead.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p>', [['New Game', start], ['Instructions', help]]);
+  modal('The Wildlands', '<p>A campfire at your back. A stranded prince. A kingdom beyond the northern marshes.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p>', [['New Game', start], ['Instructions', help]]);
 }
 function campfire(){
  if(!model?.atCampfire())return;paused=true;panel='campfire';
@@ -153,7 +154,17 @@ function encounterDialog() {
     modal('Wayfarer shrine',`<p>${event.used?'Its blessing is spent for this visit.':'Choose one exchange. Each uses a turn; enemies act afterward.'}</p><p id="encounter-result" role="status"></p>`,buttons);
   }
 }
-function interact() { if(!model||paused)return;if(model.atCampfire())campfire();else if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else act({type:'pickup'}); }
+function princeDialog(){
+ if(!model?.atPrince())return;paused=true;panel='prince';const q=model.story,c=q.prince,buttons=[];
+ const perform=type=>{model.action({type});render();if(model.state.status==='playing'&&!model.story.complete){princeDialog();if($('prince-result'))$('prince-result').textContent=model.state.log.at(-1);}};
+ if(!q.accepted)buttons.push(['Begin escort',()=>perform('acceptEscort')]);
+ else if(!q.complete&&c.hp>0)buttons.push([c.mode==='follow'?'Stay here':'Follow me',()=>perform(c.mode==='follow'?'princeStay':'princeFollow')]);
+ if(q.accepted&&!q.complete&&c.hp<c.maxHp){buttons.push(['Give tonic · heal 16 HP',()=>perform('healPrince')]);}
+ buttons.push(['Return',closePanel]);
+ const introduction=q.complete?'Aldren has rejoined his court. The road remains open to you.':q.accepted?'“Lead on. I will stay close and defend myself.”':'“My convoy was ambushed. I found shelter here, but my home is beyond the marshes. Will you guide me to Northwatch?”';
+ modal('Prince Aldren',`<p>${introduction}</p><p id="prince-status">${escape(princeProgress(model))}</p><p>Northwatch (0, -6): six regions north. Reach the northern keep together. Prepare locally as long as you wish; there is no timer.</p><p class="hint">Sword: 5 ATK · Mail: 2 DEF. Commands and aid take one turn. Stay leaves Aldren here until you return. Crossings require him within two tiles. A downed prince needs a tonic; he does not die.</p><p id="prince-result" role="status"></p>`,buttons);
+}
+function interact() { if(!model||paused)return;if(model.atCampfire())campfire();else if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else if(model.atPrince())princeDialog();else act({type:'pickup'}); }
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
@@ -161,7 +172,7 @@ function renderMinimap() {
   else drawMinimap($('minimap'), model.state, loc);
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
   $('camp-bearing').textContent = campBearing(loc);
-  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : '● You · C Camp · F Fire · Pink: detected creatures · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
+  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · Pink: detected creatures · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
   const detect=$('detect-creatures'),p=model.state.player;detect.disabled=paused||p.level<3||p.mana<25||model.state.status!=='playing'||Boolean(targetMode);detect.textContent=p.level<3?'Detect Creatures · Lv 3':'Detect Creatures · 25 MP [G]';detect.classList.toggle('hidden',mapView!=='local');
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
   for (const tab of document.querySelectorAll('[data-map-view]')) {
@@ -175,7 +186,7 @@ function render() {
   renderMinimap();
   const s = model.state, p = s.player, loc = model.location;
   const place = loc.kind === 'world' ? `${BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
-  $('stats').innerHTML = `<div class="floor">${s.home?'SAFE CAMP':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
+  $('stats').innerHTML = `<div class="floor">${s.home?'SAFE CAMP':s.city?'SAFE CITY':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
     <div class="bar"><div style="width:${p.hp/p.maxHp*100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
     <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${Number(p.mana.toFixed(1))} / ${p.maxMana}</span></div>
     <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
@@ -183,6 +194,7 @@ function render() {
   const ahead=model.borderPreview(),pocket=dangerAt(s);
   if(ahead||pocket){const warning=document.createElement('p');warning.id='travel-warning';warning.className='vision-status danger-status';warning.textContent=ahead?`${ahead.name} ahead · Lv ${ahead.recommended} · ${threatLabel(ahead.recommended,p.level)}`:`⚠ ${pocket.name} · guarded territory`;$('stats').append(warning);}
   $('portrait-level').textContent=p.level;
+  const companion=model.princeHere();if(model.story.accepted&&!model.story.complete){const status=document.createElement('p');status.className='vision-status';status.id='escort-status';status.textContent=companion?`Aldren · ${companion.hp}/${companion.maxHp} HP · ${companion.mode}`:`Aldren waits in (${model.story.prince.rx}, ${model.story.prince.ry})`; $('stats').append(status);}
   const conditions=[p.corrosion>0?'Corroded −1 DEF · '+p.corrosion+' turns':null,p.smokeTurns>0?'Smoke · '+p.smokeTurns+' turns':null,p.rationTurns>0?'Rations · '+p.rationTurns+' turns':null].filter(Boolean);
   if(conditions.length){const status=document.createElement('p');status.className='vision-status';status.textContent=conditions.join(' / ');$('stats').append(status);}
 
@@ -201,12 +213,13 @@ function render() {
   $('manage-bag').title=`Open 10×10 satchel [I] · ${used} / 100 cells used`;
   $('potion-count').textContent=p.inventory.filter(i=>i.kind==='potion').length;
   $('quest-indicator').classList.toggle('hidden',![...model.quests.values()].some(q=>q.accepted&&!q.claimed));
-  mountQuestJournal($('quest-info'),model,renderMinimap);
+  mountQuestJournal($('quest-info'),model,renderMinimap,princeDialog);
   $('latest-event').textContent = s.log.at(-1) ?? '';
   $('log').innerHTML = s.log.slice(-25).map(t => `<p>${escape(t)}</p>`).join(''); $('log').scrollTop = $('log').scrollHeight;
   renderInspection();
   if(s.status!=='playing')cancelTargeting();
   syncTouchControls();
+  if(s.status==='playing'&&model.story.complete&&!model.story.noticeShown){model.story.noticeShown=true;paused=true;panel='chapter';modal('Chapter one complete', '<p>Beyond the marsh roads, Northwatch opens its gates. Aldren reaches the northern keep and rejoins his court.</p><p>You receive 30 gold and a full recovery. Aldren remains in the city. Your expedition continues; future chapters will build on this arrival.</p>', [['Continue exploring',closePanel]]);}
   if (s.status === 'dead') {
     paused = true; panel = 'dead';
     modal('Your lantern goes dark.', `<p>Your expedition ends here. The camp and its supplies are lost.</p><p>Level ${p.level} · ${s.regionsDiscovered} regions · ${s.cryptsCleared} crypts cleared · ${p.gold} gold</p><p class="hint">Seed: ${s.seed}</p>`, [['New Run', start], ['Title', () => { model = null; menu(); }]]);
@@ -292,7 +305,7 @@ function syncTouchControls() {
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
       if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
-      if (control === 'collect') { const label = model.atCampfire()?'Cook':model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atCampfire() || model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
+      if (control === 'collect') { const label = model.atCampfire()?'Cook':model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':model.atPrince()?'Speak':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atPrince() || model.atCampfire() || model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
     }
     button.disabled = !allowed||Boolean(targetMode);
     if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);

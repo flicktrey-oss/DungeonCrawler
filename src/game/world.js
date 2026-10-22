@@ -1,9 +1,11 @@
+import {isKingdom,generateCity} from './city.js';
 import { MERCHANT } from './merchant.js';
 import { Random } from './random.js';
 import { WIDTH, HEIGHT, key, directions, walkable } from './dungeon.js';
 import { ENCOUNTERS } from './encounters.js';
 export const CAMP={x:20,y:15};
 export const BIOMES={
+  city:{name:'Northwatch',enemies:[],danger:1,recommended:1},
   forest:{name:'Whisperwood',enemies:['rat','beetle','rabbit'],danger:1,recommended:1},
   marsh:{name:'Lantern Marsh',enemies:['frog','leech'],danger:3,recommended:4},
   highlands:{name:'Broken Highlands',enemies:['goat','wolf'],danger:6,recommended:8},
@@ -19,10 +21,16 @@ export function startingFrontier(seed=0){
  const offset=rng.pick([{rx:f.rx,ry:f.ry},{rx:-f.ry,ry:f.rx},{rx:f.ry,ry:-f.rx}]);
  return {rx:f.rx+offset.rx,ry:f.ry+offset.ry,biome:rng.next()<.35?'forest':'marsh'};
 }
+export function royalRoad(seed=0){
+ const f=startingForest(seed),side=f.rx||((seed&1)?1:-1),points=[{...f}],endpoints=[{rx:side,ry:f.ry},{rx:side,ry:-3},{rx:0,ry:-3},{rx:0,ry:-6}];
+ let {rx,ry}=f;for(const end of endpoints){while(rx!==end.rx){rx+=Math.sign(end.rx-rx);points.push({rx,ry});}while(ry!==end.ry){ry+=Math.sign(end.ry-ry);points.push({rx,ry});}}return points;
+}
 export function biomeAt(rx,ry,seed=0){
+ if(isKingdom(rx,ry))return 'city';
  if(rx===0&&ry===0)return 'forest';
  const start=startingForest(seed);if(rx===start.rx&&ry===start.ry)return 'forest';
  const next=startingFrontier(seed);if(rx===next.rx&&ry===next.ry)return next.biome;
+ if(royalRoad(seed).some(p=>p.rx===rx&&p.ry===ry))return ry>=-1||ry===-4?'forest':'marsh';
  // Coarse seeded patches plus local variation: stable regardless of visit order.
  const local=new Random(regionSeed(seed,rx,ry,'biome-local'));
  const roll=local.next()<.28?local.next():new Random(regionSeed(seed,Math.floor(rx/2),Math.floor(ry/2),'biome-cluster')).next();
@@ -31,6 +39,7 @@ export function biomeAt(rx,ry,seed=0){
 export function regionInfo(seed,rx,ry){const biome=biomeAt(rx,ry,seed);return {rx,ry,biome,...BIOMES[biome]};}
 export function threatLabel(recommended,level){return recommended>=level+4?'OVERWHELMING':recommended>level?'DANGEROUS':'Prepare carefully';}
 export function generateWorldRegion(seed,rx,ry,visit=0){
+  if(isKingdom(rx,ry))return generateCity();
   if(visit>0&&!(rx===0&&ry===0))return populateVisit(generateWorldRegion(seed,rx,ry,0),new Random(regionSeed(seed,rx,ry,`inhabitants:${visit}`)),visit);
   const rng=new Random(regionSeed(seed,rx,ry,'world:0')),home=rx===0&&ry===0,biome=biomeAt(rx,ry,seed),danger=BIOMES[biome].danger;
   const map=Array.from({length:HEIGHT},()=>Array(WIDTH).fill(','));
@@ -67,7 +76,7 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   const seen=new Set([key(CAMP.x,CAMP.y)]),queue=[CAMP];
   for(let i=0;i<queue.length;i++)for(const[dx,dy]of directions){const x=queue[i].x+dx,y=queue[i].y+dy,k=key(x,y);if(walkable(map,x,y)&&!seen.has(k)){seen.add(k);queue.push({x,y});}}
   for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++)if(walkable(map,x,y)&&!seen.has(key(x,y)))map[y][x]=blocker;
-  const occupied=new Set([key(20,15),...encounters.map(e=>key(e.x,e.y))]),available=[];
+  const occupied=new Set([key(20,15),...(home?['24,17']:[]),...encounters.map(e=>key(e.x,e.y))]),available=[];
   for(let y=5;y<25;y++)for(let x=5;x<35;x++)if(walkable(map,x,y)&&!occupied.has(key(x,y))&&Math.abs(x-20)+Math.abs(y-15)>5)available.push({x,y});
   const spot=(near=null)=>{let choices=available.map((p,i)=>({p,i}));if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
   const spawns=home?[]:Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[biome].enemies)}));

@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.15.1 — Trail food** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.16.0 — The Road to Northwatch** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -280,3 +280,16 @@ Travel stops for nearby threats, newly revealed enemies, attacks (including bloc
 ## Rat trail food (v0.15.1)
 
 Brush rats now drop raw rat meat with a 35% chance, otherwise nothing: no coins, trophies or equipment. Choose **Cook rat meat** at the starting campfire, then eat **Rat meat** from the Satchel for 5 HP. Raw and cooked rat meat each stack to nine per 1×1 cell, separately from regular meat. Cooking and eating each cost one turn; full bags or full-health uses never waste supplies.
+
+## Main story: The Road to Northwatch (v0.16.0)
+
+Prince Aldren’s convoy was ambushed on the southern road. He shelters southeast of the Lantern Camp tent at tile (24, 17), wearing mail and carrying a sword. Trailwarden Iona and all side quests remain available.
+
+- **Start whenever ready.** Stand next to Aldren and use **E / Speak**, or click him on desktop. Browsing is free. **Begin escort** takes one turn; there is no level requirement, timer, or forced departure. Prepare supplies and gear locally first if you wish.
+- **Follow / Stay.** He takes at most one action after each valid player action, before enemies. He follows using paths and defends himself against adjacent enemies without chasing them. He has 36 HP, 5 attack and 2 defense. Commands take one turn. Walk into him to swap places safely. Shift-click or tap him for a free portrait/stat inspection.
+- **Crossings.** A following prince must be within two tiles for region or crypt crossings. Wait for him if he falls behind. He crosses with you onto a vacant tile, with arrival grace. Stay leaves him in that region, including crypt depth; return beside him to resume. Inactive regions stay frozen. The Journal records his region, health and orders; his last known tile remains gold on explored local maps.
+- **Wounds.** Enemies can target Aldren. At zero health he becomes downed and waits for aid. Give a healing tonic from his dialogue to restore 16 HP, then ask him to follow. Tonics are consumed and aid takes a turn. Player death still ends the entire run; there is no save/load.
+- **Destination.** Reach **Northwatch (0, -6)**, six regions north of camp, then escort him to its northern keep at tile (20, 7). Each seed has a connected route through forest and marsh (up to recommended level 4); surrounding regions retain stronger biomes and dangerous pockets. The route can involve detours. Accepted main quests mark the destination on the world map without revealing its terrain. You can track it again in the Journal.
+- **Chapter one complete.** Arrival together at the keep awards 30 gold and full recovery once. Aldren stays in the city; dismiss the chapter popup to keep exploring. Northwatch is a safe stone city with walls, gates, paved streets, enterable buildings and a keep. City shops, additional residents and later chapters are deferred.
+
+The escort is an optional story within the same permadeath expedition, rather than a separate difficulty mode. All companion rules run through the central turn manager; elapsed time never moves the prince or enemies.

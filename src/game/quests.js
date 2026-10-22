@@ -11,6 +11,7 @@ export const QUEST_TYPES={
  ward:{title:'The Broken Ward',giver:'Warden Sable',description:'Three waystones have gone dark. Rekindle them and defeat the creature they awaken, then return.',goal:'Activate three waystones, then defeat their sentinel',reward:'Lantern Relic'}
 };
 export function questProgress(q){
+ if(q.kind==='escort')return q.complete?'Chapter one complete · Northwatch reached':`Escort Aldren to Northwatch (0, -6) · ${q.prince.mode} · ${q.prince.hp}/${q.prince.maxHp} HP`;
  if(q.legacy)return q.complete?'Frogs cleared — return for your reward':`${q.remaining??3} frogs remain`;
  if(q.complete)return 'Ready to return for your reward';
  if(q.kind==='hunt')return 'Marked beast still alive';

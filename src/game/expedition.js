@@ -1,3 +1,5 @@
+import {createStory,princeHere,nearPrince,princeAction,escortCanLeave,carryPrince,actPrince,princeEnemyTarget,finishStory} from './story.js';
+import {isKingdom} from './city.js';
 import {addWoodland,woodlandAction} from './woodland.js';
 import {addQuestContent, restoreQuestRegion, questAction} from './quests.js';
 import { MERCHANT, createMerchantStock, buyFromMerchant } from './merchant.js';
@@ -12,10 +14,10 @@ import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, ratMeat, slotsFor, recalcula
 import { ordinaryDrop, modifyItem } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
-const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
+const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
-    super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
+    super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.story=createStory();this.quests.set(this.story.id,this.story);
     Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
     Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
@@ -24,6 +26,11 @@ export class Expedition extends Game {
     this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Terrain and explored maps persist. Ordinary enemies return. Accepted quests and their progress stay with you for this run.');
   }
+  refresh(){super.refresh();this.state.companion=princeHere(this);}
+  princeHere(){return princeHere(this);}
+  atPrince(){return nearPrince(this);}
+  actCompanion(){actPrince(this);}
+  enemyTarget(enemy){return princeEnemyTarget(this,enemy);}
   actEnemy(enemy){actCreature(this,enemy);}
   makeEnemy(kind,p,danger,id){
     const base=enemyTypes[kind],extra=Math.max(0,danger-1),den=kind==='elite'&&p.eventId;
@@ -32,18 +39,18 @@ export class Expedition extends Game {
   saveRegion(){if(!this.location)return;const data={};for(const field of fields)data[field]=this.state[field];this.regions.set(this.location.id,data);}
   nextVisit(id){const n=this.visits.get(id)??0;this.visits.set(id,n+1);return n;}
   activate(location,data,preferred){
-    this.saveRegion();this.location=location;for(const field of fields)this.state[field]=data[field];
+    const oldLocation=this.location,oldPlayer={...this.state.player};this.saveRegion();this.location=location;for(const field of fields)this.state[field]=data[field];
     this.state.floor=Math.min(5,data.danger+(data.depth??0));
     // Regeneration can put a tree or creature at an old return point. Choose a
     // reachable vacant landing tile, without rewriting terrain or moving foes.
-    const occupied=new Set(data.enemies.filter(e=>e.hp>0).map(e=>key(e.x,e.y)));
+    const occupied=new Set(data.enemies.filter(e=>e.hp>0).map(e=>key(e.x,e.y)));const resident=princeHere(this);if(resident)occupied.add(key(resident.x,resident.y));
     let spawn=null;
     for(let r=0;r<WIDTH+HEIGHT&&!spawn;r++)for(let y=0;y<HEIGHT&&!spawn;y++)for(let x=0;x<WIDTH;x++)if(Math.abs(x-preferred.x)+Math.abs(y-preferred.y)===r&&walkable(data.map,x,y)&&!occupied.has(key(x,y))){spawn={x,y};break;}
     if(!spawn)throw Error('No safe arrival tile');
-    Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.detectCreaturesUntil=0;this.state.transition=true;this.state.enemyEffects=[];this.refresh();
+    Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.detectCreaturesUntil=0;this.state.transition=true;this.state.enemyEffects=[];carryPrince(this,oldLocation,oldPlayer);this.refresh();
   }
   visitWorld(rx,ry,spawn=CAMP){
-    const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home?this.regions.get(id):null;
+    const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home||isKingdom(rx,ry)?this.regions.get(id):null;
     if(!data){
       const previous=this.regions.get(id);
       const generated=generateWorldRegion(this.state.seed,rx,ry,this.nextVisit(id));
@@ -82,6 +89,8 @@ export class Expedition extends Game {
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(['acceptEscort','princeStay','princeFollow','healPrince'].includes(a.type))return princeAction(this,a);
+    if(['descend','ascend'].includes(a.type)&&!escortCanLeave(this))return false;
     if(a.type==='cook'){
       if(!this.atCampfire()){this.message('Stand at the Lantern Camp fire to cook meat.');return false;}
       const rawKind=a.kind??'rawMeat';if(!['rawMeat','rawRatMeat'].includes(rawKind))return false;
@@ -176,7 +185,8 @@ export class Expedition extends Game {
     }
     if(a.type==='move'&&Number.isInteger(a.dx)&&Number.isInteger(a.dy)&&Math.abs(a.dx)+Math.abs(a.dy)===1){
       const x=p.x+a.dx,y=p.y+a.dy;
-      if(loc.kind==='world'&&(x<0||x>=WIDTH||y<0||y>=HEIGHT)){this.visitWorld(loc.rx+a.dx,loc.ry+a.dy,{x:(x+WIDTH)%WIDTH,y:(y+HEIGHT)%HEIGHT});return true;}
+      if(loc.kind==='world'&&(x<0||x>=WIDTH||y<0||y>=HEIGHT)){if(!escortCanLeave(this))return false;this.visitWorld(loc.rx+a.dx,loc.ry+a.dy,{x:(x+WIDTH)%WIDTH,y:(y+HEIGHT)%HEIGHT});return true;}
+      const c=princeHere(this);if(c&&c.x===x&&c.y===y){Object.assign(c,{x:p.x,y:p.y,swappedTurn:s.turn+1});}
       const moved=super.resolvePlayer(a);
       if(moved){
         if(this.atMerchant())this.message('Mara buys trophies and sells supplies. Press E or Trade.');
@@ -190,7 +200,7 @@ export class Expedition extends Game {
     }
     return super.resolvePlayer(a);
   }
-  finishTurn(){const p=this.state.player;if(this.state.status!=='playing')return;if(p.rationTurns>0){p.hp=Math.min(p.maxHp,p.hp+healAmount(p,3));p.rationTurns--;}if(p.smokeTurns>0)p.smokeTurns--;if(p.corrosion>0)p.corrosion--;}
+  finishTurn(){const p=this.state.player;if(this.state.status!=='playing')return;finishStory(this);if(p.rationTurns>0){p.hp=Math.min(p.maxHp,p.hp+healAmount(p,3));p.rationTurns--;}if(p.smokeTurns>0)p.smokeTurns--;if(p.corrosion>0)p.corrosion--;}
   awardExperience(amount){const p=this.state.player;p.xp+=amount;while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=3;p.hp=Math.min(p.maxHp,p.hp+4);if(p.level%2===0)p.attack++;if(p.level%4===0)p.defense++;this.message(`Level ${p.level}. You grow a little stronger.`);}}
   kill(enemy){
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);

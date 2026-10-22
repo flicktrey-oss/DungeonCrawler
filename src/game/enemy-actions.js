@@ -15,7 +15,7 @@ function line(state,e,dx,dy,length,ground=false){const tiles=[];for(let i=1;i<=l
 function effect(state,e,kind,to){(state.enemyEffects??=[]).push({kind,from:{x:e.x,y:e.y},to:{...to}});}
 function prepare(g,e,kind,tiles){e.intent={kind,tiles};g.message(kind==='tongue'?`${e.name} draws back its tongue! Sidestep the pink line.`:kind==='spit'?`${e.name} aims sap at your tile! Move off the amber cross.`:`${e.name} lowers its horns! Step off the charge lane.`);}
 export function actCreature(g,e){
- const s=g.state,p=s.player;e.actions++;
+ const s=g.state,p=g.enemyTarget?.(e)??s.player;e.actions++;
  if(e.bleeding>0){e.bleeding--;e.hp--;g.message(e.name+' bleeds for 1.');if(e.hp<=0){g.kill(e);return;}}
  if(e.interrupted){e.interrupted=false;e.intent=null;return;}
  const territory=territoryOf(e);
@@ -28,7 +28,8 @@ export function actCreature(g,e){
    const origin={x:e.x,y:e.y};let hit=false;
    for(const tile of intent.tiles){
     if(territory&&!insideTerritory(territory,tile)||!walkable(s.map,tile.x,tile.y)||s.enemies.some(o=>o!==e&&o.hp>0&&o.x===tile.x&&o.y===tile.y))break;
-    if(tile.x===p.x&&tile.y===p.y){g.receiveEnemyAttack(e,'headbutts you',{special:true});hit=true;break;}
+    if(tile.x===p.x&&tile.y===p.y){g.receiveEnemyAttack(e,'headbutts you',{special:true,target:p});hit=true;break;}
+    if(s.companion&&s.companion!==p&&tile.x===s.companion.x&&tile.y===s.companion.y||p!==s.player&&tile.x===s.player.x&&tile.y===s.player.y)break;
     Object.assign(e,tile);
    }
    effect(s,origin,'charge',e);
@@ -36,7 +37,7 @@ export function actCreature(g,e){
   }else{
    const hit=intent.tiles.some(t=>t.x===p.x&&t.y===p.y)&&clearShot(s,e,p);
    effect(s,e,intent.kind,hit?p:intent.tiles.at(-1));
-   if(hit){const damage=g.receiveEnemyAttack(e,intent.kind==='tongue'?'lashes you with its tongue':'hits you with sap',{special:true,ranged:true});if(damage&&intent.kind==='spit'){p.corrosion=3;g.message('Sap corrodes your protection: −1 defense for 3 turns.');}}
+   if(hit){const damage=g.receiveEnemyAttack(e,intent.kind==='tongue'?'lashes you with its tongue':'hits you with sap',{special:true,ranged:true,target:p});if(damage&&intent.kind==='spit'){p.corrosion=3;g.message('Sap corrodes your protection: −1 defense for 3 turns.');}}
    else g.message(`${e.name}'s ${intent.kind==='tongue'?'tongue':'sap'} misses. You moved clear.`);
   }
   return;
@@ -49,7 +50,7 @@ export function actCreature(g,e){
  }
  if(e.kind==='beetle'&&distance>1&&dx*dx+dy*dy<=9&&clearShot(s,e,p)){prepare(g,e,'spit',[{x:p.x,y:p.y}]);return;}
  if(e.kind==='goat'&&distance>=2&&distance<=3&&(!dx||!dy)&&clearShot(s,e,p)){const tiles=line(s,e,Math.sign(dx),Math.sign(dy),3,true);if(tiles.some(t=>t.x===p.x&&t.y===p.y)){prepare(g,e,'charge',tiles);return;}}
- if(distance===1){g.receiveEnemyAttack(e,e.kind==='goat'?'headbutts you':e.kind==='beetle'?'bites you':'hits you');return;}
- const occupied=territoryObstacles(s,e,Boolean(territory)),step=pathStep(s.map,e,p,occupied);
+ if(distance===1){g.receiveEnemyAttack(e,e.kind==='goat'?'headbutts you':e.kind==='beetle'?'bites you':'hits you',{target:p});return;}
+ const occupied=territoryObstacles(s,e,Boolean(territory));if(p.companion)occupied.delete(`${p.x},${p.y}`);const step=pathStep(s.map,e,p,occupied);
  if(step)Object.assign(e,step);
 }

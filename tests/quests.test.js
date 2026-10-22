@@ -28,7 +28,7 @@ describe('open world quest lifetime',()=>{
  it('supports several active quests with no expiry even after long idle and travel',()=>{
  const {g,q}=fixture('hunt');g.action({type:'acceptQuest'});g.visitWorld(0,0);stand(g,{...TRAILWARDEN,type:'villager'});g.action({type:'acceptQuest'});
  expect([...g.quests.values()].filter(q=>q.accepted)).toHaveLength(2);for(let i=0;i<150;i++)g.action({type:'wait'});expect(q.accepted).toBe(true);expect(q.claimed).toBe(false);
- expect(new Expedition(g.state.seed).quests.size).toBe(1);g.state.status='dead';expect(g.action({type:'claimQuest'})).toBe(false);
+ expect(new Expedition(g.state.seed).quests.size).toBe(2);g.state.status='dead';expect(g.action({type:'claimQuest'})).toBe(false);
  });
  it('places camp objectives when the destination was visited before accepting',()=>{
  const g=new Expedition(3),q=g.quests.get('trailwarden');g.visitWorld(q.region.rx,q.region.ry);g.visitWorld(0,0);stand(g,{...TRAILWARDEN,type:'villager'});expect(g.action({type:'acceptQuest'})).toBe(true);g.visitWorld(q.region.rx,q.region.ry);expect(q.placed).toBe(true);

@@ -78,9 +78,10 @@ export class Game {
     this.message(`${label} ${enemy.name} for ${hit}.`);if(enemy.hp<=0)this.kill(enemy);
   }
   receiveEnemyAttack(e,verb='hits you',options={}){
-    const s=this.state,p=s.player;
+    const s=this.state,p=options.target??s.player;
     if(shieldChance(p,options.ranged)>0&&this.rng.next()<shieldChance(p,options.ranged)){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand?.name??'ward'} stops ${e.name}'s attack.`);return;}
-    const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${verb} for ${hit}.`);
+    const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${p.companion?verb.replace('you',p.name):verb} for ${hit}.`);
+    if(p.companion){if(p.hp===0){p.mode='downed';this.message('Aldren is wounded and cannot follow. Bring him a healing tonic; he remains here.');}return hit;}
     if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');const index=p.inventory.indexOf(p.amulet);if(index>=0)p.inventory.splice(index,1);p.amulet=null;p.hp=1;recalculateGear(p);}
     if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return hit;
   }

@@ -10,6 +10,7 @@ export function clearShot(state,from,to){
   if(nx!==x&&ny!==y&&(solid(nx,y)||solid(x,ny)))return false;
   if(e>=dy)err+=dy;if(e<=dx)err+=dx;x=nx;y=ny;
   if(solid(x,y))return false;
+  if((x!==to.x||y!==to.y)&&state.companion&&state.companion!==from&&x===state.companion.x&&y===state.companion.y)return false;
   if((x!==to.x||y!==to.y)&&state.enemies.some(o=>o.hp>0&&o.x===x&&o.y===y))return false;
  }
  return true;

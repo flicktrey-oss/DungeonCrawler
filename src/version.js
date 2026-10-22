@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.15.1 · Trail food';
+export const RELEASE = 'v0.16.0 · The Road to Northwatch';

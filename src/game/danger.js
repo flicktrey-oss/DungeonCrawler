@@ -20,6 +20,7 @@ export function visibleDangerPockets(state){
 }
 export function territoryObstacles(state,enemy,bounded=false){
  const occupied=new Set(state.enemies.filter(e=>e!==enemy&&e.hp>0).map(e=>key(e.x,e.y)));
+ if(state.companion)occupied.add(key(state.companion.x,state.companion.y));
  if(bounded){const t=territoryOf(enemy);if(t)for(let y=0;y<state.map.length;y++)for(let x=0;x<state.map[y].length;x++)if(!insideTerritory(t,{x,y}))occupied.add(key(x,y));}
  return occupied;
 }

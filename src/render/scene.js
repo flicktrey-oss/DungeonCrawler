@@ -31,6 +31,7 @@ export class DungeonScene extends Phaser.Scene {
     camera.setBounds(-width/(2*zoom),-height/(2*zoom),s.map[0].length*T+width/zoom,s.map.length*T+height/zoom);
     for(let y=0;y<s.map.length;y++)for(let x=0;x<s.map[y].length;x++){
       const k=key(x,y);if(!s.explored.has(k))continue;const visible=s.visible.has(k),a=visible?1:0.32,t=rememberedTile(s,x,y),xx=x*T,yy=y*T;
+      if(s.location?.kind==='world'&&s.city){this.cityTile(t,xx,yy,a,x,y);continue;}
       if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,s.biome,x,y);continue;}
       g.fillStyle(t==='#'?0x3d4351:0x20272e,a);g.fillRect(xx,yy,T-1,T-1);
       if(t==='#'){g.fillStyle(0x59616b,a);g.fillRect(xx+1,yy+1,22,3);g.lineStyle(1,0x252b37,a);g.lineBetween(xx+12,yy+4,xx+12,yy+12);g.lineBetween(xx,yy+12,xx+24,yy+12);if((x*7+y*13)%37===0){g.fillStyle(0xa96632,a);g.fillRect(xx+10,yy+9,4,9);g.fillStyle(0xffd479,a);g.fillTriangle(xx+9,yy+10,xx+15,yy+10,xx+12,yy+3);}}
@@ -46,6 +47,7 @@ export class DungeonScene extends Phaser.Scene {
     for(const e of s.enemies)if(e.hp>0&&e.questKey&&this.gameModel.quests?.get(e.questKey)?.accepted&&s.visible.has(key(e.x,e.y))){g.fillStyle(0xffda85);g.fillRect(e.x*T+10,e.y*T-3,4,2);}
     for(const e of s.encounters??[])if(e.wardIndex!==undefined&&e.used&&s.visible.has(key(e.x,e.y))){g.fillStyle(0x8fe2cb);g.fillRect(e.x*T+10,e.y*T+7,4,8);}
     for(const point of this.travelHighlights??[])if(s.explored.has(key(point.x,point.y))){g.fillStyle(0xa8d6c8,.65);g.fillRect(point.x*T+10,point.y*T+10,4,4);}
+    if(s.companion&&s.visible.has(key(s.companion.x,s.companion.y))){this.actor(s.companion,'prince');this.healthBar(s.companion);}
     this.actor(s.player,'player');
     // Draw bars last so neighboring actors and scenery cannot cover them.
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);
@@ -55,6 +57,13 @@ export class DungeonScene extends Phaser.Scene {
     }
     for(const e of this.targetHighlights??[]){g.lineStyle(2,0xf4d385,1);g.strokeRect(e.x*T+1,e.y*T+1,T-2,T-2);}
     this.cameras.main.centerOn(s.player.x*T+12,s.player.y*T+12);
+  }
+  cityTile(t,x,y,a,tx,ty){
+    const g=this.paint;g.fillStyle(0x65717b,a);g.fillRect(x,y,24,24);g.lineStyle(1,0x4c5964,a);g.strokeRect(x+1,y+1,22,22);g.lineBetween(x+((ty%2)*10+3),y,x+((ty%2)*10+3),y+24);
+    if(t==='#'){g.fillStyle(0x3b4a5e,a);g.fillRect(x,y,24,24);g.fillStyle(0x91a0af,a);g.fillRect(x+1,y+1,22,5);g.fillStyle(0x566b81,a);g.fillRect(x+2,y+9,20,11);if((tx+ty)%4===0){g.fillStyle(0xc4a76b,a);g.fillRect(x+9,y+9,6,8);}}
+    if(t==='O'){g.fillStyle(0x654a39,a);g.fillRect(x+3,y+1,18,22);g.fillStyle(0xd2ac69,a);g.fillRect(x+5,y+3,3,18);g.fillRect(x+16,y+3,3,18);}
+    if(t==='J'){g.fillStyle(0x9e4c68,a);g.fillRect(x+3,y+1,18,22);g.fillStyle(0xe7c576,a);g.fillRect(x+6,y+2,12,6);g.fillRect(x+5,y+11,14,9);}
+    if(t==='Z'){g.fillStyle(0xc0c8c9,a);g.fillEllipse(x+12,y+13,22,18);g.fillStyle(0x598aab,a);g.fillEllipse(x+12,y+12,17,12);g.fillStyle(0xe0d5b2,a);g.fillRect(x+10,y+4,4,12);}
   }
   drawEnemyWarnings(s){
     const g=this.paint;
