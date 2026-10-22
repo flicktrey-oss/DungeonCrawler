@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.11.0 — Wandering quests** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.12.0 — Woodland discoveries** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -97,7 +97,7 @@ Capacity depends on contiguous shape, not just the number of free cells. Pickups
 
 ## Maps, Mana and permadeath
 
-Local and World tabs switch the same minimap canvas. Local shows explored tiles and discovered features. World shows one square per visited region, biome colors, camp, your region, and discovered entrances. Minimize/restore with Map − / +; switching costs no turns.
+Local and World tabs switch the same minimap canvas. Local shows explored tiles and discovered features. World shows visited regions, biome colors, camp, your region, discovered entrances, and accepted quest destinations (unvisited destinations stay neutral). Minimize/restore with Map − / +; switching costs no turns.
 
 Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Moving/melee restore 5 Mana; waiting and casting do not. Transitions end the effect. Revealed terrain stays mapped for the rest of the run, including when you leave a region.
 
@@ -116,7 +116,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 126 simulation tests and 38 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 135 simulation tests and 42 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -225,3 +225,17 @@ Quest equipment uses the existing quest modifier odds (70% modified, with except
 Open **Journal** to see progress, objective region, suggested biome level, and where to return. Track one quest to highlight it within the Journal; this does not reveal terrain or put unseen markers on the minimap. Quest targets have a small gold marker when visible. Quest-givers have colored clothing and inspection names.
 
 Quest persistence lasts only for the current run. Death or refreshing still ends it; no cross-session save/load has been added. Escort quests, cross-region search chains and additional templates are deferred.
+
+
+## Woodland discoveries (v0.12.0)
+
+Whisperwood has connected meadows and fewer trees (about 19% fewer tree tiles across a 100-seed comparison, including boundaries). Other biomes keep their existing terrain.
+
+Each non-camp forest region rolls an independent **50% chance** of one extra noncombat encounter, in addition to its quests and usual discoveries:
+- **Nessa the Herbalist:** one tonic for 6 gold or one hunting trophy.
+- **A Wounded Traveler:** give one Ember tonic for 8 gold.
+- **Forgotten Milestone:** read a truthful nearby crypt-region clue. Its terrain and entrance remain undiscovered until you explore there.
+
+Stand beside the people, or on the milestone, and use **E / Interact**. Browsing costs no turns; a successful exchange, helping action or reading costs one turn. Declining is free. These sites and outcomes last for the run, with no repeat rewards. Regions with an extra encounter retain their encounter layer on return; ordinary enemies still respawn.
+
+The **World** minimap now places gold **!** markers inside regions with accepted quest objectives. On completion, the marker moves to the reward giver's region and becomes **✓**. Claiming removes that quest's marker. Multiple quests in a region are grouped; tracking brightens its marker. A quest pointing to an unvisited region adds a neutral square without revealing terrain, creatures or entrances. Purple entrance indicators and the current-region border remain separate.

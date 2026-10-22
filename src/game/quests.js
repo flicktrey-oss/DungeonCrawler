@@ -64,7 +64,7 @@ export function addQuestContent(g,data,rx,ry){
 // Pin the accepted encounter layer; only ordinary inhabitants respawn.
 export function restoreQuestRegion(g,data,previous,rx,ry){
  const pinned=[...g.quests.values()].some(q=>(q.accepted||q.claimed)&&q.region.rx===rx&&q.region.ry===ry);
- if(!previous||!pinned)return false;
+ if(!previous||!pinned&&!g.woodland?.get(worldId(rx,ry)))return false;
  data.map=previous.map.map(row=>[...row]);data.encounters=previous.encounters;data.quest=previous.quest;data.items=previous.items;data.encounterSeen=new Set(previous.encounterSeen);
  const special=previous.enemies.filter(e=>e.questId||e.questKey||e.eventId);
  const ordinary=data.enemies.filter(e=>!e.questId&&!e.questKey&&!e.eventId);

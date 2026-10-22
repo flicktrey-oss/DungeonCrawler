@@ -39,11 +39,20 @@ export function drawMinimap(canvas, state, location) {
 export function worldMapCells(game) {
   const regions = new Map([...game.regions].filter(([id]) => id.startsWith('world:')));
   if (game.location.kind === 'world') regions.set(game.location.id, game.state);
-  return [...regions.values()].map(region => ({
-    rx: region.rx, ry: region.ry, biome: region.biome, home: region.home,
-    current: region.rx === game.location.rx && region.ry === game.location.ry,
-    entranceKnown: Boolean(region.entrance && region.explored.has(key(region.entrance.x, region.entrance.y))),
-  })).sort((a, b) => a.ry - b.ry || a.rx - b.rx);
+  const cells=[...regions.values()].map(region=>({
+    rx:region.rx,ry:region.ry,biome:region.biome,home:region.home,visited:true,
+    current:region.rx===game.location.rx&&region.ry===game.location.ry,
+    entranceKnown:Boolean(region.entrance&&region.explored.has(key(region.entrance.x,region.entrance.y))),
+    questCount:0,returnCount:0,tracked:false
+  }));
+  for(const q of game.quests?.values()??[]){
+    if(!q.accepted||q.claimed)continue;
+    const target=q.complete?q.giverRegion:q.region;
+    let cell=cells.find(c=>c.rx===target.rx&&c.ry===target.ry);
+    if(!cell){cell={rx:target.rx,ry:target.ry,visited:false,home:false,current:false,entranceKnown:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}
+    cell[q.complete?'returnCount':'questCount']++;if(game.trackedQuest===q.id)cell.tracked=true;
+  }
+  return cells.sort((a,b)=>a.ry-b.ry||a.rx-b.rx);
 }
 export function worldMapLayout(cells, width = 160, height = 120) {
   const xs = cells.map(c => c.rx), ys = cells.map(c => c.ry);
@@ -58,10 +67,16 @@ export function drawWorldMinimap(canvas, game) {
   const layout = worldMapLayout(cells, canvas.width, canvas.height), size = layout.size;
   for (const cell of cells) {
     const x = layout.x + cell.rx * size, y = layout.y + cell.ry * size;
-    ctx.fillStyle = ({forest:'#547749',marsh:'#47717b',highlands:'#8a887b',ashlands:'#99594f'})[cell.biome]??'#547749'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
+    ctx.fillStyle = ({forest:'#547749',marsh:'#47717b',highlands:'#8a887b',ashlands:'#99594f'})[cell.biome]??'#202c38'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
     if (cell.entranceKnown) { ctx.fillStyle = '#d4a5ff'; const mark = Math.max(1, size / 5); ctx.fillRect(x + size - mark - 2, y + 2, mark, mark); }
-    if (cell.home && size >= 10) { ctx.font = `bold ${Math.min(13, size * .6)}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe0a0'; ctx.fillText('C', x + size / 2, y + size / 2); }
+    if (cell.home && size >= 10) { ctx.font = `bold ${Math.min(13, size * .6)}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe0a0'; ctx.fillText('C', x + size * ((cell.questCount||cell.returnCount)? .72 : .5), y + size * ((cell.questCount||cell.returnCount)? .72 : .5)); }
+    if(cell.questCount||cell.returnCount){
+      // Distinct from the purple entrance dot and teal player border.
+      const radius=Math.max(2,Math.min(6,size*.24)),cx=x+size*.32,cy=y+size*.33;
+      ctx.fillStyle=cell.tracked?'#ffe6a0':'#edc76d';ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
+      if(size>=12){ctx.font=`bold ${Math.max(8,Math.min(12,size*.48))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#141a20';ctx.fillText(cell.returnCount?'✓':'!',cx,cy);}
+    }
     if (cell.current) { ctx.strokeStyle = '#4cf3dc'; ctx.lineWidth = Math.min(2, size / 5); ctx.strokeRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2)); }
   }
-  canvas.setAttribute('aria-label', `World map: ${cells.length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks camp; purple marks discovered entrances. Unvisited regions are blank.`);
+  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks camp; purple marks discovered entrances. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} Unvisited quest regions show no terrain.`);
 }

@@ -38,6 +38,15 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
     encounters.push({...p,type,id:`${type}:${i}`,used:false});
   }
   if(home){for(let y=11;y<=19;y++)for(let x=15;x<=25;x++)map[y][x]=',';map[15][20]='C';map[MERCHANT.y][MERCHANT.x]='M';}
+  if(biome==='forest'){
+    // Independent stream keeps encounter selection stable while opening the terrain.
+    const meadow=new Random(regionSeed(seed,rx,ry,'meadows'));
+    for(let i=0;i<7;i++){
+      const cx=meadow.int(5,34),cy=meadow.int(5,24),rw=meadow.int(4,7),rh=meadow.int(2,4);
+      for(let y=1;y<29;y++)for(let x=1;x<39;x++)if(map[y][x]==='T'&&((x-cx)/rw)**2+((y-cy)/rh)**2<1)map[y][x]=',';
+      let x=20,y=15;while(x!==cx){if(map[y][x]==='T')map[y][x]=',';x+=Math.sign(cx-x);}while(y!==cy){if(map[y][x]==='T')map[y][x]=',';y+=Math.sign(cy-y);}
+    }
+  }
   const seen=new Set([key(CAMP.x,CAMP.y)]),queue=[CAMP];
   for(let i=0;i<queue.length;i++)for(const[dx,dy]of directions){const x=queue[i].x+dx,y=queue[i].y+dy,k=key(x,y);if(walkable(map,x,y)&&!seen.has(k)){seen.add(k);queue.push({x,y});}}
   for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++)if(walkable(map,x,y)&&!seen.has(key(x,y)))map[y][x]=blocker;

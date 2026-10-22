@@ -1,3 +1,4 @@
+import {addWoodland,woodlandAction} from './woodland.js';
 import {addQuestContent, restoreQuestRegion, questAction} from './quests.js';
 import { MERCHANT, createMerchantStock, buyFromMerchant } from './merchant.js';
 import { Game } from './game.js';
@@ -14,7 +15,7 @@ import { ENCOUNTERS, treasure } from './encounters.js';
 const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
-    super(seed);this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
+    super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
     Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
     Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
@@ -48,11 +49,12 @@ export class Expedition extends Game {
       const generated=generateWorldRegion(this.state.seed,rx,ry,this.nextVisit(id));
       data={...generated,depth:0,start:CAMP,stairs:null,upstairs:null,cleared:false,explored:new Set(previous?.explored??[]),encounterSeen:new Set(),enemies:generated.spawns.map((e,i)=>this.makeEnemy(e.kind,e,generated.danger,i)),items:[],quest:null};
       for(const event of data.encounters){
-        if(['caravan','cache'].includes(event.type))data.items.push({kind:'chest',name:ENCOUNTERS[event.type].name,...event,eventId:event.id});
+        if(['caravan','cache'].includes(event.type))data.items.push({kind:'chest',name:(event.name??ENCOUNTERS[event.type]?.name),...event,eventId:event.id});
         if(event.type==='villager'){data.quest={id:worldId(rx,ry)+':'+event.id,legacy:true,kind:'frogs',title:'Clear the Frog Pond',giver:'The Mirekeeper',giverRegion:{rx,ry},region:{rx,ry},accepted:false,claimed:false,complete:false};event.quest=data.quest;}
       }
       if(data.quest)for(const e of data.enemies)if(e.questId)e.questId=data.quest.id;
       if(!restoreQuestRegion(this,data,previous,rx,ry))addQuestContent(this,data,rx,ry);
+      addWoodland(this,data,rx,ry);
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
     this.activate({id,kind:'world',rx,ry,depth:0},data,spawn);
@@ -72,12 +74,13 @@ export class Expedition extends Game {
   }
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>e.type==='villager'&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
+  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='woodland')return woodlandAction(this,a);
     if(['acceptQuest','claimQuest','activateWard'].includes(a.type))return questAction(this,a);
     if(a.type==='reach'||a.type==='throw'){
       const enemy=techniqueTarget(this,a.type,a.x,a.y);
@@ -163,7 +166,7 @@ export class Expedition extends Game {
       const moved=super.resolvePlayer(a);
       if(moved){
         if(this.atMerchant())this.message('Mara buys trophies and sells supplies. Press E or Trade.');
-        const event=this.activeEncounter();if(event)this.message(`${event.quest?(event.type==='villager'?event.quest.giver:'Broken waystone'):ENCOUNTERS[event.type].name}: ${event.quest?event.quest.title:ENCOUNTERS[event.type].description}${['villager','shrine'].includes(event.type)?' Press E or Interact.':''}`);
+        const event=this.activeEncounter();if(event)this.message(`${event.quest?(event.type==='villager'?event.quest.giver:'Broken waystone'):(event.name??ENCOUNTERS[event.type]?.name)}: ${event.quest?event.quest.title:(event.description??ENCOUNTERS[event.type]?.description)}${['villager','shrine','woodland'].includes(event.type)?' Press E or Interact.':''}`);
         if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The map is remembered; enemies return.');
         if(loc.kind==='world'&&(p.x===0||p.x===39||p.y===0||p.y===29)){
           const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0))];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended}${p.level<next.recommended?' — dangerous for you!':''}.`);

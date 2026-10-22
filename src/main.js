@@ -46,7 +46,7 @@ function start() { lastShownBlock=0; $('block-feedback').textContent='';$('block
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
-  <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
+  <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Forests also have a 50% chance of an herbalist, wounded traveler or milestone with a crypt clue. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
   <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
@@ -109,10 +109,18 @@ function bag(view='satchel',slot='weapon') {
   else mountInventory($('bag-editor'),model,perform);
 }
 function encounterDialog() {
-  const event=model?.activeEncounter();if(!event||!['villager','shrine'].includes(event.type))return;
+  const event=model?.activeEncounter();if(!event||!['villager','shrine','woodland'].includes(event.type))return;
   paused=true;panel='encounter';
-  const perform=action=>{model.action(action);render();if(model.state.status==='playing'){encounterDialog();$('encounter-result').textContent=model.state.log.at(-1);}};
-  if(event.type==='villager'){
+  const perform=action=>{model.action(action);render();if(model.state.status==='playing'){encounterDialog();$('encounter-result').textContent=event.type==='woodland'&&event.used?event.result:model.state.log.at(-1);}};
+  if(event.type==='woodland'){
+    const buttons=[['Return',closePanel]];
+    if(!event.used){
+      if(event.kind==='herbalist')buttons.unshift(['Buy tonic · 6 gold',()=>perform({type:'woodland',choice:'gold'})],['Exchange hunting trophy',()=>perform({type:'woodland',choice:'trophy'})]);
+      else buttons.unshift([event.kind==='traveler'?'Give Ember tonic':'Read the milestone',()=>perform({type:'woodland'})]);
+    }
+    const result=event.kind==='milestone'&&event.used?(event.clue?'A crypt lies in region ('+event.clue.rx+', '+event.clue.ry+'). Its entrance must still be discovered.':'Seek old stone doorways for shelter below.'):event.used?'This encounter is resolved for the run.':event.description;
+    modal(event.name,`<p>${escape(result)}</p><p class="hint">Browsing is free. Each successful exchange, aid or reading takes one turn. You may leave and return.</p><p id="encounter-result" role="status"></p>`,buttons);
+  }else if(event.type==='villager'){
     const q=event.quest??model.state.quest;
     const buttons=[['Return',closePanel]];
     if(!q.accepted)buttons.unshift([q.legacy?'Accept frog quest':'Accept quest',()=>perform({type:'acceptQuest'})]);
@@ -128,7 +136,7 @@ function encounterDialog() {
     modal('Wayfarer shrine',`<p>${event.used?'Its blessing is spent for this visit.':'Choose one exchange. Each uses a turn; enemies act afterward.'}</p><p id="encounter-result" role="status"></p>`,buttons);
   }
 }
-function interact() { if(!model||paused)return;if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine'].includes(model.activeEncounter()?.type))encounterDialog();else act({type:'pickup'}); }
+function interact() { if(!model||paused)return;if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else act({type:'pickup'}); }
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
@@ -136,7 +144,7 @@ function renderMinimap() {
   else drawMinimap($('minimap'), model.state, loc);
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
   $('camp-bearing').textContent = campBearing(loc);
-  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · C: camp · Purple: discovered entrance' : '● You · C Camp · M Merchant · > Crypt · ? Quest · ! Den · S Shrine · K Cache';
+  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : '● You · C Camp · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
   for (const tab of document.querySelectorAll('[data-map-view]')) {
     const selected = tab.dataset.mapView === mapView;
@@ -172,7 +180,7 @@ function render() {
   $('manage-bag').title=`Open 10×10 satchel [I] · ${used} / 100 cells used`;
   $('potion-count').textContent=p.inventory.filter(i=>i.kind==='potion').length;
   $('quest-indicator').classList.toggle('hidden',![...model.quests.values()].some(q=>q.accepted&&!q.claimed));
-  mountQuestJournal($('quest-info'),model);
+  mountQuestJournal($('quest-info'),model,renderMinimap);
   $('latest-event').textContent = s.log.at(-1) ?? '';
   $('log').innerHTML = s.log.slice(-25).map(t => `<p>${escape(t)}</p>`).join(''); $('log').scrollTop = $('log').scrollHeight;
   renderInspection();
@@ -244,7 +252,7 @@ function syncTouchControls() {
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
       if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
-      if (control === 'collect') { const label = model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atCamp() || model.atMerchant() || ['villager','shrine'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
+      if (control === 'collect') { const label = model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
     }
     button.disabled = !allowed||Boolean(targetMode);
     if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);

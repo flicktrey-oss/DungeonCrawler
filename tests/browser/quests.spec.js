@@ -13,7 +13,7 @@ for(const touch of [false,true])test.describe(touch?'phone persistent quests':'d
  await click(page.getByRole('button',{name:'Track quest '+camp.title,exact:true}));d.game.trackedQuest=camp.id;
  await expect(page.locator('.floor')).toContainText('TURN '+turn);await click(page.locator('#quest-panel summary'));
  await d.walk({x:39,y:15});await d.send({type:'move',dx:1,dy:0});
- const event=d.game.state.encounters.find(e=>e.quest?.kind==='hunt');await d.walk({x:event.x,y:event.y+1});
+ const event=d.game.state.encounters.find(e=>e.type==='villager'&&e.quest&&!e.quest.legacy);await d.walk({x:event.x,y:event.y+1});
  await click(page.getByRole('button',{name:'Interact',exact:true}));await click(page.getByRole('button',{name:'Accept quest',exact:true}));d.game.action({type:'acceptQuest'});await click(page.getByRole('button',{name:'Return',exact:true}));
  await d.walk({x:0,y:15});await d.send({type:'move',dx:-1,dy:0});await click(page.locator('#quest-panel summary'));
  await expect(page.locator('.journal-quest')).toHaveCount(2);await expect(page.locator('#quest-info')).toContainText(event.quest.title);await expect(page.locator('#quest-info')).toContainText('region (1, 0)');
