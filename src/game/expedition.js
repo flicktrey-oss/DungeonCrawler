@@ -8,7 +8,7 @@ import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeA
 import { actCreature } from './enemy-actions.js';
 import { techniqueTarget } from './techniques.js';
 import { enemyTypes } from './combat.js';
-import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, slotsFor, recalculateGear, healAmount, potion, projectileStack, reedAmulet, threshold, attack, throwingStones, salePrice } from './items.js';
+import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, ratMeat, slotsFor, recalculateGear, healAmount, potion, projectileStack, reedAmulet, threshold, attack, throwingStones, salePrice } from './items.js';
 import { ordinaryDrop, modifyItem } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
@@ -84,12 +84,14 @@ export class Expedition extends Game {
     const s=this.state,p=s.player,loc=this.location;
     if(a.type==='cook'){
       if(!this.atCampfire()){this.message('Stand at the Lantern Camp fire to cook meat.');return false;}
-      const index=p.inventory.findIndex(i=>i.kind==='rawMeat');if(index<0){this.message('No raw meat to cook.');return false;}
+      const rawKind=a.kind??'rawMeat';if(!['rawMeat','rawRatMeat'].includes(rawKind))return false;
+      const output=rawKind==='rawRatMeat'?ratMeat():cookedMeat(),healing=rawKind==='rawRatMeat'?5:10;
+      const index=p.inventory.findIndex(i=>i.kind===rawKind);if(index<0){this.message('No raw meat to cook.');return false;}
       const trial={inventory:p.inventory.map(i=>({...i}))};if(--trial.inventory[index].quantity===0)trial.inventory.splice(index,1);
-      if(!addItem(trial,cookedMeat())){this.message('Make room for the cooked meat first.');return false;}
+      if(!addItem(trial,output)){this.message('Make room for the cooked meat first.');return false;}
       // Commit only after the output fits; keep all equipped references intact.
-      if(--p.inventory[index].quantity===0)p.inventory.splice(index,1);addItem(p,cookedMeat());
-      this.message('Cooked one Campfire meat. It restores 10 health.');return true;
+      if(--p.inventory[index].quantity===0)p.inventory.splice(index,1);addItem(p,output);
+      this.message(`Cooked one ${output.name}. It restores ${healing} health.`);return true;
     }
     if(['sell','store','drop'].includes(a.type)&&equippedSlot(p,p.inventory[a.index])){this.message('Unequip that item before selling, storing or dropping it.');return false;}
     if(a.type==='woodland')return woodlandAction(this,a);
@@ -133,7 +135,7 @@ export class Expedition extends Game {
     if(a.type==='use'){
       const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item)return false;
       if(item.kind==='potion')return this.resolvePlayer({type:'potion',index:a.index});
-      if(item.kind==='cookedMeat'&&p.hp<p.maxHp){const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+healAmount(p,10));this.message('Campfire meat restores '+(p.hp-before)+' health.');if(--item.quantity===0)p.inventory.splice(a.index,1);return true;}
+      if(['cookedMeat','ratMeat'].includes(item.kind)&&p.hp<p.maxHp){const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+healAmount(p,item.kind==='ratMeat'?5:10));this.message(item.name+' restores '+(p.hp-before)+' health.');if(--item.quantity===0)p.inventory.splice(a.index,1);return true;}
       if(item.kind==='mana'&&p.mana<p.maxMana)p.mana=Math.min(p.maxMana,p.mana+35);
       else if(item.kind==='ration'&&p.hp<p.maxHp&&!p.rationTurns)p.rationTurns=4;
       else if(item.kind==='cleanse'&&p.corrosion>0)p.corrosion=0;

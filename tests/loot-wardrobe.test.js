@@ -34,7 +34,7 @@ describe('reward pacing and source identity',()=>{
  const a=new Random(9),b=new Random(9);expect(Array.from({length:20},()=>itemReward(a,3,'crypt'))).toEqual(Array.from({length:20},()=>itemReward(b,3,'crypt')));
  });
  it('keeps empty ordinary drops and makes difficult equipment rewards much more likely to be modified',()=>{
- const a=new Random(71),b=new Random(72);let empty=0,modified=0,boss=0;for(let n=0;n<4000;n++){if(!ordinaryDrop(a,1,'rat'))empty++;if(itemReward(b,4,'crypt').modifier)modified++;if(itemReward(b,4,'boss').modifier)boss++;}
+ const a=new Random(71),b=new Random(72);let empty=0,modified=0,boss=0;for(let n=0;n<4000;n++){if(!ordinaryDrop(a,1,'beetle'))empty++;if(itemReward(b,4,'crypt').modifier)modified++;if(itemReward(b,4,'boss').modifier)boss++;}
  expect(empty/4000).toBeGreaterThan(.45);expect(modified/4000).toBeGreaterThan(.65);expect(modified/4000).toBeLessThan(.75);expect(boss).toBe(4000);
  });
  it('den rewards favor weapons and boots while crypts favor protection and relics',()=>{

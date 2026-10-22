@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.15.0 — Campfire provisions** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.15.1 — Trail food** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -276,3 +276,7 @@ Travel stops for nearby threats, newly revealed enemies, attacks (including bloc
 - Select **Campfire meat 🍖** in the Satchel and use it to restore 10 HP (tonics restore 16). Eating uses one piece and one turn; full health does not waste food. Raw meat must be cooked first.
 - Base Mana regeneration is **0.3 per completed turn**, including waiting. Ability costs are deducted before that turn’s regeneration; for example a 25-Mana cast from 100 leaves 75.3 Mana.
 - **Detect Creatures** unlocks at level 3. Press **G** or open **Map → Local → Detect Creatures**. It costs 25 Mana and marks living creatures in pink for two turns, including the casting turn. It reveals neither terrain nor creatures on the main canvas. Changing regions ends detection.
+
+## Rat trail food (v0.15.1)
+
+Brush rats now drop raw rat meat with a 35% chance, otherwise nothing: no coins, trophies or equipment. Choose **Cook rat meat** at the starting campfire, then eat **Rat meat** from the Satchel for 5 HP. Raw and cooked rat meat each stack to nine per 1×1 cell, separately from regular meat. Cooking and eating each cost one turn; full bags or full-health uses never waste supplies.

@@ -23,7 +23,7 @@ export const trailSpear=()=>({kind:'weapon',name:'Trail spear',weaponType:'spear
 export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,blockChance:.35,size:[3,3],sellValue:5,description:'Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells.'});
 export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 2 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
 export const stoneCount=p=>p.inventory.filter(i=>i.kind==='stone').reduce((n,i)=>n+i.quantity,0);
-export const salePrice=item=>['stone','knife','thunder','rawMeat','cookedMeat'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:item.sellValue??1):item.sellValue??(item.kind==='potion'?3:1);
+export const salePrice=item=>['stone','knife','thunder','rawMeat','cookedMeat','rawRatMeat','ratMeat'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:item.sellValue??1):item.sellValue??(item.kind==='potion'?3:1);
 
 export const EQUIPMENT_SLOTS=['weapon','offhand','armor','boots','amulet','ring1','ring2'];
 export const equipped=p=>EQUIPMENT_SLOTS.map(slot=>p[slot]).filter(Boolean);
@@ -35,6 +35,8 @@ export const healAmount=(p,base)=>Math.ceil(base*(1+gearBonus(p,'healBonus')));
 export const recovery=p=>.3+gearBonus(p,'manaBonus');
 export const equippedSlot=(p,item)=>item?EQUIPMENT_SLOTS.find(slot=>p[slot]===item):undefined;
 export const rawMeat=(quantity=1)=>({kind:'rawMeat',name:'Raw meat',quantity,size:[1,1],sellValue:1,description:'Cook at the Lantern Camp fire. Cannot be eaten raw. Stacks of 9.'});
+export const rawRatMeat=(quantity=1)=>({kind:'rawRatMeat',name:'Raw rat meat',quantity,size:[1,1],sellValue:1,description:'Cook at the Lantern Camp fire into Rat meat. Stacks of 9.'});
+export const ratMeat=(quantity=1)=>({kind:'ratMeat',name:'Rat meat',quantity,size:[1,1],sellValue:1,description:'Restores 5 health. Eating costs one turn. Stacks of 9.'});
 export const cookedMeat=(quantity=1)=>({kind:'cookedMeat',name:'Campfire meat',quantity,size:[1,1],sellValue:2,description:'Restores 10 health. Eating costs one turn. Stacks of 9.'});
 export const shieldChance=(p,ranged=false)=>Math.min(.6,(ranged?(p.offhand?.rangedBlock??p.offhand?.blockChance??0):(p.offhand?.blockChance??0))+gearBonus(p,'blockBonus'));
 export const isProjectile=item=>['stone','knife','thunder'].includes(item?.kind);
@@ -61,4 +63,4 @@ export const moonwell=()=>({id:'moonwell',kind:'mana',name:'Moonwell Sip',sellVa
 export const smokeFlask=()=>({id:'smoke',kind:'smoke',name:'Smoke Flask',sellValue:4,description:'For 3 enemy phases, enemies beyond adjacent range cannot pursue or fire at you. Adjacent enemies still attack.'});
 export const throwingKnives=(quantity=2)=>({id:'knives',kind:'knife',name:'Balanced Throwing Knives',quantity,size:[1,1],projectileDamage:4,sellValue:6,description:'Throw within 4 tiles for 4 damage before defense. 50% recovery chance. Stacks of 9.'});
 export const thunderstone=(quantity=1)=>({id:'thunder',kind:'thunder',name:'Thunderstone',quantity,size:[1,1],projectileDamage:0,description:'Throw within 4 tiles to interrupt an enemy and make it lose its next action. No damage; consumed on impact.'});
-export const consumableKinds=['potion','ration','cleanse','mana','smoke','cookedMeat'];
+export const consumableKinds=['potion','ration','cleanse','mana','smoke','cookedMeat','ratMeat'];

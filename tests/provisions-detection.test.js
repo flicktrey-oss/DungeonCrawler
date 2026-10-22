@@ -3,7 +3,7 @@ import {Expedition} from '../src/game/expedition.js';
 import {ordinaryDrop} from '../src/game/loot.js';
 import {Random} from '../src/game/random.js';
 import {addItem,inventoryLayout,settleInventory} from '../src/game/inventory.js';
-import {rawMeat,cookedMeat,shortSword,ironRing,potion,lastLight,throwingStones,equippedSlot} from '../src/game/items.js';
+import {rawMeat,cookedMeat,rawRatMeat,ratMeat,shortSword,ironRing,potion,lastLight,throwingStones,equippedSlot} from '../src/game/items.js';
 import {detectedCreatures,minimapCells} from '../src/minimap.js';
 const game=()=>{const g=new Expedition(5);g.state.enemies=[];return g;};
 describe('carried equipment',()=>{
@@ -70,4 +70,11 @@ describe('Detect Creatures',()=>{
   const g=game();g.state.player.level=3;g.action({type:'detectCreatures'});const until=g.state.detectCreaturesUntil;expect(g.action({type:'cook'})).toBe(false);expect(g.state.detectCreaturesUntil).toBe(until);expect(g.state.turn).toBe(1);
   g.visitWorld(1,0,{x:0,y:15});expect(g.state.detectCreaturesUntil).toBe(0);expect(detectedCreatures(g.state)).toEqual([]);
  });
+});
+
+describe('rat trail food',()=>{
+ it('drops rat meat only at 35%, regardless of biome difficulty',()=>{expect(ordinaryDrop({next:()=>.34999},9,'rat')).toMatchObject({kind:'rawRatMeat',quantity:1});expect(ordinaryDrop({next:()=>.35},1,'rat')).toBeNull();const rng=new Random(61);let count=0;for(let n=0;n<10000;n++){const item=ordinaryDrop(rng,1,'rat');if(item){expect(item.kind).toBe('rawRatMeat');count++;}}expect(count/10000).toBeGreaterThan(.33);expect(count/10000).toBeLessThan(.37);});
+ it('stacks rat food separately and cooks it for one turn without consuming regular meat',()=>{const g=game(),p=g.state.player;p.y=16;p.inventory=[];addItem(p,rawRatMeat(10));addItem(p,rawMeat(2));addItem(p,ratMeat(8));addItem(p,cookedMeat(3));expect(g.action({type:'cook',kind:'rawRatMeat'})).toBe(true);expect(p.inventory.filter(i=>i.kind==='ratMeat').map(i=>i.quantity)).toEqual([9]);expect(p.inventory.filter(i=>i.kind==='rawRatMeat').reduce((n,i)=>n+i.quantity,0)).toBe(9);expect(p.inventory.find(i=>i.kind==='rawMeat').quantity).toBe(2);expect(p.inventory.find(i=>i.kind==='cookedMeat').quantity).toBe(3);expect(g.state.turn).toBe(1);});
+ it('heals five per rat meal and consumes just one piece, with no wasted full-health use',()=>{const g=game(),p=g.state.player;p.inventory=[ratMeat(2),rawRatMeat()];p.hp=20;expect(g.action({type:'use',index:0})).toBe(true);expect(p.hp).toBe(25);expect(p.inventory[0].quantity).toBe(1);expect(g.action({type:'use',index:1})).toBe(false);p.hp=p.maxHp;expect(g.action({type:'use',index:0})).toBe(false);expect(p.inventory[0].quantity).toBe(1);expect(g.state.turn).toBe(1);});
+ it('keeps raw rat ingredients when a full bag has no room for the meal',()=>{const g=game(),p=g.state.player;p.y=16;p.inventory=[rawRatMeat(2),...Array.from({length:99},potion)];settleInventory(p.inventory);const before=structuredClone(p);expect(g.action({type:'cook',kind:'rawRatMeat'})).toBe(false);expect(p).toEqual(before);expect(g.state.turn).toBe(0);});
 });

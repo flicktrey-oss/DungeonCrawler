@@ -67,9 +67,10 @@ function menu() {
 }
 function campfire(){
  if(!model?.atCampfire())return;paused=true;panel='campfire';
- const raw=model.state.player.inventory.filter(i=>i.kind==='rawMeat').reduce((n,i)=>n+i.quantity,0);
- modal('Lantern Camp fire',`<p>Cook raw meat into a meal that restores 10 health. Each piece takes one turn. Raw and cooked meat stack to nine per cell.</p><p>Raw meat: ${raw}</p><p id="cooking-result" role="status"></p>`,[['Cook one meat',()=>{model.action({type:'cook'});render();campfire();$('cooking-result').textContent=model.state.log.at(-1);}],['Return',closePanel]]);
- $('overlay').querySelector('.buttons button').disabled=raw===0;
+ const count=kind=>model.state.player.inventory.filter(i=>i.kind===kind).reduce((n,i)=>n+i.quantity,0),raw=count('rawMeat'),rat=count('rawRatMeat');
+ const cook=kind=>{model.action({type:'cook',kind});render();campfire();$('cooking-result').textContent=model.state.log.at(-1);};
+ modal('Lantern Camp fire',`<p>Cook raw meat into a 10-health meal, or raw rat meat into a 5-health meal. Each piece takes one turn. Each food type stacks to nine per cell.</p><p>Raw meat: ${raw}</p><p>Raw rat meat: ${rat}</p><p id="cooking-result" role="status"></p>`,[['Cook one meat',()=>cook('rawMeat')],['Cook rat meat',()=>cook('rawRatMeat')],['Return',closePanel]]);
+ const buttons=$('overlay').querySelectorAll('.buttons button');buttons[0].disabled=raw===0;buttons[1].disabled=rat===0;
 }
 function storage() {
   if (!model?.atCamp()) return;
