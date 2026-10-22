@@ -33,3 +33,9 @@ button,summary{touch-action:manipulation;-webkit-tap-highlight-color:transparent
 @media(max-width:700px),(pointer:coarse){#hud-character{grid-template-columns:44px 166px}#character-shortcut{width:44px;height:60px}.bar{height:19px}.bar>span{font-size:10px;line-height:17px}.xp{height:14px}.xp>span{font-size:9px;line-height:12px}.numbers{font-size:10px}}
 @media(max-height:500px) and (pointer:coarse){#hud-character{grid-template-columns:44px 194px}}
 @media(max-width:360px){#hud-character{grid-template-columns:44px minmax(0,calc(100vw - 208px))}}
+
+.slot-offhand{left:8px;top:60px}
+#targeting-bar{position:absolute;z-index:4;bottom:calc(var(--bottom) + var(--dock-height) + 10px);left:50%;transform:translateX(-50%);width:min(460px,calc(100% - 16px));padding:10px;background:#182d32f5;border:1px solid #d8bb79;border-radius:5px;font:12px/1.5 system-ui;box-shadow:0 5px 24px #000b}
+#targeting-bar>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px}#targeting-bar p{font-size:11px;margin:6px 0;color:#cbd9ca}#target-options{display:flex;gap:6px;overflow:auto;max-height:88px}#target-options button{flex-shrink:0;padding:8px;font-size:12px}#cancel-targeting{padding:4px 10px}
+main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
+@media(max-width:700px),(pointer:coarse){main.has-stairs{--dock-height:222px}.touch-actions [data-control=techniques] .action-label{font-size:9px}.slot-offhand{left:5px}}

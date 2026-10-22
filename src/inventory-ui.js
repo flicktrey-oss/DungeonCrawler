@@ -8,9 +8,9 @@ export function mountInventory(container, game, perform) {
     const place=(x,y)=>{if(selected===null){notice='Select an item first.';draw();return;}notice=game.arrange(selected,x,y,rotated)?'Item moved. No turn spent.':'That footprint overlaps another item or leaves the bag.';draw();};
     for(let y=0;y<10;y++)for(let x=0;x<10;x++){const cell=document.createElement('div');cell.className='bag-cell';cell.style.gridArea=`${y+1} / ${x+1}`;cell.onclick=()=>place(x,y);grid.append(cell);}
     for(const p of layout){
-      const item=items[p.index],b=document.createElement('button');b.className=`bag-item ${selected===p.index?'selected':''}`;b.style.gridArea=`${p.y+1} / ${p.x+1} / span ${p.h} / span ${p.w}`;b.textContent=p.w*p.h===1?item.name[0]:item.name;
+      const item=items[p.index],b=document.createElement('button');b.className=`bag-item ${selected===p.index?'selected':''}`;b.style.gridArea=`${p.y+1} / ${p.x+1} / span ${p.h} / span ${p.w}`;b.textContent=p.w*p.h===1?(item.kind==='stone'?String(item.quantity):item.name[0]):item.name;
       b.setAttribute('aria-label',`Select ${item.name}, ${p.w} by ${p.h}`);b.title=`${item.name} (${p.w}×${p.h})`;
-      b.onclick=()=>{selected=p.index;rotated=Boolean(item.rotated);notice=`${item.name}: ${item.description}`;draw();};grid.append(b);
+      b.onclick=()=>{selected=p.index;rotated=Boolean(item.rotated);notice=`${item.name}${item.quantity?` ×${item.quantity}`:''}: ${item.description}`;draw();};grid.append(b);
     }
     container.append(grid);
     const status=document.createElement('p');status.className='hint';status.setAttribute('role','status');status.textContent=notice;container.append(status);
@@ -20,7 +20,7 @@ export function mountInventory(container, game, perform) {
     const button=(label,fn,disabled=false)=>{const b=document.createElement('button');b.textContent=label;b.disabled=disabled;b.onclick=fn;controls.append(b);};
     button('Place item',()=>place(Number(x.value)-1,Number(y.value)-1),!item);
     button('Rotate item',()=>{rotated=!rotated;notice=`${footprint({...item,rotated}).join('×')} orientation planned. Tap a destination or press Place item to apply it.`;status.textContent=notice;},!item||footprint(item)[0]===footprint(item)[1]);
-    button('Use / equip',()=>perform({type:item.kind==='potion'?'potion':'equip',index:selected}),!item||!['potion','weapon','armor','amulet'].includes(item.kind));
+    button(item?.kind==='stone'?'Throw stones':'Use / equip',()=>perform({type:item.kind==='stone'?'targetThrow':item.kind==='potion'?'potion':'equip',index:selected}),!item||!['potion','weapon','armor','amulet','offhand','stone'].includes(item.kind));
     button('Drop item',()=>perform({type:'drop',index:selected}),!item);
     container.append(controls);
   }

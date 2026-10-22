@@ -1,5 +1,5 @@
 import { attack, defense } from './game/items.js';
-const slots={weapon:{label:'Weapon',icon:'⚔'},armor:{label:'Armor',icon:'▣'},amulet:{label:'Neck',icon:'◇'}};
+const slots={weapon:{label:'Main hand',icon:'⚔'},armor:{label:'Body',icon:'▣'},amulet:{label:'Neck',icon:'◇'},offhand:{label:'Off hand',icon:'⬡'}};
 export function mountEquipment(container,game,perform,initialSlot='weapon') {
   let selected=initialSlot;
   function draw(){
@@ -15,6 +15,7 @@ export function mountEquipment(container,game,perform,initialSlot='weapon') {
       <path d="M88 100H152V124H88Z" fill="#74b5ad"/>
       ${p.armor?'<path data-armor-icon d="M90 124H150V195L120 210L90 195Z" fill="#96a7b9" stroke="#d3d9c7" stroke-width="4"/><path d="M120 132V196" stroke="#536b7d" stroke-width="3"/>':''}
       ${p.weapon?'<path data-weapon-icon d="M181 108L187 100L193 108V186H181Z" fill="#d5e1df"/><path d="M174 184H200V191H174ZM183 191H191V218H183Z" fill="#b08a59"/>':''}
+      ${p.offhand?'<path data-offhand-icon d="M56 147L78 141L98 147V177L78 195L56 177Z" fill="#8e7853" stroke="#c0b691" stroke-width="4"/><path d="M78 145V187" stroke="#5f574c" stroke-width="4"/>':''}
       ${p.amulet?'<path d="M108 104L120 122L132 104" fill="none" stroke="#dabb77" stroke-width="3"/><path data-amulet-icon d="M120 115L128 124L120 134L112 124Z" fill="#85e9cf" stroke="#e9d698" stroke-width="2"/>':''}
     </svg>`;
     for(const[slot,meta]of Object.entries(slots)){
@@ -25,7 +26,7 @@ export function mountEquipment(container,game,perform,initialSlot='weapon') {
     }
     container.append(portrait);
     const detail=document.createElement('section'),h=document.createElement('h3'),description=document.createElement('p'),item=p[selected];
-    h.textContent=`${slots[selected].label}: ${item?.name??'Empty'}`;description.textContent=item?`${item.description} (+${item.bonus} ${selected==='weapon'?'attack':'defense'})`:'Select carried equipment below to fill this slot.';
+    h.textContent=`${slots[selected].label}: ${item?.name??'Empty'}`;description.textContent=item?`${item.description} (+${item.bonus??0} ${selected==='weapon'?'attack':'defense'})`:'Select carried equipment below to fill this slot.';
     detail.append(h,description);
     const unequip=document.createElement('button');unequip.textContent=`Unequip ${item?.name??slots[selected].label}`;unequip.disabled=!item;unequip.onclick=()=>perform({type:'unequip',slot:selected});detail.append(unequip);container.append(detail);
     const heading=document.createElement('h3');heading.textContent='Equip from satchel';container.append(heading);let count=0;

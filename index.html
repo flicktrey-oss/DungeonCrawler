@@ -44,6 +44,10 @@
       <details id="chronicle-panel"><summary><span data-icon="chronicle" aria-hidden="true"></span>Chronicle <span class="chronicle-toggle" aria-hidden="true">⌃</span></summary><div id="log" role="log" aria-live="off"></div></details>
       <p id="latest-event" role="status" aria-live="polite"></p>
     </div>
+    <section id="targeting-bar" class="hidden" aria-label="Choose an attack target">
+      <div><strong id="targeting-title"></strong><button id="cancel-targeting">Cancel</button></div>
+      <p id="targeting-notice" role="status"></p><div id="target-options"></div>
+    </section>
     <nav id="touch-controls" aria-label="Game actions">
       <div class="dpad" aria-label="Movement">
         <button data-control="north" aria-label="Move north"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,5 21,19 3,19" fill="currentColor"/></svg></button><button data-control="west" aria-label="Move west"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,12 19,3 19,21" fill="currentColor"/></svg></button>
@@ -53,6 +57,7 @@
         <button data-control="collect" class="context-action" aria-label="Collect" title="Interact / Collect [E]"><span data-icon="hand" aria-hidden="true"></span><span class="action-label">Collect</span><kbd>E</kbd></button>
         <button data-control="potion" aria-label="Potion" title="Drink healing potion [H]"><span data-icon="potion" aria-hidden="true"></span><span class="action-label">Potion</span><span id="potion-count" class="action-count"></span><kbd>H</kbd></button>
         <button data-control="vision" aria-label="Vision · 25" title="Mind Vision · 25 Mana [M]"><span data-icon="vision" aria-hidden="true"></span><span class="action-label">Mind Vision</span><span class="action-cost">25 MP</span><kbd>M</kbd></button>
+        <button data-control="techniques" aria-label="Field techniques" title="Reach [R] · Throw [T] · Brace [B]"><span data-icon="techniques" aria-hidden="true"></span><span class="action-label">Techniques</span></button>
         <button id="manage-bag" aria-label="Open satchel [I]" title="Open 10×10 satchel [I]"><span data-icon="bag" aria-hidden="true"></span><span class="action-label">Satchel</span><span id="bag-capacity" class="action-count"></span><kbd>I</kbd></button>
         <button id="open-equipment" aria-label="Character / equipment" title="Character / equipment"><span data-icon="armor" aria-hidden="true"></span><span class="action-label">Gear</span></button>
         <button data-control="wait" class="desktop-wait" aria-label="Wait one turn" title="Wait [.] "><span data-icon="wait" aria-hidden="true"></span><span class="action-label">Wait</span><kbd>.</kbd></button>

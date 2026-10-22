@@ -30,9 +30,9 @@ describe('camp merchant', () => {
   it('keeps stock and purchases after leaving camp and returning; a new run resets stock', () => {
     const g = new Expedition(5); approach(g); g.state.player.gold = 30;
     for (let i = 0; i < 3; i++) expect(g.action({ type: 'buy', id: 'tonic' })).toBe(true);
-    expect(g.shop[0].stock).toBe(0); expect(g.state.player.inventory).toHaveLength(5);
+    expect(g.shop[0].stock).toBe(0); expect(g.state.player.inventory).toHaveLength(6);
     g.visitWorld(1, 0, { x: 0, y: 15 }); g.visitWorld(0, 0, CAMP); approach(g);
-    expect(g.shop[0].stock).toBe(0); expect(g.state.player.inventory).toHaveLength(5);
+    expect(g.shop[0].stock).toBe(0); expect(g.state.player.inventory).toHaveLength(6);
     expect(new Expedition(5).shop[0].stock).toBe(3);
   });
   it('does not allow trade from a crypt or after death', () => {

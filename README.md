@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a shifting w
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.6.0 — Expedition HUD** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.7.0 — Field equipment** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -38,7 +38,7 @@ The world waits indefinitely for you. Each valid action costs exactly one turn, 
 
 ## Slower progression and danger
 
-Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, and no gold. Ordinary woodland rats and beetles award 2 XP; the first level needs 20 XP (ten ordinary kills). Later thresholds increase with level. Levels grant a little health, occasional attack/defense, and a small heal. Quests and stronger foes can accelerate progress.
+Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, three throwing stones, and no gold. Ordinary woodland rats and beetles award 2 XP; the first level needs 20 XP (ten ordinary kills). Later thresholds increase with level. Levels grant a little health, occasional attack/defense, and a small heal. Quests and stronger foes can accelerate progress.
 
 | Region distance from camp | Biome | Suggested level |
 | --- | --- | ---: |
@@ -76,18 +76,18 @@ The World map remembers **which regions you visited**, not permanent terrain. Pu
 
 ## Gold, drops and merchant
 
-Creatures do not always drop loot: approximately 50% drop nothing, 20% drop 1–3 coins, and 30% drop a low-value trophy. Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
+Creatures do not always drop loot: approximately 38% drop nothing, 20% drop 1–3 coins, 30% drop a low-value trophy, 10% drop a throwing stone, and 2% drop basic field gear. Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
 
-Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn longsword (+1 attack, 35 gold), or patched vest (+1 defense, 30 gold). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
+Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 18 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (Brace, 24 gold), throwing stones (3 for 4 gold), or patched vest (+1 defense, 30 gold). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
 
 ## The 10×10 satchel
 
 Open **I** or **Satchel** in the bottom action dock.
 
-- Potions and trophies: **1×1**.
+- Potions and trophies: **1×1**. Stones stack up to nine in **1×1**; overflow needs another cell.
 - Swords/spears: **7×2**, rotatable to **2×7**.
 - Armor: **4×4**.
-- Amulets: **2×2**.
+- Amulets: **2×2**. Bucklers: **3×3**.
 
 Select an item, then tap an empty cell or set a one-based Column/Row and press Place item. Rotate item changes the planned orientation; choose a destination to commit it. Rearranging is free and does not advance enemies. Using, equipping or dropping costs a turn.
 
@@ -114,7 +114,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 65 simulation tests and 24 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 78 simulation tests and 26 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -126,9 +126,9 @@ GitHub Pages uses **Source: GitHub Actions**, with `feature/playable-roguelike` 
 
 ## Character equipment screen (v0.5.1)
 
-Open **I → Equipment**, or choose **Gear** in the bottom dock (the portrait at upper left opens equipment too). Satchel and Equipment are separate tabs in the same popup. A character portrait shows your equipped weapon in hand, armor on the torso, and an amulet at the neck. Tap a slot to inspect its item and bonus, then use its Unequip button. Carried equipment is listed below the portrait with Equip buttons. The world character sprite is unchanged.
+Open **I → Equipment**, or choose **Gear** in the bottom dock (the portrait at upper left opens equipment too). Satchel and Equipment are separate tabs in the same popup. A character portrait shows your equipped weapon in hand, buckler in the off hand, armor on the torso, and an amulet at the neck. Tap a slot to inspect its item and bonus, then use its Unequip button. Carried equipment is listed below the portrait with Equip buttons. The world character sprite is unchanged.
 
-Equipped items leave the satchel because they occupy the character’s weapon, armor or neck slot—not because they were discarded. Unequipping places the item back into a fitting bag space, including rotation when needed. A full or fragmented bag rejects unequipping without losing the item or spending a turn. Equipment changes update attack/defense and consume one turn; looking and switching tabs are free. If enemies are nearby, they act after each successful equipment change.
+Equipped items leave the satchel because they occupy the character’s main-hand, off-hand, body or neck slot—not because they were discarded. Unequipping places the item back into a fitting bag space, including rotation when needed. A full or fragmented bag rejects unequipping without losing the item or spending a turn. Equipment changes update attack/defense and consume one turn; looking and switching tabs are free. If enemies are nearby, they act after each successful equipment change.
 
 Touch actions commit once through the native click after a valid release, preventing a compatibility click from immediately activating newly opened dialogs. Dragged, canceled and ambiguous two-finger gestures spend no turns. Keyboard and assistive activation are supported. The desktop and phone browser suites complete a real frog quest, equip its amulet, verify the neck icon and defense bonus, then unequip and verify that the bag item returns.
 
@@ -158,3 +158,24 @@ Visible living enemies have a small health bar above their sprite. Bars shrink a
 ## Character inspection (v0.5.5)
 
 Click or tap a visible character on the main map to open a compact portrait card with race/creature type, Strength (attack), Defense and current/maximum Health. The adventurer's stats include equipped gear. Merchant and quest-giver cards show Human / Noncombatant with no invented combat stats. Inspection costs no turn; the card updates as combat proceeds and closes if the creature dies or leaves sight. Click empty ground or × to dismiss. Hidden characters cannot be inspected.
+
+## Field equipment and techniques (v0.7.0)
+
+Each new run starts with three throwing stones in addition to two tonics. Main-hand, off-hand, body and neck slots are available in Gear. Bump attacks remain the default adjacent melee action. Techniques use equipment, not Mana:
+
+| Equipment | Technique / tradeoff |
+| --- | --- |
+| Worn shortsword | +1 attack to adjacent strikes; 7×2 cells |
+| Trail spear | Base attack, **+1 Reach**: 1–2 tiles along a clear cardinal line; 7×2 cells |
+| Weathered buckler | Off-hand, **Brace** for +3 defense against every attacker in the ensuing enemy phase; 3×3 cells |
+| Throwing stones | **Throw** within a four-tile circular range for 2 damage before defense, minimum 1; consumes one stone with 50% chance of landing intact |
+
+Open **Techniques** in the dock. On desktop **R** selects Reach, **T** selects Throw, **B** braces. Reach requires an equipped spear; Brace requires an equipped buckler. Main-hand and off-hand equipment can be used together. Higher-tier Iron-tipped spears also offer Reach.
+
+Selecting Reach/Throw highlights legal enemies. Click/tap a highlighted creature or select its named target button. A valid attack spends exactly one turn; invalid targets, opening the chooser, Cancel and Escape are free. Movement is blocked during targeting. Walls, trees, rocks, NPCs and intervening living enemies block the shot; diagonal throws cannot cut solid corners. Mind Vision does not let weapons strike through walls. Targeting closes after a successful attack.
+
+Brace takes a turn and applies to all incoming attacks that enemy phase, with minimum damage 1. The next valid action ends it; rejected wall moves and failed inventory actions do not spend the guard. Bracing repeatedly costs another turn each time. Moving/bump attacks and spear attacks restore 5 Mana; throwing and bracing do not.
+
+Stones that survive land on the target tile (even if the creature dies); collect them after the fight. Pickups and purchases merge stacks up to nine, preserving both items and gold if overflow cannot fit. Selling a bundle pays one gold per remaining stone. Basic gear can appear rarely on enemies and in early coffers, while higher-tier rewards remain in dangerous areas. No axe/recovery mechanic, helmets, gloves, boots or extra ring slots were added in this first slice.
+
+![Phone targeting with field equipment](docs/field-techniques.png)

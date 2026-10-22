@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.6.0 · Expedition HUD';
+export const RELEASE = 'v0.7.0 · Field equipment';

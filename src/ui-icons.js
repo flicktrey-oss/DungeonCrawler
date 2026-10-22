@@ -1,5 +1,6 @@
 // Original line icons, kept inline so the HUD works without asset downloads.
 const paths={
+ techniques:'<path d="m5 21 12-14m-3 1 3-5 4-1-1 4-4 4M3 4l6 7m-4-8 3 1-1 3m6 8 6 6m-2-6 4 4"/>',
  compass:'<circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5Z"/>',
  journal:'<path d="M6 3h13v18H6a3 3 0 0 1 0-6h13M6 3a3 3 0 0 0-3 3v12M8 7h7M8 10h5"/>',
  menu:'<path d="M5 6h14M5 12h14M5 18h14"/>',

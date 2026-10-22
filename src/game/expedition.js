@@ -3,18 +3,21 @@ import { Game } from './game.js';
 import { Random } from './random.js';
 import { generateDungeon, walkable, key, WIDTH, HEIGHT } from './dungeon.js';
 import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeAt } from './world.js';
+import { techniqueTarget } from './techniques.js';
+import { damage } from './combat.js';
 import { enemyTypes } from './combat.js';
-import { potion, travelGear, trophy, reedAmulet, threshold } from './items.js';
+import { potion, travelGear, trophy, reedAmulet, threshold, attack, shortSword, trailSpear, buckler, throwingStones, salePrice } from './items.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
 const fields=['map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
-    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null});settleInventory(this.state.player.inventory);
+    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,braced:false});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
     Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
+    this.message('Three throwing stones are in your satchel. Open Techniques to throw. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Regions outside camp regenerate whenever you return; finish local quests before leaving.');
   }
   makeEnemy(kind,p,danger,id){
@@ -67,10 +70,27 @@ export class Expedition extends Game {
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='reach'||a.type==='throw'){
+      const enemy=techniqueTarget(this,a.type,a.x,a.y);
+      if(!enemy){this.message('No valid target: choose a visible enemy within a clear weapon range.');return false;}
+      const hit=damage(a.type==='reach'?attack(p):2,enemy.defense);
+      if(a.type==='throw'){
+        const index=p.inventory.findIndex(i=>i.kind==='stone'&&i.quantity>0),stack=p.inventory[index];
+        if(--stack.quantity===0)p.inventory.splice(index,1);
+      }
+      enemy.hp-=hit;this.message(`${a.type==='reach'?'Your spear strikes':'Your stone hits'} ${enemy.name} for ${hit}.`);
+      if(enemy.hp<=0)this.kill(enemy);
+      if(a.type==='throw'&&this.rng.next()<.5){s.items.push({...throwingStones(1),x:enemy.x,y:enemy.y});this.message('The stone lands intact. Collect it after the fight.');}
+      return true;
+    }
+    if(a.type==='brace'){
+      if(!p.offhand?.brace){this.message('Equip a buckler to Brace.');return false;}
+      p.braced=true;this.message(`You brace: +${p.offhand.brace} defense for this enemy phase.`);return true;
+    }
     if(a.type==='buy')return buyFromMerchant(this,a.id);
     if(a.type==='sell'){
       const item=p.inventory[a.index];if(!this.atMerchant()||!Number.isInteger(a.index)||!item)return false;
-      const price=item.sellValue??(item.kind==='potion'?3:1);p.inventory.splice(a.index,1);p.gold+=price;this.message(`Sold ${item.name} for ${price} gold.`);return true;
+      const price=salePrice(item);p.inventory.splice(a.index,1);p.gold+=price;this.message(`Sold ${item.name} for ${price} gold.`);return true;
     }
     if(a.type==='store'||a.type==='retrieve'){
       if(!this.atCamp()){this.message('Return to the tent to use storage.');return false;}
@@ -92,12 +112,12 @@ export class Expedition extends Game {
       p.inventory.splice(index,1);const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+16);this.message(`Ember tonic restores ${p.hp-before} health.`);return true;
     }
     if(a.type==='unequip'){
-      if(!['weapon','armor','amulet'].includes(a.slot)||!p[a.slot])return false;
+      if(!['weapon','armor','amulet','offhand'].includes(a.slot)||!p[a.slot])return false;
       const item=p[a.slot];if(!addItem(p,item)){this.message('No fitting space in your satchel. The item stays equipped.');return false;}
       p[a.slot]=null;this.message(`Unequipped ${item.name}.`);return true;
     }
     if(a.type==='equip'){
-      const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item||!['weapon','armor','amulet'].includes(item.kind))return false;
+      const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item||!['weapon','armor','amulet','offhand'].includes(item.kind))return false;
       const inventory=p.inventory.filter((_,i)=>i!==a.index),old=p[item.kind];if(old&&!addItem({inventory},old)){this.message('No room for the equipment you would remove.');return false;}
       p.inventory=inventory;p[item.kind]=looseItem(item);this.message(`Equipped ${item.name}.`);return true;
     }
@@ -151,7 +171,7 @@ export class Expedition extends Game {
   awardExperience(amount){const p=this.state.player;p.xp+=amount;while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=3;p.hp=Math.min(p.maxHp,p.hp+4);if(p.level%2===0)p.attack++;if(p.level%4===0)p.defense++;this.message(`Level ${p.level}. You grow a little stronger.`);}}
   kill(enemy){
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
-    const roll=this.rng.next();if(roll<.2)this.state.items.push({kind:'gold',name:'Dropped coins',amount:this.rng.int(1,3),x:enemy.x,y:enemy.y});else if(roll<.5)this.state.items.push({...trophy(enemy.kind==='pondFrog'?'frog':enemy.kind),x:enemy.x,y:enemy.y});
+    const roll=this.rng.next();if(roll<.2)this.state.items.push({kind:'gold',name:'Dropped coins',amount:this.rng.int(1,3),x:enemy.x,y:enemy.y});else if(roll<.5)this.state.items.push({...trophy(enemy.kind==='pondFrog'?'frog':enemy.kind),x:enemy.x,y:enemy.y});else if(roll<.60)this.state.items.push({...throwingStones(1),x:enemy.x,y:enemy.y});else if(roll<.62)this.state.items.push({...this.rng.pick([shortSword(),trailSpear(),buckler()]),x:enemy.x,y:enemy.y});
     if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger),x:enemy.x,y:enemy.y});}}
     if(enemy.questId&&this.state.quest?.accepted&&this.questRemaining()===0)this.message('The frogs are cleared. Return to the Mirekeeper before leaving this region.');
     if(enemy.kind==='guardian'&&!this.state.cleared){this.state.cleared=true;this.state.cryptsCleared++;this.state.items.push({kind:'chest',name:'Warden’s reliquary',reward:travelGear(this.rng.pick(['weapon','armor']),Math.min(4,1+Math.floor(this.state.danger/3))),x:enemy.x,y:enemy.y});this.message('Crypt cleared. A rare equipment reliquary remains.');}

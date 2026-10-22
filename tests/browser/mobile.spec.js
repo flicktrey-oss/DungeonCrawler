@@ -100,7 +100,7 @@ test('phone rearranges the 10×10 satchel for free and drops/recovers an item at
  await page.getByRole('button',{name:'Select Ember tonic, 1 by 1',exact:true}).first().tap();
  await page.getByRole('spinbutton',{name:'Column',exact:true}).fill('10');await page.getByRole('spinbutton',{name:'Row',exact:true}).fill('10');await page.getByRole('button',{name:'Place item',exact:true}).tap();
  await expect(page.locator('.bag-item').first()).toHaveAttribute('style',/10 \/ 10/);await expect(page.locator('.floor')).toContainText('TURN 0');
- await page.getByRole('button',{name:'Drop item',exact:true}).tap();await expect(page.locator('.bag-item')).toHaveCount(1);
- await page.getByRole('button',{name:'Pick up item here',exact:true}).tap();await expect(page.locator('.bag-item')).toHaveCount(2);
+ await page.getByRole('button',{name:'Drop item',exact:true}).tap();await expect(page.locator('.bag-item')).toHaveCount(2);
+ await page.getByRole('button',{name:'Pick up item here',exact:true}).tap();await expect(page.locator('.bag-item')).toHaveCount(3);
  await page.getByRole('button',{name:'Return',exact:true}).tap();await expect(page.locator('.floor')).toContainText('TURN 2');
 });

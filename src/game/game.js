@@ -70,7 +70,7 @@ export class Game {
     const s=this.state,p=s.player;e.actions++;
     if(e.slow&&s.turn%2===0)return;
     const distance=Math.abs(e.x-p.x)+Math.abs(e.y-p.y);if(distance>e.range)return;
-    if(distance===1){const hit=damage(e.attack,defense(p));p.hp=Math.max(0,p.hp-hit);this.message(`${e.name} hits you for ${hit}.`);if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return;}
+    if(distance===1){const hit=damage(e.attack,defense(p)+(p.braced?(p.offhand?.brace??0):0));p.hp=Math.max(0,p.hp-hit);this.message(`${e.name} hits you for ${hit}.`);if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return;}
     const occupied=new Set(s.enemies.filter(o=>o!==e&&o.hp>0).map(o=>key(o.x,o.y)));
     const step=pathStep(s.map,e,p,occupied);if(step){e.x=step.x;e.y=step.y;}
   }
