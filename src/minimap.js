@@ -1,3 +1,4 @@
+import { rememberedTile } from './game/map-memory.js';
 import { key } from './game/dungeon.js';
 
 const palette = { B:'#d48c76',V:'#e0ddb0',W:'#bca273',S:'#b7a0e0',K:'#b9bd91',Y:'#5b4545', '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
@@ -6,7 +7,7 @@ const labels = {B:'!',V:'?',W:'W',S:'S',K:'K', C: 'C', M: 'M', D: '>', '>': '>',
 export function minimapCells(state) {
   const cells = [];
   for (let y = 0; y < state.map.length; y++) for (let x = 0; x < state.map[y].length; x++) {
-    if (state.explored.has(key(x, y))) cells.push({ x, y, tile: state.map[y][x], visible: state.visible.has(key(x, y)) });
+    if (state.explored.has(key(x, y))) cells.push({ x, y, tile: rememberedTile(state,x,y), visible: state.visible.has(key(x, y)) });
   }
   return cells;
 }

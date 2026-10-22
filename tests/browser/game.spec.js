@@ -23,7 +23,7 @@ test('Mind Vision button and shortcut spend Mana, reject overspending and respec
  await page.keyboard.press('m');await expect(turn).toContainText('TURN 4');await expect(mana).toHaveText('Mana 0 / 100');
 });
 
-test('explores the overworld, stores supplies, enters a discovered crypt and retreats to a fresh region', async ({page}) => {
+test('explores the overworld, stores supplies, enters a discovered crypt and retreats to a remembered region', async ({page}) => {
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const d=await expeditionDriver(page,1);
  await page.keyboard.press('e');await page.getByRole('button',{name:'Store Ember tonic',exact:true}).first().click();d.game.action({type:'store',index:0});

@@ -9,7 +9,7 @@ import { enemyTypes } from './combat.js';
 import { potion, travelGear, trophy, reedAmulet, threshold, attack, shortSword, trailSpear, buckler, throwingStones, salePrice } from './items.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
-const fields=['map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
+const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
@@ -18,7 +18,7 @@ export class Expedition extends Game {
     this.visitWorld(0,0,CAMP);this.state.transition=false;
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
     this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
-    this.message('Mara buys hunting trophies. Regions outside camp regenerate whenever you return; finish local quests before leaving.');
+    this.message('Mara buys hunting trophies. Terrain and explored maps persist. Enemies and local encounters refresh on return; finish quests before leaving.');
   }
   makeEnemy(kind,p,danger,id){
     const base=enemyTypes[kind],extra=Math.max(0,danger-1);
@@ -40,8 +40,9 @@ export class Expedition extends Game {
   visitWorld(rx,ry,spawn=CAMP){
     const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home?this.regions.get(id):null;
     if(!data){
+      const previous=this.regions.get(id);
       const generated=generateWorldRegion(this.state.seed,rx,ry,this.nextVisit(id));
-      data={...generated,depth:0,start:CAMP,stairs:null,upstairs:null,cleared:false,explored:new Set(),enemies:generated.spawns.map((e,i)=>this.makeEnemy(e.kind,e,generated.danger,i)),items:[],quest:null};
+      data={...generated,depth:0,start:CAMP,stairs:null,upstairs:null,cleared:false,explored:new Set(previous?.explored??[]),encounterSeen:new Set(),enemies:generated.spawns.map((e,i)=>this.makeEnemy(e.kind,e,generated.danger,i)),items:[],quest:null};
       for(const event of data.encounters){
         if(['caravan','cache'].includes(event.type))data.items.push({kind:'chest',name:ENCOUNTERS[event.type].name,...event,eventId:event.id});
         if(event.type==='villager')data.quest={id:event.id,accepted:false,claimed:false};
@@ -52,8 +53,8 @@ export class Expedition extends Game {
     const info=BIOMES[data.biome];this.message(`${info.name} (${rx}, ${ry}) · ${home?'safe camp':`recommended level ${info.recommended}${this.state.player.level<info.recommended?' — DANGER: you are underleveled!':''}`}.`);
   }
   visitCrypt(rx,ry,depth,arrival='upstairs'){
-    const id=cryptId(rx,ry,depth),visit=this.nextVisit(id),rng=new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:${visit}`)),d=generateDungeon(rng),biome=biomeAt(rx,ry),danger=BIOMES[biome].danger+depth;
-    const data={...d,rx,ry,biome,danger,recommended:BIOMES[biome].recommended+2,home:false,depth,visit,upstairs:{...d.start},cleared:false,explored:new Set(),enemies:[],items:[],encounters:[],scenery:[],quest:null,entrance:null,landmark:null};
+    const id=cryptId(rx,ry,depth),visit=this.nextVisit(id),rng=new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:${visit}`)),d=generateDungeon(visit===0?rng:new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:0`))),biome=biomeAt(rx,ry),danger=BIOMES[biome].danger+depth;
+    const data={...d,rx,ry,biome,danger,recommended:BIOMES[biome].recommended+2,home:false,depth,visit,upstairs:{...d.start},cleared:false,baseMap:null,encounterSeen:new Set(),explored:new Set(this.regions.get(id)?.explored??[]),enemies:[],items:[],encounters:[],scenery:[],quest:null,entrance:null,landmark:null};
     data.map[d.start.y][d.start.x]='<';if(depth===2)data.map[d.stairs.y][d.stairs.x]='A';
     const free=[];for(const room of d.rooms.slice(1))for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(key(x,y)!==key(d.stairs.x,d.stairs.y))free.push({x,y});
     const spot=()=>free.splice(rng.int(0,free.length-1),1)[0];
@@ -61,7 +62,7 @@ export class Expedition extends Game {
     if(depth===2)data.enemies.push(this.makeEnemy('guardian',{...d.stairs},danger,99));
     for(const item of [potion(),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger)}])data.items.push({...item,...spot()});
     this.activate({id,kind:'crypt',rx,ry,depth},data,data[arrival]);
-    this.message(`Crypt depth ${depth}/2 · recommended level ${data.recommended}. Each return generates a fresh floor. Q on an upward stair retreats.`);
+    this.message(`Crypt depth ${depth}/2 · recommended level ${data.recommended}. The layout and explored map persist; enemies return. Q on an upward stair retreats.`);
   }
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
@@ -155,7 +156,7 @@ export class Expedition extends Game {
       if(moved){
         if(this.atMerchant())this.message('Mara buys trophies and sells supplies. Press E or Trade.');
         const event=this.activeEncounter();if(event)this.message(`${ENCOUNTERS[event.type].name}: ${ENCOUNTERS[event.type].description}${['villager','shrine'].includes(event.type)?' Press E or Interact.':''}`);
-        if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The floor regenerates when you return.');
+        if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The map is remembered; enemies return.');
         if(loc.kind==='world'&&(p.x===0||p.x===39||p.y===0||p.y===29)){
           const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0))];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended}${p.level<next.recommended?' — dangerous for you!':''}.`);
         }

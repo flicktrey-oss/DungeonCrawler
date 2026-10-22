@@ -51,10 +51,10 @@ describe('expedition transitions and persistence', () => {
     g.action({ type: 'move', dx: 0, dy: -1 }); expect(g.location.ry).toBe(-1); expect(g.state.player.y).toBe(29);
     g.action({ type: 'move', dx: 0, dy: 1 }); expect(g.location.ry).toBe(0); expect(g.state.player.y).toBe(0);
   });
-  it('regenerates terrain, creatures, encounters and fog on return while preserving progression', () => {
-    const g=new Expedition(11);g.visitWorld(1,0,{x:0,y:15});const terrain=structuredClone(g.state.map);g.state.explored.add('39,29');g.state.enemies[0].hp=0;g.state.player.gold=19;
+  it('remembers terrain and exploration while respawning creatures and preserving progression', () => {
+    const g=new Expedition(11);g.visitWorld(1,0,{x:0,y:15});const terrain=structuredClone(g.state.baseMap);g.state.explored.add('39,29');g.state.enemies[0].hp=0;g.state.player.gold=19;
     g.visitWorld(0,0,CAMP);g.visitWorld(1,0,{x:0,y:15});
-    expect(g.state.visit).toBe(1);expect(g.state.map).not.toEqual(terrain);expect(g.state.enemies[0].hp).toBeGreaterThan(0);expect(g.state.explored.has('39,29')).toBe(false);expect(g.state.player.gold).toBe(19);expect(g.state.regionsDiscovered).toBe(2);
+    expect(g.state.visit).toBe(1);expect(g.state.baseMap).toEqual(terrain);expect(g.state.enemies[0].hp).toBeGreaterThan(0);expect(g.state.explored.has('39,29')).toBe(true);expect(g.state.player.gold).toBe(19);expect(g.state.regionsDiscovered).toBe(2);
   });
   it('keeps inactive regions frozen and gives active enemies only one action per ordinary turn', () => {
     const g = new Expedition(3); g.visitWorld(1, 0, { x: 0, y: 15 }); g.state.transition = false;
@@ -62,12 +62,12 @@ describe('expedition transitions and persistence', () => {
     g.visitWorld(0, 0, CAMP); g.state.transition = false; for (let i = 0; i < 5; i++) g.action({ type: 'wait' });
     expect(enemies.every(e => e.actions === 1)).toBe(true);
   });
-  it('returns from a crypt to regenerated, safely reachable surface while preserving stats and bag', () => {
+  it('returns from a crypt to remembered, safely reachable surface while preserving stats and bag', () => {
     const g=new Expedition(6);descend(g);expect(g.location.kind).toBe('crypt');expect(g.state.enemies.every(e=>e.actions===0)).toBe(true);
     g.state.player.mana=30;const bag=structuredClone(g.state.player.inventory),hp=g.state.player.hp;ascend(g);
     expect(g.location.kind).toBe('world');expect(g.state.visit).toBe(1);expect(walkable(g.state.map,g.state.player.x,g.state.player.y)).toBe(true);expect(g.state.player.mana).toBe(30);expect(g.state.player.inventory).toEqual(bag);expect(g.state.player.hp).toBe(hp);
   });
-  it('connects both regenerated depths and a tougher guardian that does not end the endless run', () => {
+  it('connects both persistent depths and a tougher guardian that does not end the endless run', () => {
     const g = new Expedition(17); descend(g); const down = { ...g.state.stairs }; Object.assign(g.state.player, down);
     g.action({ type: 'descend' }); expect(g.location.depth).toBe(2);
     const guardian = g.state.enemies.find(e => e.kind === 'guardian'); expect(guardian.hp).toBeGreaterThan(30); expect(guardian.attack).toBeGreaterThan(7);

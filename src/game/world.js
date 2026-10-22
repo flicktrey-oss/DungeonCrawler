@@ -14,7 +14,8 @@ export const worldId=(x,y)=>`world:${x},${y}`;
 export const cryptId=(x,y,depth)=>`crypt:${x},${y}:${depth}`;
 export function biomeAt(rx,ry){const distance=Math.abs(rx)+Math.abs(ry);return distance<=1?'forest':distance<=3?'marsh':distance<=6?'highlands':'ashlands';}
 export function generateWorldRegion(seed,rx,ry,visit=0){
-  const rng=new Random(regionSeed(seed,rx,ry,`world:${visit}`)),home=rx===0&&ry===0,biome=biomeAt(rx,ry),danger=BIOMES[biome].danger;
+  if(visit>0&&!(rx===0&&ry===0))return populateVisit(generateWorldRegion(seed,rx,ry,0),new Random(regionSeed(seed,rx,ry,`inhabitants:${visit}`)),visit);
+  const rng=new Random(regionSeed(seed,rx,ry,'world:0')),home=rx===0&&ry===0,biome=biomeAt(rx,ry),danger=BIOMES[biome].danger;
   const map=Array.from({length:HEIGHT},()=>Array(WIDTH).fill(','));
   const blocker=biome==='forest'?'T':biome==='marsh'?'~':biome==='ashlands'?'Y':'^';
   // Elliptical groves, pools, ridges and burned stands, rather than isolated noise.
@@ -51,5 +52,33 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   }
   const scenery=[];
   for(let i=0;i<18;i++){const p=spot();scenery.push({...p,type:rng.pick(biome==='forest'?['log','flowers','grave']:biome==='marsh'?['bones','reeds','grave']:['bones','grave','log'])});}
-  return {map,biome,danger,recommended:BIOMES[biome].recommended,encounters,scenery,entrance:encounters.find(e=>e.type==='crypt')??null,landmark:null,spawns,lootSpots:[],home,rx,ry,visit};
+  const baseMap=map.map(row=>row.map(t=>['B','V','W','S','K'].includes(t)?',':t));
+  return {map,baseMap,biome,danger,recommended:BIOMES[biome].recommended,encounters,scenery,entrance:encounters.find(e=>e.type==='crypt')??null,landmark:null,spawns,lootSpots:[],home,rx,ry,visit};
+}
+
+// Terrain and crypt entrances belong to the region. People, beasts and rewards
+// are a visit layer, placed without carving new paths or altering the landscape.
+function populateVisit(base,rng,visit){
+ const map=base.baseMap.map(row=>[...row]),encounters=base.encounters.filter(e=>e.type==='crypt').map(e=>({...e,used:false}));
+ const sites=[];
+ for(let y=5;y<25;y++)for(let x=5;x<35;x++){
+  if(Math.abs(x-CAMP.x)+Math.abs(y-CAMP.y)<=6)continue;
+  if(!base.scenery.some(p=>p.x===x&&p.y===y)&&[-1,0,1].every(dy=>[-1,0,1].every(dx=>walkable(map,x+dx,y+dy)))&&encounters.every(e=>Math.abs(e.x-x)+Math.abs(e.y-y)>=6))sites.push({x,y});
+ }
+ const types=Object.keys(ENCOUNTERS).filter(t=>t!=='crypt'),count=rng.int(1,2);
+ while(encounters.length<count&&sites.length){
+  const p=sites.splice(rng.int(0,sites.length-1),1)[0],type=types.splice(rng.int(0,types.length-1),1)[0];
+  encounters.push({...p,type,id:`${type}:${visit}:${encounters.length}`,used:false});map[p.y][p.x]=ENCOUNTERS[type].tile;
+  for(let i=sites.length-1;i>=0;i--)if(Math.abs(sites[i].x-p.x)+Math.abs(sites[i].y-p.y)<6)sites.splice(i,1);
+ }
+ const occupied=new Set(encounters.map(e=>key(e.x,e.y))),available=[];
+ for(let y=5;y<25;y++)for(let x=5;x<35;x++)if(walkable(map,x,y)&&!occupied.has(key(x,y))&&Math.abs(x-20)+Math.abs(y-15)>5)available.push({x,y});
+ const spot=near=>{let choices=available.map((p,i)=>({p,i}));if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
+ const spawns=Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[base.biome].enemies)}));
+ for(const e of encounters){
+  if(e.type==='villager')for(let i=0;i<3;i++)spawns.push({...spot(e),kind:'pondFrog',questId:e.id});
+  if(e.type==='den')spawns.push({x:e.x,y:e.y,kind:'elite',eventId:e.id});
+  if(e.type==='caravan')for(let i=0;i<2;i++)spawns.push({...spot(e),kind:'beetle'});
+ }
+ return {...base,map,encounters,spawns,visit,entrance:encounters.find(e=>e.type==='crypt')??null};
 }

@@ -1,10 +1,10 @@
 # DungeonCrawler: The Wildlands
 
-A strictly turn-based, original Phaser 3 browser adventure. Explore a shifting wilderness, hunt modest prey, complete local encounters, and return to Lantern Camp to sell trophies and prepare for harder lands.
+A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered wilderness, hunt modest prey, complete local encounters, and return to Lantern Camp to sell trophies and prepare for harder lands.
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.7.1 — Buckler blocks & quick slots** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.8.0 — Remembered wildlands** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -66,13 +66,15 @@ Stand next to the Mirekeeper and press E / Interact. Accepting and claiming are 
 
 Shrines reject exchanges you cannot afford, lethal HP payments, and restoring an already full resource. Once used, a shrine is spent for that visit. Common coffers contain a tonic or a small purse; equipment is rare and low tier in early regions. Better gear belongs to harder areas and Wardens.
 
-## Regenerating visits, stable camp
+## Persistent maps, returning enemies (v0.8.0)
 
-**Every re-entry into a non-camp region or crypt floor generates a fresh visit**, including terrain, enemies, encounters, treasure, quest status, and local fog. This is intentional: hunting and rewards are repeatable. Different visit numbers are seeded, so the same seed plus the same visits/actions is reproducible. Biome and region coordinates remain stable.
+Each region's terrain, paths, scenery and crypt entrances remain fixed for the run. **Explored tiles stay revealed on the local minimap after leaving and returning**, dimmed when outside current sight. Dungeon layouts, stairs and explored dungeon tiles persist too. New runs still create a newly randomized world.
 
-Leaving a quest abandons its local progress; claimed character rewards stay yours. Ascending from a crypt regenerates the surface, so its entrance may move or disappear. You emerge on a vacant walkable tile nearest your old entrance. Moving between crypt depths likewise generates a fresh floor with valid return stairs. Camp terrain, stored supplies, and merchant stock persist throughout the run.
+Re-entering a wilderness region respawns enemies and rerolls non-crypt discoveries: villagers, dens, caravans, shrines and caches can appear at different valid locations or be absent. Quest placement varies between regions, visits and run seeds; it is not locked to one sector. People and encounters are placed on existing reachable terrain without carving new trails. New encounters on previously explored ground are hidden until rediscovered, so remembered maps do not reveal fresh rewards remotely.
 
-The World map remembers **which regions you visited**, not permanent terrain. Purple entrance markers outside the active region mean **last seen**; a new visit can change those encounters.
+Local quest progress and loose loot reset when leaving, while claimed character rewards stay yours. Crypt foes and loot also respawn on re-entry. Stable surface entrances and dungeon stairs make return journeys predictable; arrival always chooses a vacant walkable tile with no immediate enemy turn. Camp terrain, stored supplies and merchant stock remain stable throughout the run.
+
+The World map remembers visited coordinates and discovered, fixed crypt entrances. **Memory lasts for the current run only**: death, refresh or closing the browser still ends the run; no save system was added.
 
 ## Gold, drops and merchant
 
@@ -95,9 +97,9 @@ Capacity depends on contiguous shape, not just the number of free cells. Pickups
 
 ## Maps, Mana and permadeath
 
-Local and World tabs switch the same minimap canvas. Local shows explored tiles and discovered features. World shows one square per visited region, biome colors, camp, your region, and last-seen entrances. Minimize/restore with Map − / +; switching costs no turns.
+Local and World tabs switch the same minimap canvas. Local shows explored tiles and discovered features. World shows one square per visited region, biome colors, camp, your region, and discovered entrances. Minimize/restore with Map − / +; switching costs no turns.
 
-Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Moving/melee restore 5 Mana; waiting and casting do not. Transitions end the effect. Terrain revealed during a visit stays mapped until that region regenerates.
+Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Moving/melee restore 5 Mana; waiting and casting do not. Transitions end the effect. Revealed terrain stays mapped for the rest of the run, including when you leave a region.
 
 **There is no save system.** Death ends the run, including camp storage. Refreshing, closing the page or Safari unloading it also loses the run. The slower progression is intended for longer runs, not cross-session persistence yet. No construction, crafting, hunger, gathering, farming systems, multiplayer, or paid services were added.
 
@@ -114,7 +116,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 80 simulation tests and 26 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 85 simulation tests and 28 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 

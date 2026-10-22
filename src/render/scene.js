@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import {rememberedTile} from '../game/map-memory.js';
 import {key} from '../game/dungeon.js';
 const T=24;
 export class DungeonScene extends Phaser.Scene {
@@ -24,7 +25,7 @@ export class DungeonScene extends Phaser.Scene {
     // Padding keeps the adventurer centered near region edges, clear of the HUD.
     camera.setBounds(-width/(2*zoom),-height/(2*zoom),s.map[0].length*T+width/zoom,s.map.length*T+height/zoom);
     for(let y=0;y<s.map.length;y++)for(let x=0;x<s.map[y].length;x++){
-      const k=key(x,y);if(!s.explored.has(k))continue;const visible=s.visible.has(k),a=visible?1:0.32,t=s.map[y][x],xx=x*T,yy=y*T;
+      const k=key(x,y);if(!s.explored.has(k))continue;const visible=s.visible.has(k),a=visible?1:0.32,t=rememberedTile(s,x,y),xx=x*T,yy=y*T;
       if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,s.biome,x,y);continue;}
       g.fillStyle(t==='#'?0x3d4351:0x20272e,a);g.fillRect(xx,yy,T-1,T-1);
       if(t==='#'){g.fillStyle(0x59616b,a);g.fillRect(xx+1,yy+1,22,3);g.lineStyle(1,0x252b37,a);g.lineBetween(xx+12,yy+4,xx+12,yy+12);g.lineBetween(xx,yy+12,xx+24,yy+12);if((x*7+y*13)%37===0){g.fillStyle(0xa96632,a);g.fillRect(xx+10,yy+9,4,9);g.fillStyle(0xffd479,a);g.fillTriangle(xx+9,yy+10,xx+15,yy+10,xx+12,yy+3);}}

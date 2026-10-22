@@ -10,4 +10,5 @@ export function updateVisibility(state) {
     }
     if(clear || state.turn<=state.mindVisionUntil && state.mindVisionUntil>0){state.visible.add(key(x,y));state.explored.add(key(x,y));}
   }
+  if(state.encounterSeen)for(const e of state.encounters??[])if(state.visible.has(key(e.x,e.y)))state.encounterSeen.add(key(e.x,e.y));
 }
