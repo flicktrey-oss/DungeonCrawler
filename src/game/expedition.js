@@ -13,11 +13,11 @@ const fields=['map','enemies','items','explored','start','stairs','upstairs','en
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
-    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,braced:false});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
+    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
     Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
-    this.message('Three throwing stones are in your satchel. Open Techniques to throw. Mara sells field equipment.');
+    this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Regions outside camp regenerate whenever you return; finish local quests before leaving.');
   }
   makeEnemy(kind,p,danger,id){
@@ -82,10 +82,6 @@ export class Expedition extends Game {
       if(enemy.hp<=0)this.kill(enemy);
       if(a.type==='throw'&&this.rng.next()<.5){s.items.push({...throwingStones(1),x:enemy.x,y:enemy.y});this.message('The stone lands intact. Collect it after the fight.');}
       return true;
-    }
-    if(a.type==='brace'){
-      if(!p.offhand?.brace){this.message('Equip a buckler to Brace.');return false;}
-      p.braced=true;this.message(`You brace: +${p.offhand.brace} defense for this enemy phase.`);return true;
     }
     if(a.type==='buy')return buyFromMerchant(this,a.id);
     if(a.type==='sell'){

@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a shifting w
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.7.0 — Field equipment** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.7.1 — Buckler blocks & quick slots** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -78,7 +78,7 @@ The World map remembers **which regions you visited**, not permanent terrain. Pu
 
 Creatures do not always drop loot: approximately 38% drop nothing, 20% drop 1–3 coins, 30% drop a low-value trophy, 10% drop a throwing stone, and 2% drop basic field gear. Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
 
-Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 18 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (Brace, 24 gold), throwing stones (3 for 4 gold), or patched vest (+1 defense, 30 gold). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
+Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 18 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (35% passive block, 24 gold), throwing stones (3 for 4 gold), or patched vest (+1 defense, 30 gold). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
 
 ## The 10×10 satchel
 
@@ -114,7 +114,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 78 simulation tests and 26 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 80 simulation tests and 26 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, regeneration, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -167,15 +167,21 @@ Each new run starts with three throwing stones in addition to two tonics. Main-h
 | --- | --- |
 | Worn shortsword | +1 attack to adjacent strikes; 7×2 cells |
 | Trail spear | Base attack, **+1 Reach**: 1–2 tiles along a clear cardinal line; 7×2 cells |
-| Weathered buckler | Off-hand, **Brace** for +3 defense against every attacker in the ensuing enemy phase; 3×3 cells |
+| Weathered buckler | Off-hand, **35% chance to block each incoming attack completely**, without an action; 3×3 cells |
 | Throwing stones | **Throw** within a four-tile circular range for 2 damage before defense, minimum 1; consumes one stone with 50% chance of landing intact |
 
-Open **Techniques** in the dock. On desktop **R** selects Reach, **T** selects Throw, **B** braces. Reach requires an equipped spear; Brace requires an equipped buckler. Main-hand and off-hand equipment can be used together. Higher-tier Iron-tipped spears also offer Reach.
+Use the **Reach** and **Throw** quick slots beside the action dock; on desktop **R** selects Reach and **T** selects Throw. The Throw slot shows your carried stone count. Reach is disabled until a spear is equipped, and Throw is disabled when no stones remain. Main-hand and off-hand equipment can be used together. Higher-tier Iron-tipped spears also offer Reach.
 
 Selecting Reach/Throw highlights legal enemies. Click/tap a highlighted creature or select its named target button. A valid attack spends exactly one turn; invalid targets, opening the chooser, Cancel and Escape are free. Movement is blocked during targeting. Walls, trees, rocks, NPCs and intervening living enemies block the shot; diagonal throws cannot cut solid corners. Mind Vision does not let weapons strike through walls. Targeting closes after a successful attack.
 
-Brace takes a turn and applies to all incoming attacks that enemy phase, with minimum damage 1. The next valid action ends it; rejected wall moves and failed inventory actions do not spend the guard. Bracing repeatedly costs another turn each time. Moving/bump attacks and spear attacks restore 5 Mana; throwing and bracing do not.
+An equipped Weathered buckler rolls a seeded **35% block chance per incoming attack**. A block prevents all damage from that hit; an unblocked hit uses normal armor/defense. Attacking, moving or using items does not disable the shield. Unequipping immediately removes the chance. Blocks flash the portrait and show “Blocked!” in the event log. There is no Brace action or B shortcut. Moving/bump attacks and spear attacks restore 5 Mana; throwing does not.
 
 Stones that survive land on the target tile (even if the creature dies); collect them after the fight. Pickups and purchases merge stacks up to nine, preserving both items and gold if overflow cannot fit. Selling a bundle pays one gold per remaining stone. Basic gear can appear rarely on enemies and in early coffers, while higher-tier rewards remain in dangerous areas. No axe/recovery mechanic, helmets, gloves, boots or extra ring slots were added in this first slice.
 
 ![Phone targeting with field equipment](docs/field-techniques.png)
+
+## Passive buckler and quick slots (v0.7.1)
+
+Brace has been replaced by passive shield blocks. Equip Weathered buckler in Gear → Off hand for 35% block chance per incoming attack. Reach and Throw now have direct, stable quick slots with their own icons and keyboard hints, so no Techniques menu is required. Target selection remains free and requires a deliberate target confirmation; a valid attack takes one turn.
+
+![Phone weapon quick slots](docs/quick-slots.png)

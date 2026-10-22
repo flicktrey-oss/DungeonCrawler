@@ -20,7 +20,7 @@ const scene = new DungeonScene();
 const phaser = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: 768, height: 624, pixelArt: true,
   backgroundColor: '#090c12', scene: [scene], scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   callbacks: { postBoot() { setTimeout(() => { if (model) scene.setGame(model); }, 0); } } });
-let model = null, paused = true, panel = null, mapView = 'local', inspected = null, inspectedMap = null, targetMode = null;
+let model = null, paused = true, panel = null, mapView = 'local', inspected = null, inspectedMap = null, targetMode = null, lastShownBlock = 0;
 new ResizeObserver(() => {
   const parent = document.getElementById('game');
   if (parent.clientWidth && parent.clientHeight) phaser.scale.resize(parent.clientWidth, parent.clientHeight);
@@ -39,14 +39,14 @@ function modal(title, body, buttons) {
   $('overlay').querySelector('article').focus({preventScroll:true});
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls(); }
-function start() { inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(); closePanel(); render(); }
+function start() { lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Start with rats and beetles in neighboring woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Every non-camp region and crypt floor regenerates on return.</b> Creatures, loot, quests, terrain and local fog reset; claim rewards before leaving. Camp storage and merchant stock stay stable. World-map squares remember travel history, not permanent terrain.</p>
   <p>WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for local quests, or Chronicle for event history.</p>
   <p>Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
-  <p>Techniques opens equipment actions: R for spear Reach, T to Throw a stone, B to Brace with a buckler. Choose highlighted targets; Cancel/Escape is free. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
+  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
@@ -147,7 +147,13 @@ function render() {
     <div class="numbers">Lv ${p.level} · ${attack(p)} ATK · ${defense(p)} DEF · <b>${p.gold} gold</b></div>`;
   $('portrait-level').textContent=p.level;
   if(s.mindVisionUntil>=s.turn&&s.mindVisionUntil>0){const status=document.createElement('p');status.className='vision-status';status.textContent=`Mind Vision active · ${s.mindVisionUntil-s.turn+1} turns`;$('stats').append(status);}
-  if(p.braced){const status=document.createElement('p');status.className='vision-status';status.textContent='Braced · +3 defense until your next action';$('stats').append(status);}
+  $('stone-count').textContent=stoneCount(p);
+  if((s.blockedAttacks??0)>lastShownBlock){
+    lastShownBlock=s.blockedAttacks;
+    $('character-shortcut').classList.remove('shield-block');$('block-feedback').classList.remove('shield-block');
+    void $('character-shortcut').offsetWidth;
+    $('block-feedback').textContent='Blocked!';$('character-shortcut').classList.add('shield-block');$('block-feedback').classList.add('shield-block');
+  }
   const used=(inventoryLayout(p.inventory)??[]).reduce((n,i)=>n+i.w*i.h,0);
   $('bag-capacity').textContent=`${used}/100`;
   $('manage-bag').title=`Open 10×10 satchel [I] · ${used} / 100 cells used`;
@@ -202,16 +208,6 @@ function completeTarget(x,y){
   cancelTargeting();render();
 }
 $('cancel-targeting').onclick=()=>{cancelTargeting();syncTouchControls();document.activeElement?.blur();};
-function techniques(){
-  if(!model||paused)return;paused=true;panel='techniques';
-  modal('Field techniques','<p>Equipment creates new options. No Mana required. Targeting and cancellation are free; a valid technique takes one turn.</p><div id="technique-choices"></div>',[['Return',closePanel]]);
-  const p=model.state.player;
-  for(const [label,description,available,perform] of [
-    ['Spear reach [R]','Strike 1–2 tiles in a clear cardinal line. Requires an equipped spear.',p.weapon?.reach,()=>beginTargeting('reach')],
-    [`Throw stone [T] · ${stoneCount(p)} carried`,'Range 4. Deals 2 damage before defense. Uses one stone; 50% chance to recover it.',stoneCount(p),()=>beginTargeting('throw')],
-    ['Brace [B]','Requires an equipped buckler. +3 defense for the enemy phase; minimum incoming damage remains 1.',p.offhand?.brace,()=>act({type:'brace'})]
-  ]){const b=document.createElement('button');b.className='item';b.textContent=label;const note=document.createElement('small');note.className='item-description';note.textContent=description;b.append(note);b.disabled=!available;b.setAttribute('aria-label',label);b.onclick=()=>{closePanel();perform();};$('technique-choices').append(b);}
-}
 function act(action) { if (!model || paused || targetMode) return; if (document.activeElement?.tagName === 'SUMMARY') document.activeElement.blur(); model.action(action); render(); }
 function syncTouchControls() {
   const ready = model && !paused && model.state.status === 'playing';
@@ -220,7 +216,8 @@ function syncTouchControls() {
     let allowed = Boolean(ready);
     const control = button.dataset.control;
     if (ready) {
-      if (control === 'techniques') allowed=Boolean(p.weapon?.reach||p.offhand?.brace||stoneCount(p));
+      if(control==='reach')allowed=Boolean(p.weapon?.reach>=2);
+      if(control==='throw')allowed=stoneCount(p)>0;
       if (control === 'vision') allowed = p.mana >= 25;
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
@@ -237,7 +234,7 @@ bindTouchControls($('touch-controls'), control => {
   const directions = { north: [0,-1], south: [0,1], east: [1,0], west: [-1,0] };
   if (directions[control]) act({ type: 'move', dx: directions[control][0], dy: directions[control][1] });
   else if (control === 'collect') interact();
-  else if (control === 'techniques') techniques();
+  else if(control==='reach'||control==='throw')beginTargeting(control);
   else act({ type: ({ collect: 'pickup', vision: 'mindVision' })[control] ?? control });
 });
 const phoneLayout = matchMedia('(max-width: 700px), (pointer: coarse)');
@@ -284,7 +281,6 @@ window.addEventListener('keydown', event => {
   if(k==='i'&&model&&model.state.status==='playing'){if(panel==='bag')closePanel();else if(!paused)bag();return;}
   if(!paused&&k==='r'){beginTargeting('reach');return;}
   if(!paused&&k==='t'){beginTargeting('throw');return;}
-  if(!paused&&k==='b'){act({type:'brace'});return;}
   if(k==='e'&&!paused){interact();return;}
   if (k === '.') act({ type: 'wait' });
   else if (k === 'h') act({ type: 'potion' }); else if (k === 'm') act({ type: 'mindVision' });

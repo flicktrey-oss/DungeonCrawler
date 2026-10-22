@@ -5,6 +5,7 @@ export function mountEquipment(container,game,perform,initialSlot='weapon') {
   function draw(){
     const p=game.state.player;container.replaceChildren();
     const stats=document.createElement('p');stats.className='equipment-stats';stats.textContent=`Level ${p.level} · ${attack(p)} attack · ${defense(p)} defense`;container.append(stats);
+    if(p.offhand?.blockChance){const note=document.createElement('p');note.className='equipment-stats';note.textContent='Buckler: 35% passive block chance per incoming attack';container.append(note);}
     const portrait=document.createElement('div');portrait.className='equipment-portrait';
     portrait.innerHTML=`<svg viewBox="0 0 240 260" role="img" aria-label="Adventurer with equipped weapon, armor and neck item" shape-rendering="crispEdges">
       <ellipse cx="120" cy="243" rx="49" ry="8" fill="#090e16"/>

@@ -15,7 +15,7 @@
         <svg viewBox="0 0 32 40" aria-hidden="true" shape-rendering="crispEdges"><path d="M8 19H24V35H8Z" fill="#558c88"/><path d="M10 32H15V40H10ZM19 32H24V40H19Z" fill="#455569"/><path d="M9 4H23V19H9Z" fill="#d8b58a"/><path d="M7 2H25V8H7ZM7 8H11V13H7Z" fill="#765343"/><path d="M12 11H14V13H12ZM19 11H21V13H19Z" fill="#15212a"/><path d="M6 20H10V31H6ZM24 20H28V31H24Z" fill="#b7bd9d"/><path d="M9 18H24V22H9Z" fill="#91cbc0"/></svg>
         <span id="portrait-level">1</span>
       </button>
-      <section id="stats" aria-label="Character status"></section>
+      <section id="stats" aria-label="Character status"></section><span id="block-feedback" aria-live="polite"></span>
     </div>
     <div id="map-tools" aria-label="World tools">
       <details id="minimap-widget" open>
@@ -53,11 +53,14 @@
         <button data-control="north" aria-label="Move north"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,5 21,19 3,19" fill="currentColor"/></svg></button><button data-control="west" aria-label="Move west"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="5,12 19,3 19,21" fill="currentColor"/></svg></button>
         <button data-control="wait" aria-label="Wait one turn" title="Wait [.]">Wait</button><button data-control="east" aria-label="Move east"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="19,12 5,3 5,21" fill="currentColor"/></svg></button><button data-control="south" aria-label="Move south"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,19 3,5 21,5" fill="currentColor"/></svg></button>
       </div>
+      <div id="quick-slots" aria-label="Weapon quick slots">
+        <button data-control="reach" aria-label="Spear reach [R]" title="Spear reach [R] · equip a spear"><span data-icon="spear" aria-hidden="true"></span><span>Reach</span><kbd>R</kbd></button>
+        <button data-control="throw" aria-label="Throw stone [T]" title="Throw stone [T] · range 4"><span data-icon="stone" aria-hidden="true"></span><span>Throw</span><span id="stone-count" class="action-count"></span><kbd>T</kbd></button>
+      </div>
       <div class="touch-actions">
         <button data-control="collect" class="context-action" aria-label="Collect" title="Interact / Collect [E]"><span data-icon="hand" aria-hidden="true"></span><span class="action-label">Collect</span><kbd>E</kbd></button>
         <button data-control="potion" aria-label="Potion" title="Drink healing potion [H]"><span data-icon="potion" aria-hidden="true"></span><span class="action-label">Potion</span><span id="potion-count" class="action-count"></span><kbd>H</kbd></button>
         <button data-control="vision" aria-label="Vision · 25" title="Mind Vision · 25 Mana [M]"><span data-icon="vision" aria-hidden="true"></span><span class="action-label">Mind Vision</span><span class="action-cost">25 MP</span><kbd>M</kbd></button>
-        <button data-control="techniques" aria-label="Field techniques" title="Reach [R] · Throw [T] · Brace [B]"><span data-icon="techniques" aria-hidden="true"></span><span class="action-label">Techniques</span></button>
         <button id="manage-bag" aria-label="Open satchel [I]" title="Open 10×10 satchel [I]"><span data-icon="bag" aria-hidden="true"></span><span class="action-label">Satchel</span><span id="bag-capacity" class="action-count"></span><kbd>I</kbd></button>
         <button id="open-equipment" aria-label="Character / equipment" title="Character / equipment"><span data-icon="armor" aria-hidden="true"></span><span class="action-label">Gear</span></button>
         <button data-control="wait" class="desktop-wait" aria-label="Wait one turn" title="Wait [.] "><span data-icon="wait" aria-hidden="true"></span><span class="action-label">Wait</span><kbd>.</kbd></button>

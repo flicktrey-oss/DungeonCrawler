@@ -17,7 +17,7 @@ export const trophy=(kind)=>({kind:'trophy',name:kind==='frog'?'Frog pearl':kind
 
 export const shortSword=()=>({...travelGear('weapon',1),name:'Worn shortsword',weaponType:'sword',description:'+1 attack. Reliable adjacent strikes. Main hand; 7×2 cells.'});
 export const trailSpear=()=>({kind:'weapon',name:'Trail spear',weaponType:'spear',bonus:0,reach:2,size:[7,2],sellValue:6,description:'+1 Reach: strike 1–2 tiles in a cardinal direction through a clear line. No attack bonus. Main hand; 7×2 cells.'});
-export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,brace:3,size:[3,3],sellValue:5,description:'Off hand. Unlocks Brace: +3 defense against the next enemy phase. Takes one turn; no Mana cost. 3×3 cells.'});
+export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,blockChance:.35,size:[3,3],sellValue:5,description:'Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells.'});
 export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 2 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
 export const stoneCount=p=>p.inventory.filter(i=>i.kind==='stone').reduce((n,i)=>n+i.quantity,0);
 export const salePrice=item=>item.kind==='stone'?item.quantity:item.sellValue??(item.kind==='potion'?3:1);
