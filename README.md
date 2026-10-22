@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.13.1 — Satchel icons** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.14.0 — Click to explore** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -260,3 +260,9 @@ Equipment defense is less cumulative: armor supplies the main flat protection, b
 ## Satchel icons (v0.13.1)
 
 Items in the 10×10 satchel use emoji artwork: swords, spears, shields, boots, rings, necklaces, tonics, food, stones, trophies and relics. Stack counts appear as small badges. Tap an icon for the full name, description and item controls; desktop hover also shows its name and quantity. Icons follow the item family even when loot has a modifier. Emoji appearance varies with the device font.
+
+## Click to explore (v0.14.0)
+
+On desktop, click a visible empty tile to walk there using explored paths. Click a loose item to walk over and collect it, a friendly person to approach and open their dialogue, or a camp, shrine or crypt entrance to use it on arrival. Walking takes one turn per tile; collecting an item takes another turn. Dialogue still lets you choose whether to buy or accept anything. Mint dots mark the remaining route.
+
+Travel stops for nearby threats, newly revealed enemies, attacks (including blocked attacks), blocked paths and region changes. Escape, manual input, opening a menu or leaving the browser tab also cancels it. It never automatically attacks. Click a creature to inspect it; Shift-click a friendly person to inspect instead of approaching. Phone taps retain character inspection and ability targeting; use the directional touch controls to move.

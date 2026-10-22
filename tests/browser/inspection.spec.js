@@ -10,7 +10,7 @@ for(const touch of [false,true])test.describe(touch?'phone inspection':'desktop 
    const zoom=b.height<500?1.25:b.width<900?1.5:2,viewWidth=b.width/zoom,viewHeight=b.height/zoom;
    const sx=p.x*24+12-viewWidth/2,sy=p.y*24+12-viewHeight/2;
    const position={x:(target.x*24+12-sx)*zoom,y:(target.y*24+12-sy)*zoom};
-   if(touch)await canvas.tap({position});else await canvas.click({position});
+   if(touch)await canvas.tap({position});else await canvas.click({position,modifiers:target!==d.game.state.player&&target.type==='villager'?['Shift']:[]});
   }
   await inspect(d.game.state.player);await expect(page.locator('#character-inspector')).toBeVisible();
   await expect(page.locator('#inspection-details')).toContainText('Human');await expect(page.locator('#inspection-details')).toContainText('32 / 32');

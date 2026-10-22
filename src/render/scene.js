@@ -7,17 +7,19 @@ import {key} from '../game/dungeon.js';
 const T=24;
 export class DungeonScene extends Phaser.Scene {
   constructor(){super('dungeon');}
-  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();const canvas=this.sys.game.canvas;let down=null;
-    canvas.addEventListener('pointerdown',event=>{down=event.isPrimary&&event.button===0?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;});
-    canvas.addEventListener('pointercancel',()=>{down=null;});
+  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();const canvas=this.sys.game.canvas;let down=null,pending=null;
+    canvas.addEventListener('pointerdown',event=>{pending=null;down=event.isPrimary&&event.button===0?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;});
+    canvas.addEventListener('pointercancel',()=>{down=null;pending=null;});
     canvas.addEventListener('pointerup',event=>{
       const pressed=down;down=null;
       if(!pressed||pressed.id!==event.pointerId||Math.hypot(event.clientX-pressed.x,event.clientY-pressed.y)>12)return;
       // Read the current DOM rectangle: mobile HUD changes and page scrolling move the canvas.
       const rect=canvas.getBoundingClientRect();
       const point=this.cameras.main.getWorldPoint((event.clientX-rect.left)*this.scale.width/rect.width,(event.clientY-rect.top)*this.scale.height/rect.height);
-      this.onInspect?.(Math.floor(point.x/T),Math.floor(point.y/T));
-    });}
+      pending={x:Math.floor(point.x/T),y:Math.floor(point.y/T),pointerType:event.pointerType,shiftKey:event.shiftKey};
+      if(event.pointerType==='touch'){const tap=pending;pending=null;this.onInspect?.(tap.x,tap.y,tap);}
+    });
+    canvas.addEventListener('click',()=>{const click=pending;pending=null;if(click)this.onInspect?.(click.x,click.y,click);});}
 
   setGame(game){this.gameModel=game;this.draw();}
   draw(){
@@ -43,6 +45,7 @@ export class DungeonScene extends Phaser.Scene {
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.actor(e,e.kind);
     for(const e of s.enemies)if(e.hp>0&&e.questKey&&this.gameModel.quests?.get(e.questKey)?.accepted&&s.visible.has(key(e.x,e.y))){g.fillStyle(0xffda85);g.fillRect(e.x*T+10,e.y*T-3,4,2);}
     for(const e of s.encounters??[])if(e.wardIndex!==undefined&&e.used&&s.visible.has(key(e.x,e.y))){g.fillStyle(0x8fe2cb);g.fillRect(e.x*T+10,e.y*T+7,4,8);}
+    for(const point of this.travelHighlights??[])if(s.explored.has(key(point.x,point.y))){g.fillStyle(0xa8d6c8,.65);g.fillRect(point.x*T+10,point.y*T+10,4,4);}
     this.actor(s.player,'player');
     // Draw bars last so neighboring actors and scenery cannot cover them.
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);
