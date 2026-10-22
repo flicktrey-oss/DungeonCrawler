@@ -48,3 +48,9 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 @media(prefers-reduced-motion:reduce){#character-shortcut.shield-block{animation:none}#block-feedback.shield-block{animation:block-label 1.4s step-end}}
 
 .creature-trait{font:11px/1.6 system-ui;color:#c0d8ca;margin:8px 0}.creature-warning{font:bold 11px/1.5 system-ui;color:#efc880;border-left:2px solid #d8aa6c;padding-left:7px}
+
+/* Seven usable slots around the shared character silhouette. */
+.equipment-portrait{height:330px}.equipment-portrait svg{width:62%;margin:auto}
+.slot-ring1{left:8px;top:235px}.slot-ring2{right:8px;top:235px}.slot-boots{left:calc(50% - 29px);bottom:5px}
+
+#target-options select{max-width:100%;min-height:44px;background:#20343d;color:#edf0d8;border:1px solid #869c95;border-radius:5px;font:14px system-ui;padding:6px}

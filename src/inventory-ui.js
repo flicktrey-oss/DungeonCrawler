@@ -20,7 +20,7 @@ export function mountInventory(container, game, perform) {
     const button=(label,fn,disabled=false)=>{const b=document.createElement('button');b.textContent=label;b.disabled=disabled;b.onclick=fn;controls.append(b);};
     button('Place item',()=>place(Number(x.value)-1,Number(y.value)-1),!item);
     button('Rotate item',()=>{rotated=!rotated;notice=`${footprint({...item,rotated}).join('×')} orientation planned. Tap a destination or press Place item to apply it.`;status.textContent=notice;},!item||footprint(item)[0]===footprint(item)[1]);
-    button(item?.kind==='stone'?'Throw stones':'Use / equip',()=>perform({type:item.kind==='stone'?'targetThrow':item.kind==='potion'?'potion':'equip',index:selected}),!item||!['potion','weapon','armor','amulet','offhand','stone'].includes(item.kind));
+    button(['stone','knife','thunder'].includes(item?.kind)?'Throw stones':'Use / equip',()=>perform({type:['stone','knife','thunder'].includes(item.kind)?'targetThrow':['potion','ration','cleanse','mana','smoke'].includes(item.kind)?'use':'equip',index:selected}),!item||!['potion','weapon','armor','amulet','offhand','boots','ring','stone','knife','thunder','ration','cleanse','mana','smoke'].includes(item.kind));
     button('Drop item',()=>perform({type:'drop',index:selected}),!item);
     container.append(controls);
   }

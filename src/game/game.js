@@ -2,7 +2,7 @@ import { Random } from './random.js';
 import { generateDungeon, walkable, key } from './dungeon.js';
 import { pathStep } from './ai.js';
 import { updateVisibility } from './visibility.js';
-import { equipment, potion, attack, defense, threshold } from './items.js';
+import { equipment, potion, attack, defense, threshold, gearBonus, shieldChance, recalculateGear } from './items.js';
 import { damage, enemyTypes } from './combat.js';
 import { TurnManager } from './turn-manager.js';
 export class Game {
@@ -31,13 +31,13 @@ export class Game {
       if(!Number.isInteger(a.dx)||!Number.isInteger(a.dy)||Math.abs(a.dx)+Math.abs(a.dy)!==1)return false;
       const x=p.x+a.dx,y=p.y+a.dy;if(!walkable(s.map,x,y))return false;
       const enemy=s.enemies.find(e=>e.hp>0&&e.x===x&&e.y===y);
-      if(enemy){const hit=damage(attack(p),enemy.defense);enemy.hp-=hit;this.message(`You strike ${enemy.name} for ${hit}.`);if(enemy.hp<=0)this.kill(enemy);}
+      if(enemy){this.strikeEnemy(enemy,attack(p));}
       else {p.x=x;p.y=y;const item=s.items.find(i=>i.x===x&&i.y===y);if(item)this.message(`${item.name} here. Press E to collect or open.`);if(s.map[y][x]==='>')this.message(s.floor<5?'Stairs down. Press Enter to descend.':'The final stair is sealed. Defeat the Ash Warden.');}
       return true;
     }
     if(a.type==='mindVision'){
       if(p.mana<25){this.message('Mind Vision needs 25 Mana. Move or fight to recharge.');return false;}
-      p.mana-=25;s.mindVisionUntil=s.turn+3;this.message('Mind Vision pierces nearby walls for 3 turns. Terrain remains mapped.');return true;
+      p.mana-=25;s.mindVisionUntil=s.turn+3+gearBonus(p,'visionBonus');this.message('Mind Vision pierces nearby walls for '+(3+gearBonus(p,'visionBonus'))+' turns. Terrain remains mapped.');return true;
     }
     if(a.type==='wait'){this.message('You listen to the darkness.');return true;}
     if(a.type==='pickup'){
@@ -66,11 +66,18 @@ export class Game {
     while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=6;p.hp=Math.min(p.maxHp,p.hp+10);p.attack++;if(p.level%2===0)p.defense++;this.message(`Level ${p.level}! Your strength grows.`);}
     if(enemy.kind==='boss'){s.status='victory';this.message('The Ash Warden crumbles. Dawn returns to the vault.');}
   }
-  receiveEnemyAttack(e,verb='hits you'){
+  strikeEnemy(enemy,power,label='You strike',melee=true){
+    const p=this.state.player,isolated=!this.state.enemies.some(o=>o!==enemy&&o.hp>0&&Math.abs(o.x-enemy.x)+Math.abs(o.y-enemy.y)<=2);
+    const hit=damage(power+(melee&&isolated?gearBonus(p,'isolatedBonus'):0),Math.max(0,enemy.defense-(melee?(p.weapon?.armorPierce??0):0)));
+    enemy.hp-=hit;if(melee&&p.weapon?.bleedBonus)enemy.bleeding=2;
+    this.message(`${label} ${enemy.name} for ${hit}.`);if(enemy.hp<=0)this.kill(enemy);
+  }
+  receiveEnemyAttack(e,verb='hits you',options={}){
     const s=this.state,p=s.player;
-    if(p.offhand?.blockChance&&this.rng.next()<p.offhand.blockChance){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand.name} stops ${e.name}'s attack.`);return;}
-    const hit=damage(e.attack,defense(p));p.hp=Math.max(0,p.hp-hit);this.message(`${e.name} ${verb} for ${hit}.`);
-    if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}
+    if(shieldChance(p,options.ranged)>0&&this.rng.next()<shieldChance(p,options.ranged)){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand?.name??'ward'} stops ${e.name}'s attack.`);return;}
+    const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);p.rationTurns=0;this.message(`${e.name} ${verb} for ${hit}.`);
+    if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');p.amulet=null;p.hp=1;recalculateGear(p);}
+    if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return hit;
   }
   actEnemy(e){
     const s=this.state,p=s.player;e.actions++;

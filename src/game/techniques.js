@@ -1,3 +1,4 @@
+import { projectileCount } from './items.js';
 import {key} from './dungeon.js';
 // Grid ray shared by validation and targeting. Creatures and solid terrain block shots;
 // diagonal rays cannot squeeze between solid corners, even under Mind Vision.
@@ -18,7 +19,7 @@ export function techniqueTarget(game,type,x,y){
  if(!['reach','throw'].includes(type)||!Number.isInteger(x)||!Number.isInteger(y)||!s.visible.has(key(x,y)))return null;
  const dx=Math.abs(x-p.x),dy=Math.abs(y-p.y);
  if(type==='reach'&&(!(p.weapon?.reach>=2)||dx&&dy||dx+dy<1||dx+dy>p.weapon.reach))return null;
- if(type==='throw'&&(!p.inventory.some(i=>i.kind==='stone'&&i.quantity>0)||dx*dx+dy*dy>16||dx+dy===0))return null;
+ if(type==='throw'&&(!projectileCount(p)||dx*dx+dy*dy>16||dx+dy===0))return null;
  const enemy=s.enemies.find(e=>e.hp>0&&e.x===x&&e.y===y);
  return enemy&&clearShot(s,p,enemy)?enemy:null;
 }

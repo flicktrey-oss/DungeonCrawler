@@ -5,16 +5,16 @@ import { generateDungeon, walkable, key, WIDTH, HEIGHT } from './dungeon.js';
 import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeAt } from './world.js';
 import { actCreature } from './enemy-actions.js';
 import { techniqueTarget } from './techniques.js';
-import { damage } from './combat.js';
 import { enemyTypes } from './combat.js';
-import { potion, travelGear, trophy, reedAmulet, threshold, attack, shortSword, trailSpear, buckler, throwingStones, salePrice } from './items.js';
+import { EQUIPMENT_SLOTS, slotsFor, recalculateGear, healAmount, potion, projectileStack, reedAmulet, threshold, attack, throwingStones, salePrice } from './items.js';
+import { ordinaryDrop, modifyItem } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
 const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();
-    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
+    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
     Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
@@ -62,7 +62,7 @@ export class Expedition extends Game {
     const spot=()=>free.splice(rng.int(0,free.length-1),1)[0];
     for(let i=0;i<5+depth;i++)data.enemies.push(this.makeEnemy(rng.pick(['skeleton','goblin']),spot(),danger,i));
     if(depth===2)data.enemies.push(this.makeEnemy('guardian',{...d.stairs},danger,99));
-    for(const item of [potion(),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger)}])data.items.push({...item,...spot()});
+    for(const item of [potion(),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger,'crypt')}])data.items.push({...item,...spot()});
     this.activate({id,kind:'crypt',rx,ry,depth},data,data[arrival]);
     this.message(`Crypt depth ${depth}/2 · recommended level ${data.recommended}. The layout and explored map persist; enemies return. Q on an upward stair retreats.`);
   }
@@ -76,14 +76,11 @@ export class Expedition extends Game {
     if(a.type==='reach'||a.type==='throw'){
       const enemy=techniqueTarget(this,a.type,a.x,a.y);
       if(!enemy){this.message('No valid target: choose a visible enemy within a clear weapon range.');return false;}
-      const hit=damage(a.type==='reach'?attack(p):2,enemy.defense);
-      if(a.type==='throw'){
-        const index=p.inventory.findIndex(i=>i.kind==='stone'&&i.quantity>0),stack=p.inventory[index];
-        if(--stack.quantity===0)p.inventory.splice(index,1);
-      }
-      enemy.hp-=hit;this.message(`${a.type==='reach'?'Your spear strikes':'Your stone hits'} ${enemy.name} for ${hit}.`);
-      if(enemy.hp<=0)this.kill(enemy);
-      if(a.type==='throw'&&this.rng.next()<.5){s.items.push({...throwingStones(1),x:enemy.x,y:enemy.y});this.message('The stone lands intact. Collect it after the fight.');}
+      const stack=a.type==='throw'?projectileStack(p,a.index):null;if(a.type==='throw'&&(!stack||stack.quantity<1))return false;
+      if(stack){if(--stack.quantity===0)p.inventory.splice(p.inventory.indexOf(stack),1);}
+      if(stack?.kind==='thunder'){enemy.intent=null;enemy.interrupted=true;this.message('Thunder interrupts '+enemy.name+'!');}
+      else this.strikeEnemy(enemy,a.type==='reach'?attack(p):(stack.projectileDamage??2),a.type==='reach'?'Your spear strikes':'Your projectile hits',a.type==='reach');
+      if(stack&&stack.kind!=='thunder'&&this.rng.next()<.5){s.items.push({...stack,quantity:1,x:enemy.x,y:enemy.y});this.message('The projectile lands intact. Collect it after the fight.');}
       return true;
     }
     if(a.type==='buy')return buyFromMerchant(this,a.id);
@@ -99,7 +96,7 @@ export class Expedition extends Game {
     }
     if(a.type==='pickup'){
       const index=s.items.findIndex(i=>i.x===p.x&&i.y===p.y);if(index<0){this.message('Nothing here to collect.');return false;}
-      const ground=s.items[index],item=ground.kind==='chest'?(ground.reward??=treasure(this.rng,s.danger)):ground;
+      const ground=s.items[index],item=ground.kind==='chest'?(ground.reward??=treasure(this.rng,s.danger,ground.type??'cache')):ground;
       if(item.kind==='gold')p.gold+=item.amount;
       else if(!addItem(p,item)){this.message('Satchel full or no fitting space. The item stays here.');return false;}
       s.items.splice(index,1);const event=s.encounters?.find(e=>e.id===ground.eventId);if(event)event.used=true;
@@ -108,17 +105,28 @@ export class Expedition extends Game {
     if(a.type==='potion'){
       const index=a.index===undefined?p.inventory.findIndex(i=>i.kind==='potion'):a.index;
       if(!Number.isInteger(index)||p.inventory[index]?.kind!=='potion'||p.hp===p.maxHp){this.message(p.hp===p.maxHp?'You are already at full health.':'No tonic selected.');return false;}
-      p.inventory.splice(index,1);const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+16);this.message(`Ember tonic restores ${p.hp-before} health.`);return true;
+      p.inventory.splice(index,1);const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+healAmount(p,16));this.message(`Ember tonic restores ${p.hp-before} health.`);return true;
+    }
+    if(a.type==='use'){
+      const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item)return false;
+      if(item.kind==='potion')return this.resolvePlayer({type:'potion',index:a.index});
+      if(item.kind==='mana'&&p.mana<p.maxMana)p.mana=Math.min(p.maxMana,p.mana+35);
+      else if(item.kind==='ration'&&p.hp<p.maxHp&&!p.rationTurns)p.rationTurns=4;
+      else if(item.kind==='cleanse'&&p.corrosion>0)p.corrosion=0;
+      else if(item.kind==='smoke'&&!p.smokeTurns)p.smokeTurns=3;
+      else {this.message('That supply would have no effect right now.');return false;}
+      p.inventory.splice(a.index,1);this.message('Used '+item.name+'.');return true;
     }
     if(a.type==='unequip'){
-      if(!['weapon','armor','amulet','offhand'].includes(a.slot)||!p[a.slot])return false;
+      if(!EQUIPMENT_SLOTS.includes(a.slot)||!p[a.slot])return false;
       const item=p[a.slot];if(!addItem(p,item)){this.message('No fitting space in your satchel. The item stays equipped.');return false;}
-      p[a.slot]=null;this.message(`Unequipped ${item.name}.`);return true;
+      p[a.slot]=null;recalculateGear(p);this.message(`Unequipped ${item.name}.`);return true;
     }
     if(a.type==='equip'){
-      const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item||!['weapon','armor','amulet','offhand'].includes(item.kind))return false;
-      const inventory=p.inventory.filter((_,i)=>i!==a.index),old=p[item.kind];if(old&&!addItem({inventory},old)){this.message('No room for the equipment you would remove.');return false;}
-      p.inventory=inventory;p[item.kind]=looseItem(item);this.message(`Equipped ${item.name}.`);return true;
+      const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item||!slotsFor(item).length)return false;
+      const slot=a.slot??slotsFor(item).find(slot=>!p[slot])??slotsFor(item)[0];if(!slotsFor(item).includes(slot))return false;
+      const inventory=p.inventory.filter((_,i)=>i!==a.index),old=p[slot];if(old&&!addItem({inventory},old)){this.message('No room for the equipment you would remove.');return false;}
+      p.inventory=inventory;p[slot]=looseItem(item);recalculateGear(p);this.message(`Equipped ${item.name}.`);return true;
     }
     if(a.type==='drop'){
       if(!Number.isInteger(a.index)||!p.inventory[a.index])return false;
@@ -135,8 +143,8 @@ export class Expedition extends Game {
       if(event.type!=='villager'||!s.quest)return false;
       if(a.type==='acceptQuest'&&!s.quest.accepted){s.quest.accepted=true;this.message('Quest accepted: clear the three troublesome frogs and return. Leaving resets this quest.');return true;}
       if(a.type==='claimQuest'&&s.quest.accepted&&!s.quest.claimed&&this.questRemaining()===0){
-        if(!addItem(p,reedAmulet())){this.message('Make room for the 2×2 amulet before claiming.');return false;}
-        s.quest.claimed=true;this.awardExperience(6);this.message('The Mirekeeper gives you a Reedheart amulet! Equip it for +1 defense.');return true;
+        if(!addItem(p,s.quest.reward??=modifyItem(reedAmulet(),this.rng,'quest'))){this.message('Make room for the 2×2 amulet before claiming.');return false;}
+        s.quest.claimed=true;this.awardExperience(6);this.message('The Mirekeeper gives you '+s.quest.reward.name+'! Inspect it in Equipment.');return true;
       }
       return false;
     }
@@ -167,12 +175,13 @@ export class Expedition extends Game {
     }
     return super.resolvePlayer(a);
   }
+  finishTurn(){const p=this.state.player;if(this.state.status!=='playing')return;if(p.rationTurns>0){p.hp=Math.min(p.maxHp,p.hp+healAmount(p,3));p.rationTurns--;}if(p.smokeTurns>0)p.smokeTurns--;if(p.corrosion>0)p.corrosion--;}
   awardExperience(amount){const p=this.state.player;p.xp+=amount;while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=3;p.hp=Math.min(p.maxHp,p.hp+4);if(p.level%2===0)p.attack++;if(p.level%4===0)p.defense++;this.message(`Level ${p.level}. You grow a little stronger.`);}}
   kill(enemy){
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
-    const roll=this.rng.next();if(roll<.2)this.state.items.push({kind:'gold',name:'Dropped coins',amount:this.rng.int(1,3),x:enemy.x,y:enemy.y});else if(roll<.5)this.state.items.push({...trophy(enemy.kind==='pondFrog'?'frog':enemy.kind),x:enemy.x,y:enemy.y});else if(roll<.60)this.state.items.push({...throwingStones(1),x:enemy.x,y:enemy.y});else if(roll<.62)this.state.items.push({...this.rng.pick([shortSword(),trailSpear(),buckler()]),x:enemy.x,y:enemy.y});
-    if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger),x:enemy.x,y:enemy.y});}}
+    const loot=ordinaryDrop(this.rng,this.state.danger,enemy.kind,Boolean(enemy.eventId));if(loot)this.state.items.push({...loot,x:enemy.x,y:enemy.y});
+    if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger,'den'),x:enemy.x,y:enemy.y});}}
     if(enemy.questId&&this.state.quest?.accepted&&this.questRemaining()===0)this.message('The frogs are cleared. Return to the Mirekeeper before leaving this region.');
-    if(enemy.kind==='guardian'&&!this.state.cleared){this.state.cleared=true;this.state.cryptsCleared++;this.state.items.push({kind:'chest',name:'Warden’s reliquary',reward:travelGear(this.rng.pick(['weapon','armor']),Math.min(4,1+Math.floor(this.state.danger/3))),x:enemy.x,y:enemy.y});this.message('Crypt cleared. A rare equipment reliquary remains.');}
+    if(enemy.kind==='guardian'&&!this.state.cleared){this.state.cleared=true;this.state.cryptsCleared++;this.state.items.push({kind:'chest',name:'Warden’s reliquary',reward:treasure(this.rng,this.state.danger,'boss'),x:enemy.x,y:enemy.y});this.message('Crypt cleared. A rare equipment reliquary remains.');}
   }
 }

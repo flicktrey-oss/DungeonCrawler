@@ -9,7 +9,7 @@ test('complete a frog quest, sell its reward and buy supplies using earned gold'
  await d.walk({x:event.x,y:event.y+1});await page.keyboard.press('e');
  await page.getByRole('button',{name:'Claim Reedheart amulet',exact:true}).click();d.game.action({type:'claimQuest'});await page.getByRole('button',{name:'Return',exact:true}).click();
  await d.walk({x:0,y:15});await d.send({type:'move',dx:-1,dy:0});await d.walk({x:22,y:15});await page.keyboard.press('e');
- const index=d.game.state.player.inventory.findIndex(i=>i.kind==='amulet');await page.getByRole('button',{name:'Sell Reedheart amulet · 12 gold',exact:true}).click();d.game.action({type:'sell',index});
+ const index=d.game.state.player.inventory.findIndex(i=>i.kind==='amulet');await page.getByRole('button',{name:'Sell '+d.game.state.player.inventory[index].name+' · 12 gold',exact:true}).click();d.game.action({type:'sell',index});
  const before=d.game.state.player.gold;await page.getByRole('button',{name:'Buy Ember tonic · 10 gold',exact:true}).click();d.game.action({type:'buy',id:'tonic'});
  await expect(page.locator('#shop-gold')).toHaveText(`Your gold: ${before-10}`);await expect(page.locator('#shop-offers section').first()).toContainText('2 left');
  await page.getByRole('button',{name:'Return',exact:true}).click();await expect(page.locator('.floor')).toContainText(`TURN ${d.game.state.turn}`);

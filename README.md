@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.9.0 — Creature personalities** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.10.0 — Loot & wardrobe** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -38,7 +38,7 @@ The world waits indefinitely for you. Each valid action costs exactly one turn, 
 
 ## Slower progression and danger
 
-Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, three throwing stones, and no gold. Ordinary woodland rats and beetles award 2 XP; the first level needs 20 XP (ten ordinary kills). Later thresholds increase with level. Levels grant a little health, occasional attack/defense, and a small heal. Quests and stronger foes can accelerate progress.
+Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, three throwing stones, and 8 gold. Ordinary woodland rats and beetles award 2 XP; the first level needs 20 XP (ten ordinary kills). Later thresholds increase with level. Levels grant a little health, occasional attack/defense, and a small heal. Quests and stronger foes can accelerate progress.
 
 | Region distance from camp | Biome | Suggested level |
 | --- | --- | ---: |
@@ -78,9 +78,9 @@ The World map remembers visited coordinates and discovered, fixed crypt entrance
 
 ## Gold, drops and merchant
 
-Creatures do not always drop loot: approximately 38% drop nothing, 20% drop 1–3 coins, 30% drop a low-value trophy, 10% drop a throwing stone, and 2% drop basic field gear. Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
+Creatures do not always drop loot: 50% drop nothing, 25% roll 2–4 coins, 17% drop a low-value trophy, and 8% roll the weighted item table (locked items become coins). Loot remains on the ground and must be collected. Brush-rat fangs sell for 2 gold; frog pearls for 3. Coins do not occupy inventory cells.
 
-Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 18 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (35% passive block, 24 gold), throwing stones (3 for 4 gold), or patched vest (+1 defense, 30 gold). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
+Mara stands two tiles east and one north of the tent. From the starting position, walk **two steps east**, then E / Trade. Buy tonics (10 gold, three per run), a worn shortsword (+1 attack, 8 gold), a trail spear (+1 Reach, no attack bonus, 35 gold), a weathered buckler (35% passive block, 12 gold), throwing stones (3 for 4 gold), patched vest (+1 defense, 10 gold), Trail Boots (8 gold), or Iron Bands (12 gold, two available). Sell carried items from the same dialogue. Unequip equipped gear before selling it. Trading costs one turn per successful transaction; browsing is free. Stock does not replenish on travel.
 
 ## The 10×10 satchel
 
@@ -128,7 +128,7 @@ GitHub Pages uses **Source: GitHub Actions**, with `feature/playable-roguelike` 
 
 ## Character equipment screen (v0.5.1)
 
-Open **I → Equipment**, or choose **Gear** in the bottom dock (the portrait at upper left opens equipment too). Satchel and Equipment are separate tabs in the same popup. A character portrait shows your equipped weapon in hand, buckler in the off hand, armor on the torso, and an amulet at the neck. Tap a slot to inspect its item and bonus, then use its Unequip button. Carried equipment is listed below the portrait with Equip buttons. The world character sprite is unchanged.
+Open **I → Equipment**, or choose **Gear** in the bottom dock (the portrait at upper left opens equipment too). Satchel and Equipment are separate tabs in the same popup. A character portrait shows your equipped weapon in hand, buckler in the off hand, armor on the torso, and an amulet at the neck. Tap a slot to inspect its item and bonus, then use its Unequip button. Carried equipment is listed below the portrait with Equip buttons. The same character changes appearance in the world, HUD and inspection. Boots and two ring slots are included; off-hand relics replace shields. Select either ring slot before equipping to choose which ring to replace.
 
 Equipped items leave the satchel because they occupy the character’s main-hand, off-hand, body or neck slot—not because they were discarded. Unequipping places the item back into a fitting bag space, including rotation when needed. A full or fragmented bag rejects unequipping without losing the item or spending a turn. Equipment changes update attack/defense and consume one turn; looking and switching tabs are free. If enemies are nearby, they act after each successful equipment change.
 
@@ -176,7 +176,7 @@ Use the **Reach** and **Throw** quick slots beside the action dock; on desktop *
 
 Selecting Reach/Throw highlights legal enemies. Click/tap a highlighted creature or select its named target button. A valid attack spends exactly one turn; invalid targets, opening the chooser, Cancel and Escape are free. Movement is blocked during targeting. Walls, trees, rocks, NPCs and intervening living enemies block the shot; diagonal throws cannot cut solid corners. Mind Vision does not let weapons strike through walls. Targeting closes after a successful attack.
 
-An equipped Weathered buckler rolls a seeded **35% block chance per incoming attack**. A block prevents all damage from that hit; an unblocked hit uses normal armor/defense. Attacking, moving or using items does not disable the shield. Unequipping immediately removes the chance. Blocks flash the portrait and show “Blocked!” in the event log. There is no Brace action or B shortcut. Moving/bump attacks and spear attacks restore 5 Mana; throwing does not.
+An equipped Weathered buckler rolls a seeded **35% block chance per incoming attack**. A block prevents all damage from that hit; an unblocked hit uses normal armor/defense. Attacking, moving or using items does not disable the shield. Unequipping immediately removes the chance. Blocks flash the portrait and show “Blocked!” in the event log. There is no Brace action or B shortcut. Moving/bump attacks and spear attacks restore 5 Mana (increased by relevant relics/charms); throwing does not.
 
 Stones that survive land on the target tile (even if the creature dies); collect them after the fight. Pickups and purchases merge stacks up to nine, preserving both items and gold if overflow cannot fit. Selling a bundle pays one gold per remaining stone. Basic gear can appear rarely on enemies and in early coffers, while higher-tier rewards remain in dangerous areas. No axe/recovery mechanic, helmets, gloves, boots or extra ring slots were added in this first slice.
 
@@ -203,3 +203,9 @@ Warnings resolve only after another valid player action. Idle time, inspection a
 Click/tap an enemy to read its traits and current preparation. Warning colors are paired with different marks, inspection text and Chronicle messages. Pink tongue trails, amber sap shots and orange charge paths provide combat feedback; rendering has no effect on turn rules.
 
 ![Original creature field guide](docs/creature-guide.png)
+
+## Loot and wardrobe update
+
+The 27-item roster adds boots, two ring slots, off-hand relics, consumables and alternate ammunition. Difficult encounters offer substantially better modifier odds than ordinary kills. Dens favor weapons/boots; crypts favor protection/relics. Start in ragged clothes; equipped gear changes your original pixel character in the world and popup. Plain equipment is affordable early; ideal combinations remain uncommon. The roughly 20-minute pacing target still needs player feedback.
+
+See [the full item table, source odds and mechanics](docs/loot-and-wardrobe.md). Choose supplies from the Satchel; use the Throw selector for stones, knives or thunderstones. Opening panels, selecting ammo and rearranging inventory remain free. No save/load is added.

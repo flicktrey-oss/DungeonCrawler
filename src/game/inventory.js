@@ -24,10 +24,10 @@ export function settleInventory(items) {
 }
 export function looseItem(item) { const copy={...item}; delete copy.x;delete copy.y;delete copy.bagX;delete copy.bagY;return copy; }
 export function addItem(player,item) {
-  if(item.kind==='stone'){
+  if(['stone','knife','thunder'].includes(item.kind)){
     if(!Number.isInteger(item.quantity)||item.quantity<=0)return false;
     const items=player.inventory.map(i=>({...i}));let remaining=item.quantity;
-    for(const stack of items)if(stack.kind==='stone'&&stack.quantity<9){const amount=Math.min(9-stack.quantity,remaining);stack.quantity+=amount;remaining-=amount;if(!remaining)break;}
+    for(const stack of items)if(stack.kind===item.kind&&stack.quantity<9&&stack.name===item.name){const amount=Math.min(9-stack.quantity,remaining);stack.quantity+=amount;remaining-=amount;if(!remaining)break;}
     while(remaining>0){const amount=Math.min(9,remaining);items.push({...looseItem(item),quantity:amount});remaining-=amount;}
     if(!inventoryLayout(items))return false;
     player.inventory.splice(0,player.inventory.length,...items);settleInventory(player.inventory);return true;

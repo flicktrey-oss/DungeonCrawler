@@ -1,7 +1,8 @@
+import { adventurerSvg } from './render/adventurer.js';
 import Phaser from 'phaser';
 import { Expedition } from './game/expedition.js';
 import { BIOMES } from './game/world.js';
-import { attack, defense, threshold, stoneCount, salePrice } from './game/items.js';
+import { attack, defense, threshold, projectileCount as stoneCount, EQUIPMENT_SLOTS, salePrice } from './game/items.js';
 import { DungeonScene } from './render/scene.js';
 import './style.css';
 import { drawMinimap, drawWorldMinimap, campBearing } from './minimap.js';
@@ -83,8 +84,9 @@ function bag(view='satchel',slot='weapon') {
   if(!model||model.state.status!=='playing')return;
   paused=true;panel='bag';
   const perform=action=>{
-    if(action.type==='targetThrow'){closePanel();beginTargeting('throw');return;}
-    const focusSlot=action.slot??model.state.player.inventory[action.index]?.kind??slot;
+    if(action.type==='targetThrow'){closePanel();beginTargeting('throw',action.index);return;}
+    const carried=model.state.player.inventory[action.index];
+    const focusSlot=action.slot??(carried?.kind==='ring'?(!model.state.player.ring1?'ring1':!model.state.player.ring2?'ring2':'ring1'):carried?.kind)??slot;
     model.action(action);render();
     if(model.state.status==='playing'){bag(view,focusSlot);$('bag-result').textContent=model.state.log.at(-1);}
   };
@@ -101,7 +103,7 @@ function bag(view='satchel',slot='weapon') {
     tab.tabIndex=tab.getAttribute('aria-selected')==='true'?0:-1;
     tab.onkeydown=event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();event.stopPropagation();const next=event.key==='Home'?'satchel':event.key==='End'?'equipment':view==='satchel'?'equipment':'satchel';switchView(next);$(`${next}-tab`).focus();};
   }
-  if(view==='equipment')mountEquipment($('bag-editor'),model,perform,['weapon','armor','amulet','offhand'].includes(slot)?slot:'weapon');
+  if(view==='equipment')mountEquipment($('bag-editor'),model,perform,EQUIPMENT_SLOTS.includes(slot)?slot:'weapon');
   else mountInventory($('bag-editor'),model,perform);
 }
 function encounterDialog() {
@@ -146,7 +148,11 @@ function render() {
     <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
     <div class="numbers">Lv ${p.level} · ${attack(p)} ATK · ${defense(p)} DEF · <b>${p.gold} gold</b></div>`;
   $('portrait-level').textContent=p.level;
+  const conditions=[p.corrosion>0?'Corroded −1 DEF · '+p.corrosion+' turns':null,p.smokeTurns>0?'Smoke · '+p.smokeTurns+' turns':null,p.rationTurns>0?'Rations · '+p.rationTurns+' turns':null].filter(Boolean);
+  if(conditions.length){const status=document.createElement('p');status.className='vision-status';status.textContent=conditions.join(' / ');$('stats').append(status);}
+
   if(s.mindVisionUntil>=s.turn&&s.mindVisionUntil>0){const status=document.createElement('p');status.className='vision-status';status.textContent=`Mind Vision active · ${s.mindVisionUntil-s.turn+1} turns`;$('stats').append(status);}
+  $('character-shortcut').querySelector('svg').outerHTML=adventurerSvg(p).replace(/ data-[a-z0-9]+-icon=""/g,'');
   $('stone-count').textContent=stoneCount(p);
   if((s.blockedAttacks??0)>lastShownBlock){
     lastShownBlock=s.blockedAttacks;
@@ -190,7 +196,9 @@ $('close-inspector').onclick=()=>{inspected=null;renderInspection();document.act
 function cancelTargeting(){
   targetMode=null;scene.targetHighlights=[];$('targeting-bar').classList.add('hidden');scene.draw();
 }
-function beginTargeting(type){
+let targetAmmo;
+function beginTargeting(type,index){
+  targetAmmo=index;
   if(!model||paused||model.state.status!=='playing')return;
   stopMovement();inspected=null;renderInspection();
   const targets=techniqueTargets(model,type);
@@ -200,12 +208,18 @@ function beginTargeting(type){
   $('targeting-bar').classList.remove('hidden');$('targeting-title').textContent=type==='reach'?'Spear reach':'Throw a stone';
   $('targeting-notice').textContent='Tap a highlighted enemy or choose below. One attack = one turn. Cancel is free.';
   $('target-options').replaceChildren();
+  if(type==='throw'){
+    const select=document.createElement('select');select.setAttribute('aria-label','Throwing ammunition');
+    model.state.player.inventory.forEach((item,i)=>{if(!['stone','knife','thunder'].includes(item.kind))return;const option=document.createElement('option');option.value=i;option.textContent=item.name+' ×'+item.quantity;select.append(option);});
+    if(index!==undefined)select.value=index;targetAmmo=Number(select.value);select.onchange=()=>{targetAmmo=Number(select.value);};$('target-options').append(select);
+    $('targeting-title').textContent='Throw a projectile';
+  }
   for(const enemy of targets){const b=document.createElement('button');b.textContent=`${enemy.name} · ${enemy.hp} HP`;b.onclick=()=>completeTarget(enemy.x,enemy.y);$('target-options').append(b);}
   syncTouchControls();
 }
 function completeTarget(x,y){
   const type=targetMode;if(!type)return;
-  if(!model.action({type,x,y})){$('targeting-notice').textContent='That target is blocked or out of range. Choose a highlighted enemy or Cancel.';return;}
+  if(!model.action({type,x,y,index:targetAmmo})){$('targeting-notice').textContent='That target is blocked or out of range. Choose a highlighted enemy or Cancel.';return;}
   cancelTargeting();render();
 }
 $('cancel-targeting').onclick=()=>{cancelTargeting();syncTouchControls();document.activeElement?.blur();};

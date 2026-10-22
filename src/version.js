@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.9.0 · Creature personalities';
+export const RELEASE = 'v0.10.0 · Loot & wardrobe';

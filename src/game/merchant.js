@@ -1,14 +1,16 @@
 import { addItem } from './inventory.js';
-import { travelGear, potion, shortSword, trailSpear, buckler, throwingStones } from './items.js';
+import { travelGear, potion, shortSword, trailSpear, buckler, throwingStones, trailBoots, ironRing } from './items.js';
 
 export const MERCHANT = { x: 22, y: 14 };
 export function createMerchantStock() {
   return [
     { id: 'tonic', item: potion(), price: 10, stock: 3 },
     { id: 'spear', item: trailSpear(), price: 35, stock: 1 },
-    { id: 'mail', item: travelGear('armor', 1), price: 30, stock: 1 },
-    { id: 'shortsword', item: shortSword(), price: 18, stock: 1 },
-    { id: 'buckler', item: buckler(), price: 24, stock: 1 },
+    { id: 'mail', item: travelGear('armor', 1), price: 10, stock: 1 },
+    { id: 'shortsword', item: shortSword(), price: 8, stock: 1 },
+    { id: 'buckler', item: buckler(), price: 12, stock: 1 },
+    { id: 'boots', item: trailBoots(), price: 8, stock: 1 },
+    { id: 'ring', item: ironRing(), price: 12, stock: 2 },
     { id: 'stones', item: throwingStones(3), price: 4, stock: 5 },
   ];
 }
