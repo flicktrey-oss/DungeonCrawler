@@ -11,8 +11,8 @@ export async function expeditionDriver(page,seed=1,touch=false){
   async function send(a){
     const result=game.action(a);
     if(a.type==='move'){if(touch)await page.getByRole('button',{name:`Move ${stepNames[key(a.dx,a.dy)]}`,exact:true}).tap();else await page.keyboard.press(keys[key(a.dx,a.dy)]);}
-    else if(touch)await page.getByRole('button',{name:({potion:'Potion',descend:'Enter ↓',ascend:'Leave ↑',pickup:'Collect',mindVision:'Vision · 25'})[a.type],exact:true}).tap();
-    else await page.keyboard.press(({potion:'h',descend:'Enter',ascend:'q',pickup:'e',mindVision:'m'})[a.type]);
+    else if(touch)await page.getByRole('button',{name:({potion:'Potion',descend:'Enter ↓',ascend:'Leave ↑',pickup:'Collect',mindVision:'Vision · 25',wait:'Wait one turn'})[a.type],exact:true}).tap();
+    else await page.keyboard.press(({potion:'h',descend:'Enter',ascend:'q',pickup:'e',mindVision:'m',wait:'.'})[a.type]);
     await expect(page.locator('.floor')).toContainText(`TURN ${game.state.turn}`);return result;
   }
   function firstStep(target){

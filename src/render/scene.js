@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import {drawCreature} from './creature-sprites.js';
 import {rememberedTile} from '../game/map-memory.js';
 import {key} from '../game/dungeon.js';
 const T=24;
@@ -34,12 +35,28 @@ export class DungeonScene extends Phaser.Scene {
     if(s.location?.kind==='crypt'){const u=s.upstairs; if(s.explored.has(key(u.x,u.y))){g.lineStyle(2,0x86d6c0,s.visible.has(key(u.x,u.y))?1:.3);g.strokeTriangle(u.x*T+6,u.y*T+17,u.x*T+18,u.y*T+17,u.x*T+12,u.y*T+5);}}
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
+    this.drawEnemyWarnings(s);
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.actor(e,e.kind);
     this.actor(s.player,'player');
     // Draw bars last so neighboring actors and scenery cannot cover them.
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);
+    for(const effect of s.enemyEffects??[])if(s.visible.has(key(effect.from.x,effect.from.y))&&s.visible.has(key(effect.to.x,effect.to.y))){
+      g.lineStyle(effect.kind==='tongue'?3:2,effect.kind==='tongue'?0xef9ab8:effect.kind==='spit'?0xe7c66e:0xeeb079,.9);g.lineBetween(effect.from.x*T+12,effect.from.y*T+14,effect.to.x*T+12,effect.to.y*T+14);
+      if(effect.kind==='spit'){g.fillStyle(0xf1d67b);g.fillCircle(effect.to.x*T+12,effect.to.y*T+14,3);}
+    }
     for(const e of this.targetHighlights??[]){g.lineStyle(2,0xf4d385,1);g.strokeRect(e.x*T+1,e.y*T+1,T-2,T-2);}
     this.cameras.main.centerOn(s.player.x*T+12,s.player.y*T+12);
+  }
+  drawEnemyWarnings(s){
+    const g=this.paint;
+    for(const e of s.enemies)if(e.hp>0&&e.intent&&s.visible.has(key(e.x,e.y))){
+      const color=e.intent.kind==='tongue'?0xef9ab8:e.intent.kind==='spit'?0xe7c66e:0xee9b60;
+      for(const tile of e.intent.tiles)if(s.visible.has(key(tile.x,tile.y))){
+        const x=tile.x*T,y=tile.y*T;g.fillStyle(color,.23);g.fillRect(x+1,y+1,22,22);g.lineStyle(1,color,.95);g.strokeRect(x+2,y+2,20,20);
+        if(e.intent.kind==='spit'){g.lineBetween(x+7,y+7,x+17,y+17);g.lineBetween(x+17,y+7,x+7,y+17);}else{g.lineBetween(x+7,y+15,x+12,y+9);g.lineBetween(x+12,y+9,x+17,y+15);}
+      }
+      g.fillStyle(color);g.fillTriangle(e.x*T+8,e.y*T-7,e.x*T+16,e.y*T-7,e.x*T+12,e.y*T-14);g.fillStyle(0x17242d);g.fillRect(e.x*T+11,e.y*T-12,2,3);
+    }
   }
   healthBar(enemy){
     const g=this.paint,x=enemy.x*T+2,y=Math.max(0,enemy.y*T-5);
@@ -77,6 +94,7 @@ export class DungeonScene extends Phaser.Scene {
     return this.textures.get(textureKey).getSourceImage().toDataURL();
   }
   actor(e,kind,g=this.paint){const x=e.x*T,y=e.y*T;g.fillStyle(0x000000,0.35);g.fillEllipse(x+12,y+21,19,6);
+    if(kind!=='player'&&drawCreature(g,x,y,kind))return;
     const colors={player:0x70c6c0,slime:0x8fbd67,skeleton:0xd6ccad,goblin:0xc67d57,boss:0xc56388,guardian:0xb76883,wolf:0xb8b7a6,boar:0x93775c,leech:0xa9b55c,rat:0xa2937a,beetle:0xa18b58,pondFrog:0x86bd72,frog:0x71ab6d,elite:0xc9a16c,goat:0xaea99b,ashling:0xd16a4f};g.fillStyle(colors[kind]);
     if(['wolf','boar','leech','rat','beetle','frog','pondFrog','elite','goat'].includes(kind)){g.fillRect(x+3,y+9,18,9);g.fillRect(x+3,y+17,4,5);g.fillRect(x+16,y+17,4,5);g.fillRect(x+15,y+5,7,7);g.fillStyle(0xe5db9f);g.fillRect(x+19,y+7,2,2);}else if(kind==='slime'){g.fillEllipse(x+12,y+15,19,14);}else{g.fillRect(x+6,y+9,13,11);g.fillRect(x+8,y+3,9,9);g.fillRect(x+6,y+19,4,4);g.fillRect(x+15,y+19,4,4);}
     g.fillStyle(0x15202b);g.fillRect(x+9,y+(kind==='slime'?13:6),2,2);g.fillRect(x+14,y+(kind==='slime'?13:6),2,2);

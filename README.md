@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.8.0 — Remembered wildlands** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.9.0 — Creature personalities** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -116,7 +116,7 @@ npm run test:browser
 CHROMIUM_PATH=/usr/bin/chromium npm run test:browser
 ```
 
-Validation: 85 simulation tests and 28 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
+Validation: 96 simulation tests and 30 Chromium browser tests. Coverage includes all generated walkable tiles/exits across seeded samples, spawn uniqueness, turn accounting, persistent maps and respawns, slow leveling, loot outcomes, all six encounters, quest completion, shop purchases/sales, inventory footprints/rotation/full-bag transactions, and phone gestures/layout. Browser fixtures use actual inputs against a deterministic simulation, without injecting character state. One browser run completes the frog quest, sells its reward and buys a tonic; another rearranges and drops/recovers inventory on a phone layout.
 
 Phone tests are Chromium touch emulation. Actual iPhone Safari remains a manual check; WebKit download was blocked by the environment. Balance is a first pass, not an exhaustive long-run playtest. Art is simple original procedural pixel-style drawing. There is no sound. Vite reports the expected large Phaser bundle warning.
 
@@ -187,3 +187,19 @@ Stones that survive land on the target tile (even if the creature dies); collect
 Brace has been replaced by passive shield blocks. Equip Weathered buckler in Gear → Off hand for 35% block chance per incoming attack. Reach and Throw now have direct, stable quick slots with their own icons and keyboard hints, so no Techniques menu is required. Target selection remains free and requires a deliberate target confirmation; a valid attack takes one turn.
 
 ![Phone weapon quick slots](docs/quick-slots.png)
+
+## Creature personalities (v0.9.0)
+
+Enemies now use original expressive 24px creature icons, rather than one shared animal silhouette. World sprites and inspection portraits use the same renderer. Rats have ears and curled tails, frogs have wide eyes and feet, beetles have split shells and antennae, rams have horns and armor, and the other creatures have distinct silhouettes and palettes. No external sprites, platform emoji fonts or downloaded assets are required.
+
+| Creature | Attack style | Counterplay |
+| --- | --- | --- |
+| Mire / Troublesome frog | Winds up **Tongue lash**, a clear cardinal line up to **2 tiles** | Pink warning tiles show the lane. Sidestep before its next enemy phase. |
+| Sap beetle | Marks a tile for **Sap spit**, range **3**, then fires next phase; bites when adjacent | Move off the amber cross. The projectile targets the marked tile, rather than tracking you. |
+| Ridge ram | **5 base defense**, adjacent headbutts, and a telegraphed straight charge up to **3 tiles** | Leave the orange lane; walls and creatures stop the charge. The ram cannot overlap the player or another creature. |
+
+Warnings resolve only after another valid player action. Idle time, inspection and rejected wall moves do not advance them. Killing a preparing enemy cancels its attack. Tongues and sap require a clear line; Mind Vision does not allow attacks through walls. Bucklers can block all three attack types. Damaging attacks still use ordinary attack/defense calculations, and prepared moves consume one enemy action rather than adding extra attacks.
+
+Click/tap an enemy to read its traits and current preparation. Warning colors are paired with different marks, inspection text and Chronicle messages. Pink tongue trails, amber sap shots and orange charge paths provide combat feedback; rendering has no effect on turn rules.
+
+![Original creature field guide](docs/creature-guide.png)

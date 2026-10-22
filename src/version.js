@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.8.0 · Remembered wildlands';
+export const RELEASE = 'v0.9.0 · Creature personalities';

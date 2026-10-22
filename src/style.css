@@ -46,3 +46,5 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 @media(max-width:700px),(pointer:coarse){#quick-slots{position:absolute;right:7px;bottom:calc(100% + 8px);padding:0;border:0}#quick-slots button{width:56px;height:54px;font-size:10px;background:#233c3bf5}#quick-slots svg{width:21px;height:21px}#quick-slots kbd{display:none}#event-feed{width:calc(100% - 148px)}#block-feedback{top:68px;font-size:11px}}
 @media(max-height:500px) and (pointer:coarse){#event-feed{width:calc(100% - 410px)}#quick-slots{right:7px;bottom:calc(100% + 8px)}#quick-slots button{height:44px;flex-direction:row;width:68px}}
 @media(prefers-reduced-motion:reduce){#character-shortcut.shield-block{animation:none}#block-feedback.shield-block{animation:block-label 1.4s step-end}}
+
+.creature-trait{font:11px/1.6 system-ui;color:#c0d8ca;margin:8px 0}.creature-warning{font:bold 11px/1.5 system-ui;color:#efc880;border-left:2px solid #d8aa6c;padding-left:7px}

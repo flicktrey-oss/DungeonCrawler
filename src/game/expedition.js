@@ -3,6 +3,7 @@ import { Game } from './game.js';
 import { Random } from './random.js';
 import { generateDungeon, walkable, key, WIDTH, HEIGHT } from './dungeon.js';
 import { generateWorldRegion, regionSeed, worldId, cryptId, CAMP, BIOMES, biomeAt } from './world.js';
+import { actCreature } from './enemy-actions.js';
 import { techniqueTarget } from './techniques.js';
 import { damage } from './combat.js';
 import { enemyTypes } from './combat.js';
@@ -20,6 +21,7 @@ export class Expedition extends Game {
     this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Terrain and explored maps persist. Enemies and local encounters refresh on return; finish quests before leaving.');
   }
+  actEnemy(enemy){actCreature(this,enemy);}
   makeEnemy(kind,p,danger,id){
     const base=enemyTypes[kind],extra=Math.max(0,danger-1);
     return {...base,...p,kind,id,hp:base.hp+extra*2,maxHp:base.hp+extra*2,attack:base.attack+Math.floor(extra/2),xp:({skeleton:3,goblin:3,leech:3,wolf:5,boar:5,guardian:10})[kind]??base.xp,actions:0};
@@ -35,7 +37,7 @@ export class Expedition extends Game {
     let spawn=null;
     for(let r=0;r<WIDTH+HEIGHT&&!spawn;r++)for(let y=0;y<HEIGHT&&!spawn;y++)for(let x=0;x<WIDTH;x++)if(Math.abs(x-preferred.x)+Math.abs(y-preferred.y)===r&&walkable(data.map,x,y)&&!occupied.has(key(x,y))){spawn={x,y};break;}
     if(!spawn)throw Error('No safe arrival tile');
-    Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.transition=true;this.refresh();
+    Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.transition=true;this.state.enemyEffects=[];this.refresh();
   }
   visitWorld(rx,ry,spawn=CAMP){
     const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home?this.regions.get(id):null;

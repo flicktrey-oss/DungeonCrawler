@@ -66,13 +66,17 @@ export class Game {
     while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=6;p.hp=Math.min(p.maxHp,p.hp+10);p.attack++;if(p.level%2===0)p.defense++;this.message(`Level ${p.level}! Your strength grows.`);}
     if(enemy.kind==='boss'){s.status='victory';this.message('The Ash Warden crumbles. Dawn returns to the vault.');}
   }
+  receiveEnemyAttack(e,verb='hits you'){
+    const s=this.state,p=s.player;
+    if(p.offhand?.blockChance&&this.rng.next()<p.offhand.blockChance){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand.name} stops ${e.name}'s attack.`);return;}
+    const hit=damage(e.attack,defense(p));p.hp=Math.max(0,p.hp-hit);this.message(`${e.name} ${verb} for ${hit}.`);
+    if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}
+  }
   actEnemy(e){
     const s=this.state,p=s.player;e.actions++;
     if(e.slow&&s.turn%2===0)return;
     const distance=Math.abs(e.x-p.x)+Math.abs(e.y-p.y);if(distance>e.range)return;
-    if(distance===1){
-      if(p.offhand?.blockChance&&this.rng.next()<p.offhand.blockChance){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand.name} stops ${e.name}'s attack.`);return;}
-      const hit=damage(e.attack,defense(p));p.hp=Math.max(0,p.hp-hit);this.message(`${e.name} hits you for ${hit}.`);if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return;}
+    if(distance===1){this.receiveEnemyAttack(e);return;}
     const occupied=new Set(s.enemies.filter(o=>o!==e&&o.hp>0).map(o=>key(o.x,o.y)));
     const step=pathStep(s.map,e,p,occupied);if(step){e.x=step.x;e.y=step.y;}
   }
