@@ -30,8 +30,8 @@ describe('carried equipment',()=>{
  });
 });
 describe('hunting and campfire cooking',()=>{
- it('rabbits and both frog types drop only raw meat or nothing at the 35% boundary',()=>{
-  for(const kind of ['rabbit','frog','pondFrog']){
+ it('both frog types drop only raw meat or nothing at the 35% boundary',()=>{
+  for(const kind of ['frog','pondFrog']){
    expect(ordinaryDrop({next:()=>.349999},9,kind)).toMatchObject({kind:'rawMeat',quantity:1});expect(ordinaryDrop({next:()=>.35},1,kind)).toBeNull();
    const rng=new Random(123);let meat=0;for(let n=0;n<10000;n++){const drop=ordinaryDrop(rng,1,kind);if(drop){expect(drop.kind).toBe('rawMeat');meat++;}}expect(meat/10000).toBeGreaterThan(.33);expect(meat/10000).toBeLessThan(.37);
   }
@@ -73,8 +73,13 @@ describe('Detect Creatures',()=>{
 });
 
 describe('rat trail food',()=>{
- it('drops rat meat only at 35%, regardless of biome difficulty',()=>{expect(ordinaryDrop({next:()=>.34999},9,'rat')).toMatchObject({kind:'rawRatMeat',quantity:1});expect(ordinaryDrop({next:()=>.35},1,'rat')).toBeNull();const rng=new Random(61);let count=0;for(let n=0;n<10000;n++){const item=ordinaryDrop(rng,1,'rat');if(item){expect(item.kind).toBe('rawRatMeat');count++;}}expect(count/10000).toBeGreaterThan(.33);expect(count/10000).toBeLessThan(.37);});
+ it('drops rat meat only at 50%, regardless of biome difficulty',()=>{expect(ordinaryDrop({next:()=>.49999},9,'rat')).toMatchObject({kind:'rawRatMeat',quantity:1});expect(ordinaryDrop({next:()=>.5},1,'rat')).toBeNull();const rng=new Random(61);let count=0;for(let n=0;n<10000;n++){const item=ordinaryDrop(rng,1,'rat');if(item){expect(item.kind).toBe('rawRatMeat');count++;}}expect(count/10000).toBeGreaterThan(.48);expect(count/10000).toBeLessThan(.52);});
  it('stacks rat food separately and cooks it for one turn without consuming regular meat',()=>{const g=game(),p=g.state.player;p.y=16;p.inventory=[];addItem(p,rawRatMeat(10));addItem(p,rawMeat(2));addItem(p,ratMeat(8));addItem(p,cookedMeat(3));expect(g.action({type:'cook',kind:'rawRatMeat'})).toBe(true);expect(p.inventory.filter(i=>i.kind==='ratMeat').map(i=>i.quantity)).toEqual([9]);expect(p.inventory.filter(i=>i.kind==='rawRatMeat').reduce((n,i)=>n+i.quantity,0)).toBe(9);expect(p.inventory.find(i=>i.kind==='rawMeat').quantity).toBe(2);expect(p.inventory.find(i=>i.kind==='cookedMeat').quantity).toBe(3);expect(g.state.turn).toBe(1);});
  it('heals five per rat meal and consumes just one piece, with no wasted full-health use',()=>{const g=game(),p=g.state.player;p.inventory=[ratMeat(2),rawRatMeat()];p.hp=20;expect(g.action({type:'use',index:0})).toBe(true);expect(p.hp).toBe(25);expect(p.inventory[0].quantity).toBe(1);expect(g.action({type:'use',index:1})).toBe(false);p.hp=p.maxHp;expect(g.action({type:'use',index:0})).toBe(false);expect(p.inventory[0].quantity).toBe(1);expect(g.state.turn).toBe(1);});
  it('keeps raw rat ingredients when a full bag has no room for the meal',()=>{const g=game(),p=g.state.player;p.y=16;p.inventory=[rawRatMeat(2),...Array.from({length:99},potion)];settleInventory(p.inventory);const before=structuredClone(p);expect(g.action({type:'cook',kind:'rawRatMeat'})).toBe(false);expect(p).toEqual(before);expect(g.state.turn).toBe(0);});
+});
+
+describe('more visible early food',()=>{
+ it('raises rabbit meat to 50% without awarding coins or equipment',()=>{expect(ordinaryDrop({next:()=>.499999},1,'rabbit')).toMatchObject({kind:'rawMeat',quantity:1});expect(ordinaryDrop({next:()=>.5},9,'rabbit')).toBeNull();const rng=new Random(456);let count=0;for(let n=0;n<10000;n++){const drop=ordinaryDrop(rng,1,'rabbit');if(drop){expect(drop.kind).toBe('rawMeat');count++;}}expect(count/10000).toBeGreaterThan(.48);expect(count/10000).toBeLessThan(.52);});
+ it('announces the exact food dropped and leaves it on the creature’s tile for pickup',()=>{for(const kind of ['rat','rabbit','frog']){const g=game();g.rng.next=()=>0;g.state.items=[];g.kill({kind,name:'Prey',xp:2,x:22,y:16});const item=g.state.items[0];expect(item).toMatchObject({kind:kind==='rat'?'rawRatMeat':'rawMeat',x:22,y:16});expect(g.state.log.at(-1)).toBe(item.name+' dropped. Collect it from the ground.');expect(g.state.player.inventory.some(i=>i.kind===item.kind)).toBe(false);}});
 });

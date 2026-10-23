@@ -101,7 +101,17 @@ export class DungeonScene extends Phaser.Scene {
     if(t==='C'){g.fillStyle(0xad8050,a);g.fillTriangle(x+1,y+22,x+11,y+2,x+21,y+22);g.fillStyle(0x3a3128,a);g.fillTriangle(x+7,y+22,x+11,y+9,x+16,y+22);g.fillStyle(0xffd180,a);g.fillRect(x+20,y+15,3,6);g.fillStyle(0xf18f53,a);g.fillRect(x+19,y+19,5,3);}
   }
   scenery(d,a){const g=this.paint,x=d.x*T,y=d.y*T;g.fillStyle(d.type==='flowers'?0xbea273:d.type==='reeds'?0x9ca569:d.type==='log'?0x796047:0xa3a699,a);if(d.type==='log'){g.fillRect(x+2,y+14,20,5);g.fillStyle(0xb89a69,a);g.fillRect(x+2,y+14,3,5);}else if(d.type==='grave'){g.fillRect(x+9,y+7,6,13);g.fillRect(x+5,y+11,14,3);}else{g.fillRect(x+5,y+11,3,3);g.fillRect(x+14,y+17,4,2);g.fillRect(x+11,y+5,2,4);}}
-  item(i){const g=this.paint,x=i.x*T,y=i.y*T;const colors={potion:0xf36a83,gold:0xf8cc68,weapon:0xd2e4e8,armor:0x829bb4,chest:0xb98043,amulet:0xb2e7cb,trophy:0xc7ba93,offhand:0xc5a678,stone:0xabb9b0};g.fillStyle(colors[i.kind]??0xb7c5dc);if(i.kind==='potion'){g.fillRect(x+9,y+9,7,10);g.fillStyle(0xe0e9d9);g.fillRect(x+11,y+5,3,5);}else if(i.kind==='weapon'){g.fillRect(x+11,y+4,3,15);g.fillRect(x+7,y+15,11,3);}else{g.fillRect(x+6,y+9,13,10);g.fillStyle(0xffe2a1);g.fillRect(x+11,y+11,3,5);}}
+  item(i){const g=this.paint,x=i.x*T,y=i.y*T;
+    if(['rawMeat','rawRatMeat','cookedMeat','ratMeat'].includes(i.kind)){
+      const raw=i.kind.startsWith('raw'),rat=['rawRatMeat','ratMeat'].includes(i.kind);
+      g.fillStyle(0x0d171b,.8);g.fillEllipse(x+12,y+20,21,7);
+      // Pale bone and a pink steak silhouette distinguish food from coffers.
+      g.fillStyle(0xf6e6bd);g.fillRect(x+3,y+14,13,3);g.fillRect(x+2,y+12,4,6);
+      g.fillStyle(raw?(rat?0xb86d83:0xe18c98):0xaf734d);g.fillEllipse(x+15,y+12,rat?12:16,14);
+      g.fillStyle(raw?0xf6bac1:0xe3af71);g.fillRect(x+12,y+8,4,3);
+      g.fillStyle(0xffefcf);g.fillRect(x+17,y+13,3,3);return;
+    }
+    const colors={potion:0xf36a83,gold:0xf8cc68,weapon:0xd2e4e8,armor:0x829bb4,chest:0xb98043,amulet:0xb2e7cb,trophy:0xc7ba93,offhand:0xc5a678,stone:0xabb9b0};g.fillStyle(colors[i.kind]??0xb7c5dc);if(i.kind==='potion'){g.fillRect(x+9,y+9,7,10);g.fillStyle(0xe0e9d9);g.fillRect(x+11,y+5,3,5);}else if(i.kind==='weapon'){g.fillRect(x+11,y+4,3,15);g.fillRect(x+7,y+15,11,3);}else{g.fillRect(x+6,y+9,13,10);g.fillStyle(0xffe2a1);g.fillRect(x+11,y+11,3,5);}}
   portrait(kind){
     const player=this.model?.state?.player??this.gameModel?.state?.player;
     const textureKey=`portrait-${kind}-${kind==='player'?JSON.stringify(['weapon','armor','offhand','amulet','boots','ring1','ring2'].map(slot=>player?.[slot]?.name)):''}`;

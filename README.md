@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.16.0 — The Road to Northwatch** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.16.1 — Better hunting** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -271,7 +271,7 @@ Travel stops for nearby threats, newly revealed enemies, attacks (including bloc
 ## Campfire provisions (v0.15.0)
 
 - Equipment keeps occupying the same satchel cells while worn. Green tiles with a check mark identify equipped items. Select one to unequip it, or use the Equipment tab.
-- Bramble rabbits inhabit forests. Rabbits, Mire frogs and Troublesome frogs drop one raw meat with a 35% chance; otherwise nothing. They no longer drop coins, trophies or random equipment. Quest rewards remain separate.
+- Bramble rabbits inhabit forests. Rabbits drop one raw meat with a 50% chance; Mire frogs and Troublesome frogs have a 35% chance; otherwise nothing. They no longer drop coins, trophies or random equipment. Quest rewards remain separate.
 - The **F campfire** is one tile south of the starting tent. Stand on it and use **E / Cook**, or click it on desktop. Cook one raw meat per turn. Raw and cooked meat each stack to nine per 1×1 cell. Cooking fails without consuming ingredients if the result cannot fit.
 - Select **Campfire meat 🍖** in the Satchel and use it to restore 10 HP (tonics restore 16). Eating uses one piece and one turn; full health does not waste food. Raw meat must be cooked first.
 - Base Mana regeneration is **0.3 per completed turn**, including waiting. Ability costs are deducted before that turn’s regeneration; for example a 25-Mana cast from 100 leaves 75.3 Mana.
@@ -279,7 +279,7 @@ Travel stops for nearby threats, newly revealed enemies, attacks (including bloc
 
 ## Rat trail food (v0.15.1)
 
-Brush rats now drop raw rat meat with a 35% chance, otherwise nothing: no coins, trophies or equipment. Choose **Cook rat meat** at the starting campfire, then eat **Rat meat** from the Satchel for 5 HP. Raw and cooked rat meat each stack to nine per 1×1 cell, separately from regular meat. Cooking and eating each cost one turn; full bags or full-health uses never waste supplies.
+Brush rats now drop raw rat meat with a 50% chance, otherwise nothing: no coins, trophies or equipment. Choose **Cook rat meat** at the starting campfire, then eat **Rat meat** from the Satchel for 5 HP. Raw and cooked rat meat each stack to nine per 1×1 cell, separately from regular meat. Cooking and eating each cost one turn; full bags or full-health uses never waste supplies.
 
 ## Main story: The Road to Northwatch (v0.16.0)
 
@@ -293,3 +293,7 @@ Prince Aldren’s convoy was ambushed on the southern road. He shelters southeas
 - **Chapter one complete.** Arrival together at the keep awards 30 gold and full recovery once. Aldren stays in the city; dismiss the chapter popup to keep exploring. Northwatch is a safe stone city with walls, gates, paved streets, enterable buildings and a keep. City shops, additional residents and later chapters are deferred.
 
 The escort is an optional story within the same permadeath expedition, rather than a separate difficulty mode. All companion rules run through the central turn manager; elapsed time never moves the prince or enemies.
+
+## Better hunting (v0.16.1)
+
+Rats and rabbits now drop meat 50% of the time; frogs remain at 35%. Successful meat drops are announced in the Chronicle and shown as a distinct steak-and-bone sprite on the ground. Drops still need collecting and cooking; food healing and stack sizes are unchanged.
