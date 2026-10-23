@@ -1,8 +1,9 @@
+import {journeyHints} from './game/journey.js';
 import { rememberedTile } from './game/map-memory.js';
 import { key } from './game/dungeon.js';
 
-const palette = {'X':'#dc9280','=':'#caa977',I:'#f3d59b',N:'#ecd78c',J:'#f0cc76',O:'#bf9e75',Z:'#77b8d1', B:'#d48c76',V:'#e0ddb0',W:'#bca273',S:'#b7a0e0',K:'#b9bd91',Y:'#5b4545', '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', F:'#f3a05a', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
-const labels = {'X':'×',I:'I',N:'B',J:'K',B:'!',V:'?',W:'W',S:'S',K:'K', F:'F', C: 'C', M: 'M', D: '>', '>': '>', '<': '<', R: 'R', A: '*' };
+const palette = {L:'#c4b5a1',U:'#d5b578','X':'#dc9280','=':'#caa977',I:'#f3d59b',N:'#ecd78c',J:'#f0cc76',O:'#bf9e75',Z:'#77b8d1', B:'#d48c76',V:'#e0ddb0',W:'#bca273',S:'#b7a0e0',K:'#b9bd91',Y:'#5b4545', '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', F:'#f3a05a', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
+const labels = {L:'T',U:'H','X':'×',I:'I',N:'B',J:'K',B:'!',V:'?',W:'W',S:'S',K:'K', F:'F', C: 'C', M: 'M', D: '>', '>': '>', '<': '<', R: 'R', A: '*' };
 // Detection exposes creature positions only; terrain stays governed by fog.
 export const detectedCreatures=state=>(state.detectCreaturesUntil>0&&state.turn<=state.detectCreaturesUntil)?state.enemies.filter(e=>e.hp>0):[];
 export function minimapCells(state) {
@@ -57,6 +58,7 @@ export function worldMapCells(game) {
     if(!cell){cell={rx:target.rx,ry:target.ry,visited:false,home:false,current:false,entranceKnown:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}
     cell[q.complete?'returnCount':'questCount']++;if(game.trackedQuest===q.id)cell.tracked=true;
   }
+  for(const hint of journeyHints(game)){let cell=cells.find(c=>c.rx===hint.rx&&c.ry===hint.ry);if(!cell){cell={rx:hint.rx,ry:hint.ry,visited:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}(cell.leads??=[]).push(hint);}
   return cells.sort((a,b)=>a.ry-b.ry||a.rx-b.rx);
 }
 export function worldMapLayout(cells, width = 160, height = 120) {
@@ -81,7 +83,8 @@ export function drawWorldMinimap(canvas, game) {
       ctx.fillStyle=cell.tracked?'#ffe6a0':'#edc76d';ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
       if(size>=12){ctx.font=`bold ${Math.max(8,Math.min(12,size*.48))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#141a20';ctx.fillText(cell.returnCount?'✓':'!',cx,cy);}
     }
+    if(cell.leads?.length){ctx.fillStyle='#93c7eb';ctx.font=`bold ${Math.max(7,Math.min(11,size*.5))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(cell.leads[0].symbol,x+size*.74,y+size*.7);}
     if (cell.current) { ctx.strokeStyle = '#4cf3dc'; ctx.lineWidth = Math.min(2, size / 5); ctx.strokeRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2)); }
   }
-  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks camp; purple marks discovered entrances. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} Unvisited quest regions show no terrain.`);
+  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks camp; purple marks discovered entrances. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} ${journeyHints(game).map(h=>`${h.label} lead in region ${h.rx}, ${h.ry}.`).join(' ')} Unvisited quest and lead regions show no terrain.`);
 }

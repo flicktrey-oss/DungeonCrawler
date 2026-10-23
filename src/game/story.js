@@ -1,3 +1,4 @@
+import {awardKeepsake,arrivalSummary} from './journey.js';
 import {key,walkable} from './dungeon.js';
 import {pathStep} from './ai.js';
 import {KINGDOM,isKingdom} from './city.js';
@@ -11,7 +12,7 @@ export function princeAction(g,a){
  if(!q.accepted)return false;
  if(a.type==='princeStay'&&c.hp>0&&c.mode==='follow'){c.mode='stay';g.message('Aldren will wait here until you return.');return true;}
  if(a.type==='princeFollow'&&c.hp>0&&c.mode==='stay'){c.mode='follow';g.message('Aldren follows you again.');return true;}
- if(a.type==='healPrince'&&c.hp<c.maxHp){const i=p.inventory.findIndex(i=>i.kind==='potion');if(i<0){g.message('A healing tonic is needed to help Aldren.');return false;}p.inventory.splice(i,1);c.hp=Math.min(c.maxHp,c.hp+16);if(c.mode==='downed')c.mode='stay';g.message('Your tonic restores 16 health to Aldren. Ask him to follow when ready.');return true;}
+ if(a.type==='healPrince'&&c.hp<c.maxHp){const i=p.inventory.findIndex(i=>i.kind==='potion');if(i<0){g.message('A healing tonic is needed to help Aldren.');return false;}p.inventory.splice(i,1);q.aidCount=(q.aidCount??0)+1;c.hp=Math.min(c.maxHp,c.hp+16);if(c.mode==='downed')c.mode='stay';g.message('Your tonic restores 16 health to Aldren. Ask him to follow when ready.');return true;}
  return false;
 }
 export function escortCanLeave(g){const c=princeHere(g);if(c&&g.story.accepted&&!g.story.complete&&c.mode==='follow'&&distance(c,g.state.player)>2){g.message('Aldren is too far behind. Wait for him, or return and ask him to stay.');return false;}return true;}
@@ -40,7 +41,8 @@ export function finishStory(g){
  const q=g.story,c=princeHere(g),p=g.state.player;
  if(!q?.accepted||q.complete||!c||c.hp<=0||!isKingdom(g.location.rx,g.location.ry)||g.location.kind!=='world')return;
  if(distance(p,KINGDOM.keep)>0||distance(c,p)>2)return;
- q.complete=true;q.claimed=true;c.mode='arrived';p.gold+=30;p.hp=p.maxHp;c.hp=c.maxHp;
+ q.complete=true;q.claimed=true;c.mode='arrived';p.gold+=30;p.hp=p.maxHp;p.mana=p.maxMana;c.hp=c.maxHp;
+ q.homecoming=arrivalSummary(g);awardKeepsake(g);
  g.message('Chapter one complete: Aldren reaches Northwatch. The court grants 30 gold and sanctuary. Your expedition continues.');
 }
 export function princeProgress(g){

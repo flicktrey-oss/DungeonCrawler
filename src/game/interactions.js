@@ -10,7 +10,8 @@ export function availableInteractions(g){
  if(g.atCamp())add('storage','storage','Camp chest','Lantern Camp storage');
  if(g.atMerchant())add('merchant','merchant','Trade','Mara the Wayfarer');
  for(const e of events){
-  if(['villager','shrine','woodland'].includes(e.type))add(e.id,'encounter','Interact',e.quest?.giver??e.name??'Wayfarer shrine',e);
+  if(['guide','steward','journey'].includes(e.type))add(e.id,'journey',e.type==='journey'?'Interact':'Speak',e.name,e);
+  else if(['villager','shrine','woodland'].includes(e.type))add(e.id,'encounter','Interact',e.quest?.giver??e.name??'Wayfarer shrine',e);
   else if(e.type==='gravekeeper')add(e.id,'grave','Trade bones',e.name,e);
   else if(e.type==='citizen')add(e.id,'town','Visit',e.name,e);
  }

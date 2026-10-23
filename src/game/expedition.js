@@ -1,3 +1,4 @@
+import {createJourney,attachJourney,journeyAction} from './journey.js';
 import {attachBridge,bridgeAction,collectMedicine,finishBridgeFight} from './bridge.js';
 import {denEnemy,minibossReward} from './minibosses.js';
 import {GRAVEKEEPER,tradeBones,spendStack} from './gravekeeper.js';
@@ -19,10 +20,10 @@ import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, ratMeat, slotsFor, recalcula
 import { ordinaryDrop, modifyItem, cryptRelic } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
-const fields=['bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
+const fields=['routeLandmark','bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
-    super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
+    super(seed);this.journey=createJourney();this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
     Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);assignQuick(this,0,this.state.player.inventory.findIndex(i=>i.kind==='stone'));
     Object.assign(this.state,{log:[],timeline:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
@@ -30,6 +31,7 @@ export class Expedition extends Game {
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
     this.message('Three throwing stones are in your satchel. Use quick slot 1 to throw, or reassign it from your satchel. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Terrain and explored maps persist. Ordinary enemies return. Accepted quests and their progress stay with you for this run.');
+    this.message('Scout Fen waits northeast of the tent (25, 12). Ask him to mark Willow Crossing and explain the northern road.');
   }
   refresh(){super.refresh();this.state.companion=princeHere(this);recordDiscovery(this);}
   princeHere(){return princeHere(this);}
@@ -70,6 +72,7 @@ export class Expedition extends Game {
       if(!restoreQuestRegion(this,data,previous,rx,ry))addQuestContent(this,data,rx,ry);
       addWoodland(this,data,rx,ry);
       attachBridge(this,data,rx,ry);
+      attachJourney(this,data,rx,ry);
       if(home){data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
@@ -96,7 +99,7 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['bridge','villager','citizen','innkeeper','gravekeeper'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
+  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['bridge','villager','citizen','innkeeper','gravekeeper','guide','steward'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
   activeEncounter(){const events=this.nearbyEncounters();return events.includes(this.interactionTarget)?this.interactionTarget:events[0];}
 
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
@@ -104,6 +107,7 @@ export class Expedition extends Game {
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='journey')return journeyAction(this,a);
     if(a.type==='bridge')return bridgeAction(this,a);
     if(a.type==='tradeBones')return tradeBones(this);
     if(['innRest','acceptBounty','claimBounty'].includes(a.type))return townAction(this,a);
@@ -214,7 +218,7 @@ export class Expedition extends Game {
       const moved=super.resolvePlayer(a);
       if(moved){
         if(this.atMerchant())this.message('Mara buys trophies and sells supplies. Press E or Trade.');
-        const event=this.activeEncounter();if(event)this.message(`${event.quest?(['bridge','villager'].includes(event.type)?event.quest.giver:'Broken waystone'):(event.name??ENCOUNTERS[event.type]?.name)}: ${event.quest?event.quest.title:(event.description??ENCOUNTERS[event.type]?.description)}${['bridge','villager','shrine','woodland'].includes(event.type)?' Press E or Interact.':''}`);
+        const event=this.activeEncounter();if(event)this.message(`${event.quest?(['bridge','villager'].includes(event.type)?event.quest.giver:'Broken waystone'):(event.name??ENCOUNTERS[event.type]?.name)}: ${event.quest?event.quest.title:(event.description??ENCOUNTERS[event.type]?.description)}${['guide','steward','journey','bridge','villager','shrine','woodland'].includes(event.type)?' Press E or Interact.':''}`);
         if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The map is remembered; enemies return.');
         if(loc.kind==='world'&&(p.x===0||p.x===39||p.y===0||p.y===29)){
           const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0),s.seed)];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended} — ${threatLabel(next.recommended,p.level)}. You can turn back.`);

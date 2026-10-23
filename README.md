@@ -360,3 +360,15 @@ The open bridge provides a shorter physical route for both you and Aldren. Payme
 ## v0.22.0 — Choose your action
 
 When several interactions are available at your tile, the action dock shows **Next action** and a counter such as **1/3**. Tap it, or press **F**, to cycle between speaking, trading, storage, cooking, and each individual item on the ground. The main action button shows the selected person/item; tap it or press **E** to perform that action. Cycling is free and never advances enemies. Moving resets the selection. Clicking a specific person or item still targets that person/item directly.
+
+## v0.23.0 — The northern road
+
+- **A lead from camp:** Scout Fen stands northeast of the tent at local tile (25, 12). Speak to him and choose **Mark Willow Crossing**. For one turn he marks the bridge’s region with **B** and the Fallen Watchtower with **◇** on the world map. These clues reveal no terrain and do not count as visits. The Journal remembers them.
+- **Three road landmarks:** the seeded road toward Northwatch now has a Fallen Watchtower, Reedstone Causeway, and Last Lantern Shelter in three distinct regions. Their terrain persists and the crossings remain connected to all four exits. Each offers one optional choice per run, with no deadline.
+- **Watchtower:** scout the road to mark all three landmarks, or take its last Ember tonic.
+- **Causeway:** help a nearby, living, wounded Aldren recover 8 health, or recover a purse worth 4 gold.
+- **Shelter:** restore up to 8 health to yourself and nearby Aldren, or take Honeyed Rations for later. A rest at full health is free and does not spend the landmark’s choice.
+- **A homecoming:** reach the northern keep with Aldren to receive 30 gold, full health/Mana recovery, and **Aldren’s Wayfarer Brooch**. The amulet grants +10 maximum Mana and +1 protection against special attacks. It stays in your satchel until you choose to equip it. Steward Elara holds it inside the keep if it will not fit; claiming it later takes one turn and cannot duplicate it.
+- **Your journey acknowledged:** the welcome reflects how you resolved Willow Crossing, your landmark choices, and tonic aid given to Aldren. Blue-and-gold keep banners and Elara’s dialogue remain after arrival. You can continue exploring.
+
+These additions preserve the existing open world, optional escort, alternative routes, permadeath, and strictly turn-based actions. A new run resets the road choices and rewards.
