@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.17.0 — Roads and townsfolk** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.18.0 — Bones and keys** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -29,6 +29,7 @@ Open Vite’s printed address. Existing checkouts can skip cloning. In the restr
 | Enter / `>` | Enter ↓ | Enter a discovered crypt / descend on stairs |
 | Q / `<` | Leave ↑ | Retreat while on an upward stair |
 | H | Potion | Drink a tonic for up to 16 health |
+| 1–3 | Assigned item slots | Use items, equip gear, or target attacks with assigned ammunition/spears |
 | M | Vision · 25 | Reveal through walls for three turns, costing 25 Mana |
 | G | Map → Local → Detect Creatures | Level 3: mark creatures for two turns, costing 25 Mana |
 | Period | Wait | Spend one turn |
@@ -179,7 +180,7 @@ Each new run starts with three throwing stones in addition to two tonics. Main-h
 | Weathered buckler | Off-hand, **35% chance to block each incoming attack completely**, without an action; 3×3 cells |
 | Throwing stones | **Throw** within a four-tile circular range for 2 damage before defense, minimum 1; consumes one stone with 50% chance of landing intact |
 
-Use the **Reach** and **Throw** quick slots beside the action dock; on desktop **R** selects Reach and **T** selects Throw. The Throw slot shows your carried stone count. Reach is disabled until a spear is equipped, and Throw is disabled when no stones remain. Main-hand and off-hand equipment can be used together. Higher-tier Iron-tipped spears also offer Reach.
+Assign a spear or ammunition to item slots **1–3**. An equipped spear opens Reach targeting; ammunition opens Throw targeting. Slot 1 starts with throwing stones and shows the carried quantity. The fixed Reach/Throw buttons and R/T shortcuts have been removed. Main-hand and off-hand equipment can be used together. Higher-tier Iron-tipped spears also offer Reach.
 
 Selecting Reach/Throw highlights legal enemies. Click/tap a highlighted creature or select its named target button. A valid attack spends exactly one turn; invalid targets, opening the chooser, Cancel and Escape are free. Movement is blocked during targeting. Walls, trees, rocks, NPCs and intervening living enemies block the shot; diagonal throws cannot cut solid corners. Mind Vision does not let weapons strike through walls. Targeting closes after a successful attack.
 
@@ -191,7 +192,7 @@ Stones that survive land on the target tile (even if the creature dies); collect
 
 ## Passive buckler and quick slots (v0.7.1)
 
-Brace has been replaced by passive shield blocks. Equip Weathered buckler in Gear → Off hand for 35% block chance per incoming attack. Reach and Throw now have direct, stable quick slots with their own icons and keyboard hints, so no Techniques menu is required. Target selection remains free and requires a deliberate target confirmation; a valid attack takes one turn.
+Brace has been replaced by passive shield blocks. Equip Weathered buckler in Gear → Off hand for 35% block chance per incoming attack. Reach and Throw are now accessed through assigned item slots; there are no fixed technique buttons. Target selection remains free and requires a deliberate target confirmation; a valid attack takes one turn.
 
 ![Phone weapon quick slots](docs/quick-slots.png)
 
@@ -300,7 +301,7 @@ Rats and rabbits now drop meat 50% of the time; frogs remain at 35%. Successful 
 
 ## Roads and townsfolk (v0.17.0)
 
-- **Any-item quick slots:** select any satchel item and choose Assign to quick slot 1, 2 or 3. Assignment and clearing are free. The three emoji buttons beside Reach/Throw use keyboard shortcuts **1–3**. Consumables are used, ammunition opens targeting, equipment equips/unequips, and raw materials/trophies open their description. Identical replenished supplies reconnect to their slot. Missing supplies disable it. Worn gear is green.
+- **Any-item quick slots:** select any satchel item and choose Assign to quick slot 1, 2 or 3. Assignment and clearing are free. The three emoji buttons use keyboard shortcuts **1–3**. Consumables are used, ammunition opens targeting, equipment equips/unequips (equipped spears open Reach targeting), and raw materials/trophies open their description. Identical replenished supplies reconnect to their slot. Missing supplies disable it. Worn gear is green.
 - **Cook All:** the campfire processes both meat types, one turn per piece, stopping when output cannot fit. No ingredient is lost on failure.
 - **Equipment comparisons:** satchel selections and equipment listings preview attack, effective/raw defense, block chances, reach, Mana, stealth and special protection. Replacement and new ability descriptions appear together. Ring previews respect the selected slot.
 - **Animal tracks:** discover fixed footprint trails near hunting grounds and dens. They suggest a place to investigate, not live creature positions; old tracks persist with terrain.
@@ -313,3 +314,11 @@ Rats and rabbits now drop meat 50% of the time; frogs remain at 35%. Successful 
 - **Distinct people:** named people have original adventurer-like bodies, varied hair, skin, clothing and hats. Iona and wardens carry protective gear; Nessa carries herbs; Mara has merchant clothing and a satchel. Inspection portraits match each person.
 
 Shove and extra prince dialogue are intentionally excluded. All of these features remain within one permadeath run; no save system, crafting tree or persistent power progression is introduced.
+
+## Bones and keys (v0.18.0)
+
+The action dock now has only the three configurable item slots. Slot 1 initially contains throwing stones. Pin a spear from the satchel; press its slot to equip it, then press again to select a Reach target. Select targets deliberately; opening/canceling targeting is free. Other gear retains its equip/unequip behavior.
+
+**Orren the Grave Keeper** stands southwest of the tent at (16, 18), next to bones and a gravestone. Walk beside him and use **E / Trade bones**, or click him on desktop. Skeletons drop one **Old bones** stack item with a 50% chance; otherwise their ordinary loot roll applies. Bones stack to nine per cell.
+
+Trade **five bones for one skeleton key**, costing one turn. The trade is repeatable and checks output space before consuming anything. Keys stack to nine. A new **Locked reliquary** on each crypt depth two contains a valuable equipment reward. Collect/open it using a key; one key and one turn are consumed only after the treasure fits. Locked coffers remain in place on insufficient keys or inventory space, and their reward does not reroll after a failed attempt.

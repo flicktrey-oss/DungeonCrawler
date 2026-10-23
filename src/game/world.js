@@ -76,7 +76,7 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   const seen=new Set([key(CAMP.x,CAMP.y)]),queue=[CAMP];
   for(let i=0;i<queue.length;i++)for(const[dx,dy]of directions){const x=queue[i].x+dx,y=queue[i].y+dy,k=key(x,y);if(walkable(map,x,y)&&!seen.has(k)){seen.add(k);queue.push({x,y});}}
   for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++)if(walkable(map,x,y)&&!seen.has(key(x,y)))map[y][x]=blocker;
-  const occupied=new Set([key(20,15),...(home?['24,17']:[]),...encounters.map(e=>key(e.x,e.y))]),available=[];
+  const occupied=new Set([key(20,15),...(home?['24,17','16,18','15,18','15,17']:[]),...encounters.map(e=>key(e.x,e.y))]),available=[];
   for(let y=5;y<25;y++)for(let x=5;x<35;x++)if(walkable(map,x,y)&&!occupied.has(key(x,y))&&Math.abs(x-20)+Math.abs(y-15)>5)available.push({x,y});
   const spot=(near=null)=>{let choices=available.map((p,i)=>({p,i}));if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
   const spawns=home?[]:Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[biome].enemies)}));
@@ -87,6 +87,7 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   }
   const scenery=[];
   for(let i=0;i<18;i++){const p=spot();scenery.push({...p,type:rng.pick(biome==='forest'?['log','flowers','grave']:biome==='marsh'?['bones','reeds','grave']:['bones','grave','log'])});}
+  if(home){scenery.push({x:15,y:18,type:'bones'},{x:15,y:17,type:'grave'});}
   if(!home){const landmark=encounters.find(e=>e.type==='den')??spawns.find(e=>e.kind==='rabbit'||e.kind==='rat');if(landmark)for(let n=1;n<=4;n++){const x=landmark.x+(landmark.x<20?n:-n),y=landmark.y;if(walkable(map,x,y)&&!scenery.some(d=>d.x===x&&d.y===y))scenery.push({x,y,type:'tracks'});}}
   const baseMap=map.map(row=>row.map(t=>['B','V','W','S','K'].includes(t)?',':t));
   return {map,baseMap,biome,danger,recommended:BIOMES[biome].recommended,encounters,scenery,entrance:encounters.find(e=>e.type==='crypt')??null,landmark:null,spawns,lootSpots:[],home,rx,ry,visit};

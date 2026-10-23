@@ -68,3 +68,5 @@ Use new consumables from the satchel. Rations heal over four turns, interrupted 
 Throwing uses the existing T quick slot. Choose ammunition in the targeting selector, or choose a specific stack in the satchel. Thunderstones interrupt one action; knives deal more damage than stones. Selection/cancellation stays free. Every successful use/equip/unequip/throw takes one turn.
 
 Base Mana regeneration is 0.3 each completed turn; Lantern Relic and Amber Moth add 0.2 each. Meat drops are separate from the weighted item table: rabbits have a 50% raw-meat chance; both frog types retain 35%; rats have a 50% raw-rat-meat chance. These creatures have no other ordinary drops. Regular meat cooks at the starting campfire into 10-HP meals; rat meat heals 5 HP. Each type stacks separately to nine per cell.
+
+Skeletons first roll a 50% bone drop; otherwise they use the ordinary loot table. Bones and skeleton keys stack to nine per cell. Orren trades five bones for one key at camp. Crypt depth two has a locked equipment reliquary; opening consumes one key only once the reward can fit.

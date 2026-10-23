@@ -1,4 +1,5 @@
-import {recordDiscovery} from './quality.js';
+import {GRAVEKEEPER,tradeBones,spendStack} from './gravekeeper.js';
+import {recordDiscovery,assignQuick} from './quality.js';
 import {townAction,townBounties,placeCitizens} from './town.js';
 import {createStory,princeHere,nearPrince,princeAction,escortCanLeave,carryPrince,actPrince,princeEnemyTarget,finishStory} from './story.js';
 import {isKingdom} from './city.js';
@@ -20,12 +21,12 @@ const fields=['baseMap','encounterSeen','map','enemies','items','explored','star
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
-    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
+    Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);assignQuick(this,0,this.state.player.inventory.findIndex(i=>i.kind==='stone'));
     Object.assign(this.state,{log:[],timeline:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
     this.message('Trailwarden Iona stands west of the campfire. Speak to her for an optional expedition goal.');
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
-    this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
+    this.message('Three throwing stones are in your satchel. Use quick slot 1 to throw, or reassign it from your satchel. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Terrain and explored maps persist. Ordinary enemies return. Accepted quests and their progress stay with you for this run.');
   }
   refresh(){super.refresh();this.state.companion=princeHere(this);recordDiscovery(this);}
@@ -64,6 +65,7 @@ export class Expedition extends Game {
       if(data.quest)for(const e of data.enemies)if(e.questId)e.questId=data.quest.id;
       if(!restoreQuestRegion(this,data,previous,rx,ry))addQuestContent(this,data,rx,ry);
       addWoodland(this,data,rx,ry);
+      if(home){data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
     placeCitizens(this,data);
@@ -78,7 +80,7 @@ export class Expedition extends Game {
     const spot=()=>free.splice(rng.int(0,free.length-1),1)[0];
     for(let i=0;i<5+depth;i++)data.enemies.push(this.makeEnemy(rng.pick(['skeleton','goblin']),spot(),danger,i));
     if(depth===2)data.enemies.push(this.makeEnemy('guardian',{...d.stairs},danger,99));
-    for(const item of [potion(),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger,'crypt')}])data.items.push({...item,...spot()});
+    for(const item of [potion(),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger,'crypt')},...(depth===2?[{kind:'chest',name:'Locked reliquary',locked:true,reward:treasure(rng,danger,'boss')}]:[])])data.items.push({...item,...spot()});
     this.activate({id,kind:'crypt',rx,ry,depth},data,data[arrival]);
     this.message(`Crypt depth ${depth}/2 · recommended level ${data.recommended}. The layout and explored map persist; enemies return. Q on an upward stair retreats.`);
   }
@@ -86,12 +88,13 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='citizen'||e.type==='innkeeper'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
+  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='citizen'||e.type==='innkeeper'||e.type==='gravekeeper'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='tradeBones')return tradeBones(this);
     if(['innRest','acceptBounty','claimBounty'].includes(a.type))return townAction(this,a);
     if(['acceptEscort','princeStay','princeFollow','healPrince'].includes(a.type))return princeAction(this,a);
     if(['descend','ascend'].includes(a.type)&&!escortCanLeave(this))return false;
@@ -133,10 +136,14 @@ export class Expedition extends Game {
     if(a.type==='pickup'){
       const index=s.items.findIndex(i=>i.x===p.x&&i.y===p.y);if(index<0){this.message('Nothing here to collect.');return false;}
       const ground=s.items[index];
+      if(ground.locked&&!p.inventory.some(i=>i.kind==='skeletonKey'&&i.quantity>0)){this.message('The reliquary needs a skeleton key. Orren at camp trades keys for bones.');return false;}
       if(ground.kind==='questToken'){const q=this.quests.get(ground.questKey);if(!q?.accepted||q.claimed||q.complete){this.message('Find its owner and accept their quest first.');return false;}if(s.enemies.some(e=>e.hp>0&&e.questKey===q.id)){this.message('Defeat the keepsake’s guards first.');return false;}q.complete=true;s.items.splice(index,1);this.message('Recovered the keepsake. It is recorded in your Journal; return whenever you are ready.');return true;}
       const item=ground.kind==='chest'?(ground.reward??=treasure(this.rng,s.danger,ground.type??'cache')):ground;
       if(item.kind==='gold')p.gold+=item.amount;
+      else if(ground.locked){const trial={inventory:p.inventory.map(i=>({...i}))};spendStack(trial,'skeletonKey',1);if(!addItem(trial,item)){this.message('Make room for the treasure first. Your key is safe.');return false;}spendStack(p,'skeletonKey',1);addItem(p,item);}
       else if(!addItem(p,item)){this.message('Satchel full or no fitting space. The item stays here.');return false;}
+      if(ground.locked&&item.kind==='gold')spendStack(p,'skeletonKey',1);
+      if(ground.locked)this.message('A skeleton key opens the reliquary and crumbles.');
       s.items.splice(index,1);const event=s.encounters?.find(e=>e.id===ground.eventId);if(event)event.used=true;
       this.message(item.kind==='gold'?`Collected ${item.amount} gold.`:`Collected ${item.name}.`);return true;
     }

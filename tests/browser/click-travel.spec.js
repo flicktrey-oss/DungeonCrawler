@@ -27,7 +27,7 @@ test('clicking the trailwarden approaches and opens her quest; shift-click inspe
 test('clicking a dropped item walks to it and collects it, including an item on the camp chest',async({page})=>{
  await begin(page);await page.keyboard.press('i');await page.getByRole('button',{name:'Select Throwing stones, 1 by 1',exact:true}).click();await page.getByRole('button',{name:'Drop item',exact:true}).click();await page.getByRole('button',{name:'Return',exact:true}).click();
  for(let i=0;i<3;i++)await page.keyboard.press('a');await turn(page,4);await tile(page,3,0);await page.clock.runFor(450);await turn(page,8);
- await expect(page.locator('#stone-count')).toHaveText('3');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.locator('#latest-event')).toContainText('Collected Throwing stones');
+ await expect(page.locator('#custom-slot-0 .action-count')).toHaveText('3');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.locator('#latest-event')).toContainText('Collected Throwing stones');
  await page.clock.runFor(1000);await turn(page,8);
 });
 test('escape, keyboard movement, menus and focus loss cancel pending travel',async({page})=>{

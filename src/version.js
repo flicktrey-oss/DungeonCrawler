@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.17.0 · Roads and townsfolk';
+export const RELEASE = 'v0.18.0 · Bones and keys';

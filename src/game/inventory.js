@@ -24,7 +24,7 @@ export function settleInventory(items) {
 }
 export function looseItem(item) { const copy={...item}; delete copy.x;delete copy.y;delete copy.bagX;delete copy.bagY;return copy; }
 export function addItem(player,item) {
-  if(['stone','knife','thunder','rawMeat','cookedMeat','rawRatMeat','ratMeat'].includes(item.kind)){
+  if(['stone','knife','thunder','rawMeat','cookedMeat','rawRatMeat','ratMeat','bones','skeletonKey'].includes(item.kind)){
     if(!Number.isInteger(item.quantity)||item.quantity<=0)return false;
     const items=player.inventory.map(i=>({...i}));let remaining=item.quantity;
     for(const stack of items)if(stack.kind===item.kind&&stack.quantity<9&&stack.name===item.name){const amount=Math.min(9-stack.quantity,remaining);stack.quantity+=amount;remaining-=amount;if(!remaining)break;}

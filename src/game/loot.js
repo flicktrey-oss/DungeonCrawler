@@ -41,6 +41,7 @@ export function itemReward(rng,danger,source='ordinary'){
  return modifyItem({...entry.create(),id:entry.id},rng,source);
 }
 export function ordinaryDrop(rng,danger,kind,elite=false){
+ if(kind==='skeleton'&&rng.next()<.5)return I.bones();
  if(kind==='rat')return rng.next()<.5?I.rawRatMeat():null;
  if(kind==='rabbit')return rng.next()<.5?I.rawMeat():null;
  if(['frog','pondFrog','toad'].includes(kind))return rng.next()<.35?I.rawMeat():null;

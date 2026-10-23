@@ -23,7 +23,7 @@ export const trailSpear=()=>({kind:'weapon',name:'Trail spear',weaponType:'spear
 export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,blockChance:.35,size:[3,3],sellValue:5,description:'Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells.'});
 export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 2 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
 export const stoneCount=p=>p.inventory.filter(i=>i.kind==='stone').reduce((n,i)=>n+i.quantity,0);
-export const salePrice=item=>['stone','knife','thunder','rawMeat','cookedMeat','rawRatMeat','ratMeat'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:item.sellValue??1):item.sellValue??(item.kind==='potion'?3:1);
+export const salePrice=item=>['stone','knife','thunder','rawMeat','cookedMeat','rawRatMeat','ratMeat','bones','skeletonKey'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:item.sellValue??1):item.sellValue??(item.kind==='potion'?3:1);
 
 export const EQUIPMENT_SLOTS=['weapon','offhand','armor','boots','amulet','ring1','ring2'];
 export const equipped=p=>EQUIPMENT_SLOTS.map(slot=>p[slot]).filter(Boolean);
@@ -34,6 +34,8 @@ export function recalculateGear(p){p.maxMana=100+gearBonus(p,'maxManaBonus');p.m
 export const healAmount=(p,base)=>Math.ceil(base*(1+gearBonus(p,'healBonus')));
 export const recovery=p=>.3+gearBonus(p,'manaBonus');
 export const equippedSlot=(p,item)=>item?EQUIPMENT_SLOTS.find(slot=>p[slot]===item):undefined;
+export const bones=(quantity=1)=>({kind:'bones',name:'Old bones',quantity,size:[1,1],sellValue:1,description:'Orren at Lantern Camp trades five bones for one skeleton key. Stacks of nine.'});
+export const skeletonKey=(quantity=1)=>({kind:'skeletonKey',name:'Skeleton key',quantity,size:[1,1],sellValue:3,description:'Opens one locked reliquary on crypt depth two. Consumed only after treasure can be collected. Stacks of nine.'});
 export const rawMeat=(quantity=1)=>({kind:'rawMeat',name:'Raw meat',quantity,size:[1,1],sellValue:1,description:'Cook at the Lantern Camp fire. Cannot be eaten raw. Stacks of 9.'});
 export const rawRatMeat=(quantity=1)=>({kind:'rawRatMeat',name:'Raw rat meat',quantity,size:[1,1],sellValue:1,description:'Cook at the Lantern Camp fire into Rat meat. Stacks of 9.'});
 export const ratMeat=(quantity=1)=>({kind:'ratMeat',name:'Rat meat',quantity,size:[1,1],sellValue:1,description:'Restores 5 health. Eating costs one turn. Stacks of 9.'});
