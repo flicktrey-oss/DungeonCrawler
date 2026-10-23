@@ -1,3 +1,4 @@
+import {attachBridge,bridgeAction,collectMedicine,finishBridgeFight} from './bridge.js';
 import {denEnemy,minibossReward} from './minibosses.js';
 import {GRAVEKEEPER,tradeBones,spendStack} from './gravekeeper.js';
 import {recordDiscovery,assignQuick,creatureIndexKey} from './quality.js';
@@ -18,7 +19,7 @@ import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, ratMeat, slotsFor, recalcula
 import { ordinaryDrop, modifyItem, cryptRelic } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
-const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
+const fields=['bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
@@ -68,6 +69,7 @@ export class Expedition extends Game {
       if(data.quest)for(const e of data.enemies)if(e.questId)e.questId=data.quest.id;
       if(!restoreQuestRegion(this,data,previous,rx,ry))addQuestContent(this,data,rx,ry);
       addWoodland(this,data,rx,ry);
+      attachBridge(this,data,rx,ry);
       if(home){data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
@@ -94,12 +96,13 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='citizen'||e.type==='innkeeper'||e.type==='gravekeeper'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
+  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='bridge'||e.type==='villager'||e.type==='citizen'||e.type==='innkeeper'||e.type==='gravekeeper'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='bridge')return bridgeAction(this,a);
     if(a.type==='tradeBones')return tradeBones(this);
     if(['innRest','acceptBounty','claimBounty'].includes(a.type))return townAction(this,a);
     if(['acceptEscort','princeStay','princeFollow','healPrince'].includes(a.type))return princeAction(this,a);
@@ -142,6 +145,7 @@ export class Expedition extends Game {
     if(a.type==='pickup'){
       const index=s.items.findIndex(i=>i.x===p.x&&i.y===p.y);if(index<0){this.message('Nothing here to collect.');return false;}
       const ground=s.items[index];
+      if(ground.kind==='bridgeMedicine')return collectMedicine(this,ground);
       if(ground.locked&&!p.inventory.some(i=>i.kind==='skeletonKey'&&i.quantity>0)){this.message('The reliquary needs a skeleton key. Orren at camp trades keys for bones.');return false;}
       if(ground.kind==='questToken'){const q=this.quests.get(ground.questKey);if(!q?.accepted||q.claimed||q.complete){this.message('Find its owner and accept their quest first.');return false;}if(s.enemies.some(e=>e.hp>0&&e.questKey===q.id)){this.message('Defeat the keepsake’s guards first.');return false;}q.complete=true;s.items.splice(index,1);this.message('Recovered the keepsake. It is recorded in your Journal; return whenever you are ready.');return true;}
       const item=ground.kind==='chest'?(ground.reward??=treasure(this.rng,s.danger,ground.type??'cache')):ground;
@@ -203,11 +207,12 @@ export class Expedition extends Game {
     if(a.type==='move'&&Number.isInteger(a.dx)&&Number.isInteger(a.dy)&&Math.abs(a.dx)+Math.abs(a.dy)===1){
       const x=p.x+a.dx,y=p.y+a.dy;
       if(loc.kind==='world'&&(x<0||x>=WIDTH||y<0||y>=HEIGHT)){if(!escortCanLeave(this))return false;this.visitWorld(loc.rx+a.dx,loc.ry+a.dy,{x:(x+WIDTH)%WIDTH,y:(y+HEIGHT)%HEIGHT});return true;}
+      if(s.map[y]?.[x]==='X'){this.message('The bridge is barred. Speak to Kestrel nearby, or follow the longer dry path around.');return false;}
       const c=princeHere(this);if(c&&c.x===x&&c.y===y){Object.assign(c,{x:p.x,y:p.y,swappedTurn:s.turn+1});}
       const moved=super.resolvePlayer(a);
       if(moved){
         if(this.atMerchant())this.message('Mara buys trophies and sells supplies. Press E or Trade.');
-        const event=this.activeEncounter();if(event)this.message(`${event.quest?(event.type==='villager'?event.quest.giver:'Broken waystone'):(event.name??ENCOUNTERS[event.type]?.name)}: ${event.quest?event.quest.title:(event.description??ENCOUNTERS[event.type]?.description)}${['villager','shrine','woodland'].includes(event.type)?' Press E or Interact.':''}`);
+        const event=this.activeEncounter();if(event)this.message(`${event.quest?(['bridge','villager'].includes(event.type)?event.quest.giver:'Broken waystone'):(event.name??ENCOUNTERS[event.type]?.name)}: ${event.quest?event.quest.title:(event.description??ENCOUNTERS[event.type]?.description)}${['bridge','villager','shrine','woodland'].includes(event.type)?' Press E or Interact.':''}`);
         if(s.map[p.y][p.x]==='<')this.message('Q / Leave ↑ to retreat. The map is remembered; enemies return.');
         if(loc.kind==='world'&&(p.x===0||p.x===39||p.y===0||p.y===29)){
           const next=BIOMES[biomeAt(loc.rx+(p.x===0?-1:p.x===39?1:0),loc.ry+(p.y===0?-1:p.y===29?1:0),s.seed)];this.message(`Trail ahead: ${next.name}, recommended level ${next.recommended} — ${threatLabel(next.recommended,p.level)}. You can turn back.`);
@@ -226,6 +231,7 @@ export class Expedition extends Game {
     if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:enemy.miniboss?enemy.name+'’s hoard':'Beast hoard',reward:enemy.miniboss?minibossReward(this.rng,enemy.miniboss):treasure(this.rng,this.state.danger+2,'den'),x:enemy.x,y:enemy.y});}}
     if(enemy.questId&&this.state.quest){const q=this.state.quest;q.remaining=this.questRemaining();q.complete=q.remaining===0;if(q.complete&&q.accepted)this.message('The frogs are cleared. Return to the Mirekeeper whenever you are ready.');}
     if(enemy.questKey){const q=this.quests.get(enemy.questKey)??this.state.encounters.find(e=>e.quest?.id===enemy.questKey)?.quest;if(q&&q.kind!=='recovery'&&!this.state.enemies.some(e=>e.hp>0&&e.questKey===q.id)){q.complete=true;if(q.accepted)this.message(q.title+': objective complete. Return for your reward.');}}
+    finishBridgeFight(this,enemy);
     if(enemy.kind==='guardian'&&!this.state.cleared){this.state.cleared=true;this.state.cryptsCleared++;this.state.items.push({kind:'chest',name:'Warden’s reliquary',reward:cryptRelic(this.rng),x:enemy.x,y:enemy.y});this.message('Crypt cleared. A dungeon-exclusive relic awaits in the Warden’s reliquary. This first-clear prize cannot be rerolled by leaving.');}
   }
 }

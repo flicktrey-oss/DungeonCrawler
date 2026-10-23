@@ -3,7 +3,7 @@ import {key} from './dungeon.js';
 // Grid ray shared by validation and targeting. Creatures and solid terrain block shots;
 // diagonal rays cannot squeeze between solid corners, even under Mind Vision.
 export function clearShot(state,from,to){
- const solid=(x,y)=>!state.map[y]?.[x]||['#','T','^','Y','M','V'].includes(state.map[y][x]);
+ const solid=(x,y)=>!state.map[y]?.[x]||['#','T','^','Y','M','V','X'].includes(state.map[y][x]);
  let x=from.x,y=from.y;const dx=Math.abs(to.x-x),dy=-Math.abs(to.y-y),sx=x<to.x?1:-1,sy=y<to.y?1:-1;let err=dx+dy;
  while(x!==to.x||y!==to.y){
   const e=2*err,nx=e>=dy?x+sx:x,ny=e<=dx?y+sy:y;

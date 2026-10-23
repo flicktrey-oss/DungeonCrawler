@@ -1,6 +1,6 @@
 export const WIDTH = 40, HEIGHT = 30;
 export const key = (x, y) => `${x},${y}`;
-export const walkable = (map, x, y) => y >= 0 && y < map.length && x >= 0 && x < map[0].length && !['#', 'T', '^', '~', 'M', 'V', 'Y'].includes(map[y][x]);
+export const walkable = (map, x, y) => y >= 0 && y < map.length && x >= 0 && x < map[0].length && !['#', 'T', '^', '~', 'M', 'V', 'Y', 'X'].includes(map[y][x]);
 export const directions = [[0,-1],[1,0],[0,1],[-1,0]];
 export function generateDungeon(rng) {
   const map = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill('#'));

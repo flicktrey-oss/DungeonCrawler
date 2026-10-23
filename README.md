@@ -344,3 +344,15 @@ Balance remains a playtesting task: these mechanics provide readable opportuniti
 - **Remembered crypt treasure:** crypt supplies, collected chests, unclaimed rewards, dropped items, and first-clear status persist for the run. Leaving does not reroll a prize or restore looted supplies. Enemies still repopulate; a new run resets everything. Skeleton-key reliquaries remain separate bonus rewards.
 
 Play the revised marsh edges, use inspection to learn den-owner attacks, and prepare before entering side pools or crypts. This release focuses on difficulty transitions and meaningful encounter rewards; later roadmap items remain future work.
+
+## v0.21.0 — The Willow Crossing
+
+Your guaranteed neighboring forest now contains a river bridge held by Kestrel’s Willow Band. A longer dry detour remains available: this encounter cannot lock you out of exploration or the prince’s journey.
+
+Approach Kestrel and press **E / Interact**, or click the keeper to approach and talk. Browsing dialogue is free. Choose one solution:
+
+- **Pay 8 gold:** opens the crossing immediately, using one turn.
+- **Recover medicine:** accept the errand for one turn, clear the small guarded medicine site, collect its pouch for one turn, then return it for one turn. The Journal and local minimap mark the objective. The pouch needs no satchel space; returning it awards 4 XP. No deadline. You may switch to payment or fighting before resolving the errand.
+- **Fight:** starts a fight with two human guards for one turn, after which they act. Both must fall before the barrier opens. Once combat begins, the guards will not negotiate.
+
+The open bridge provides a shorter physical route for both you and Aldren. Payment, unfinished errands, medicine, hostile guards, defeated guards, and the opened crossing persist when leaving and returning. New runs reset the encounter. Failed payments and bumping the closed gate do not consume turns. The encounter uses original procedural bridge, barrier, medicine-pouch and bandit graphics.

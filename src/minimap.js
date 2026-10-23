@@ -1,8 +1,8 @@
 import { rememberedTile } from './game/map-memory.js';
 import { key } from './game/dungeon.js';
 
-const palette = {I:'#f3d59b',N:'#ecd78c',J:'#f0cc76',O:'#bf9e75',Z:'#77b8d1', B:'#d48c76',V:'#e0ddb0',W:'#bca273',S:'#b7a0e0',K:'#b9bd91',Y:'#5b4545', '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', F:'#f3a05a', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
-const labels = {I:'I',N:'B',J:'K',B:'!',V:'?',W:'W',S:'S',K:'K', F:'F', C: 'C', M: 'M', D: '>', '>': '>', '<': '<', R: 'R', A: '*' };
+const palette = {'X':'#dc9280','=':'#caa977',I:'#f3d59b',N:'#ecd78c',J:'#f0cc76',O:'#bf9e75',Z:'#77b8d1', B:'#d48c76',V:'#e0ddb0',W:'#bca273',S:'#b7a0e0',K:'#b9bd91',Y:'#5b4545', '#': '#5b6270', T: '#315342', '^': '#8c9489', '~': '#397082', ',': '#507447', ';': '#809064', '.': '#a18b68', '+': '#a18b68', F:'#f3a05a', C: '#ffe0a0', M: '#f2b2c5', D: '#ba99e6', R: '#a6c1c5', '>': '#ba99e6', '<': '#8ce6d1', A: '#eabf61' };
+const labels = {'X':'×',I:'I',N:'B',J:'K',B:'!',V:'?',W:'W',S:'S',K:'K', F:'F', C: 'C', M: 'M', D: '>', '>': '>', '<': '<', R: 'R', A: '*' };
 // Detection exposes creature positions only; terrain stays governed by fog.
 export const detectedCreatures=state=>(state.detectCreaturesUntil>0&&state.turn<=state.detectCreaturesUntil)?state.enemies.filter(e=>e.hp>0):[];
 export function minimapCells(state) {
@@ -18,7 +18,7 @@ export function campBearing(location) {
   if (location.ry) parts.push(`${Math.abs(location.ry)} ${location.ry > 0 ? 'N' : 'S'}`);
   return `${location.kind === 'crypt' ? 'Surface camp' : 'Camp'}: ${parts.join(' · ') || 'this region'}`;
 }
-export function drawMinimap(canvas, state, location) {
+export function drawMinimap(canvas, state, location, objectives=[]) {
   const ctx = canvas.getContext('2d'), sx = canvas.width / state.map[0].length, sy = canvas.height / state.map.length;
   ctx.globalAlpha = 1; ctx.fillStyle = '#080c12'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   for (const cell of minimapCells(state)) {
@@ -26,6 +26,7 @@ export function drawMinimap(canvas, state, location) {
     ctx.fillRect(cell.x * sx, cell.y * sy, sx, sy);
   }
   ctx.globalAlpha = 1; ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for(const objective of objectives){ctx.strokeStyle='#ffd885';ctx.lineWidth=2;ctx.strokeRect(objective.x*sx-2,objective.y*sy-2,sx+4,sy+4);}
   for (const cell of minimapCells(state)) if (labels[cell.tile]) {
     ctx.fillStyle = '#111824'; ctx.fillRect(cell.x * sx - 3, cell.y * sy - 3, 10, 10);
     ctx.fillStyle = palette[cell.tile]; ctx.fillText(labels[cell.tile], cell.x * sx + sx / 2, cell.y * sy + sy / 2);

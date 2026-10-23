@@ -18,6 +18,9 @@ for(const touch of [false,true])test.describe(touch?'phone techniques':'desktop 
   await expect(page.getByRole('heading',{name:'Trail spear',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Weathered buckler',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Worn shortsword (+1 ATK)',exact:true})).toBeVisible();
   await click(page.getByRole('button',{name:'Return',exact:true}));
   await d.walk({x:20,y:15});await d.east();const villager=d.game.state.encounters.find(e=>e.type==='villager');await d.walk({x:villager.x,y:villager.y+1});
+  // Landscape additions can change what is visible beside the quest giver.
+  // Approach actual prey rather than assuming that dialogue location is a firing position.
+  if(!techniqueTargets(d.game,'throw').length){const p=d.game.state.player,prey=d.game.state.enemies.filter(e=>e.hp>0).sort((a,b)=>(Math.abs(a.x-p.x)+Math.abs(a.y-p.y))-(Math.abs(b.x-p.x)+Math.abs(b.y-p.y)))[0];expect(prey).toBeTruthy();await d.walk(prey,()=>techniqueTargets(d.game,'throw').length>0);}
   const target=techniqueTargets(d.game,'throw')[0];expect(target).toBeTruthy();const turn=d.game.state.turn,ammo=stoneCount(d.game.state.player);
   await expect(page.getByRole('button',{name:'Spear reach [R]',exact:true})).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Brace [B]',exact:true})).toHaveCount(0);

@@ -8,5 +8,6 @@ export function drawPerson(g,x,y,name,role='traveler'){
  if(name.includes('Warden')||name.includes('Iona')){b(0xa5b3af,17,11,5,8);b(0xded7b0,22,8,2,15);}
  if(name.includes('Grave')){b(0x777a87,7,1,13,4);b(0xb9b4a8,9,4,7,2);b(0x806345,1,8,2,15);b(0xabb8bd,0,18,5,5);}
  if(name.includes('Nessa')){b(0x99bf7d,2,10,3,11);b(0xd3b5dd,1,8,5,4);}
+ if(role==='bandit'||name.includes('Willow Band')){b(0x6e7366,7,1,13,4);b(0x4c474b,8,8,10,3);b(0xc9b792,21,9,2,13);}
  if(role==='merchant'){b(0xb68951,19,15,5,7);b(0xe1c376,20,17,2,2);}
 }

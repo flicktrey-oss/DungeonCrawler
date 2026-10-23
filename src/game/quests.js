@@ -11,6 +11,7 @@ export const QUEST_TYPES={
  ward:{title:'The Broken Ward',giver:'Warden Sable',description:'Three waystones have gone dark. Rekindle them and defeat the creature they awaken, then return.',goal:'Activate three waystones, then defeat their sentinel',reward:'Lantern Relic'}
 };
 export function questProgress(q){
+ if(q.kind==='bridge')return q.claimed?'Willow Crossing opened · '+({paid:'toll paid',medicine:'medicine returned',fought:'guards defeated'})[q.mode]:q.mode==='fight'?'Defeat both Willow-band guards':q.medicine?'Return the medicine to Kestrel':`Recover medicine at local tile (${q.medicineSite?.x}, ${q.medicineSite?.y}), then return to Kestrel. Paying or fighting remains possible.`;
  if(q.kind==='escort')return q.complete?'Chapter one complete · Northwatch reached':`Escort Aldren to Northwatch (0, -6) · ${q.prince.mode} · ${q.prince.hp}/${q.prince.maxHp} HP`;
  if(q.legacy)return q.complete?'Frogs cleared — return for your reward':`${q.remaining??3} frogs remain`;
  if(q.complete)return 'Ready to return for your reward';
@@ -71,8 +72,8 @@ export function restoreQuestRegion(g,data,previous,rx,ry){
  const pinned=[...g.quests.values()].some(q=>(q.accepted||q.claimed)&&q.region.rx===rx&&q.region.ry===ry);
  if(!previous||!pinned&&!g.woodland?.get(worldId(rx,ry)))return false;
  data.map=previous.map.map(row=>[...row]);data.encounters=previous.encounters;data.quest=previous.quest;data.items=previous.items;data.encounterSeen=new Set(previous.encounterSeen);
- const special=previous.enemies.filter(e=>e.questId||e.questKey||e.eventId);
- const ordinary=data.enemies.filter(e=>!e.questId&&!e.questKey&&!e.eventId);
+ const special=previous.enemies.filter(e=>e.bridgeId||e.questId||e.questKey||e.eventId);
+ const ordinary=data.enemies.filter(e=>!e.bridgeId&&!e.questId&&!e.questKey&&!e.eventId);
  const occupied=new Set([...special.filter(e=>e.hp>0),...data.encounters,...data.items].map(e=>key(e.x,e.y)));
  for(const e of ordinary){
  if(occupied.has(key(e.x,e.y))||!walkable(data.map,e.x,e.y)){

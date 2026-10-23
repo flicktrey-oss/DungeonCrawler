@@ -15,5 +15,5 @@ export function characterAt(game,x,y){
 }
 export function characterDetails(game,target){
  const player=target===game.state.player,noncombatant=target.friendly&&!target.companion;
- return {ability:target.companion?'Escort · sword and mail. Follows or waits on your turns. A tonic treats wounds.':describeCreature(target),warning:attackWarning(target,game.state.player),name:player?'Your adventurer':target.name,kind:player?'player':target.kind,race:player||target.friendly?'Human':races[target.kind]??'Creature',strength:noncombatant?null:player?attack(target):target.attack,defense:noncombatant?null:player?defense(target):target.defense,hp:noncombatant?null:target.hp,maxHp:noncombatant?null:target.maxHp,friendly:target.friendly};
+ return {ability:target.companion?'Escort · sword and mail. Follows or waits on your turns. A tonic treats wounds.':describeCreature(target),warning:attackWarning(target,game.state.player),name:player?'Your adventurer':target.name,kind:player?'player':target.bridgeBandit?'bandit':target.kind,race:player||target.friendly||target.bridgeBandit?'Human':races[target.kind]??'Creature',strength:noncombatant?null:player?attack(target):target.attack,defense:noncombatant?null:player?defense(target):target.defense,hp:noncombatant?null:target.hp,maxHp:noncombatant?null:target.maxHp,friendly:target.friendly};
 }

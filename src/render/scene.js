@@ -93,6 +93,13 @@ export class DungeonScene extends Phaser.Scene {
     if(t==='T'){g.fillStyle(0x594937,a);g.fillRect(x+10,y+12,5,11);g.fillStyle(0x20392d,a);g.fillRect(x+2,y+3,20,13);g.fillStyle(0x45684a,a);g.fillRect(x+5,y+1,14,9);g.fillStyle(0x63835a,a);g.fillRect(x+7,y+2,7,3);}
     if(t==='Y'){g.fillStyle(0x27252a,a);g.fillRect(x+10,y+2,4,21);g.fillRect(x+4,y+7,8,3);g.fillRect(x+13,y+11,7,3);}
     if(['B','V','W','S','K'].includes(t)){g.fillStyle(t==='S'?0x9386b4:t==='V'?0x9fb8a5:0x9c8060,a);if(t==='V'){g.fillRect(x+7,y+8,11,13);g.fillStyle(0xe4c28d,a);g.fillRect(x+9,y+3,7,7);}else if(t==='S'){g.fillRect(x+5,y+17,14,5);g.fillRect(x+9,y+5,6,13);g.fillStyle(0xb5efeb,a);g.fillRect(x+10,y+2,4,5);}else if(t==='W'){g.fillRect(x+2,y+8,20,11);g.fillStyle(0x282c31,a);g.fillRect(x+4,y+18,4,5);g.fillRect(x+16,y+18,4,5);}else{g.fillRect(x+4,y+15,16,6);g.fillRect(x+9,y+9,6,7);}}
+    if(t==='='||t==='X'){
+      const vertical=Boolean(this.gameModel?.state.bridgeLayout?.forward.ry);
+      g.fillStyle(0x79563b,a);g.fillRect(x,y,24,24);g.fillStyle(0xb18a57,a);
+      for(let i=0;i<4;i++)if(vertical)g.fillRect(x+3,y+i*6,18,4);else g.fillRect(x+i*6,y+3,4,18);
+      g.fillStyle(0xd7bb86,a);if(vertical){g.fillRect(x+2,y,2,24);g.fillRect(x+21,y,2,24);}else{g.fillRect(x,y+2,24,2);g.fillRect(x,y+21,24,2);}
+      if(t==='X'){g.fillStyle(0x9f4b48,a);if(vertical){g.fillRect(x+3,y+5,18,3);g.fillRect(x+3,y+16,18,3);}else{g.fillRect(x+5,y+3,3,18);g.fillRect(x+16,y+3,3,18);}g.fillStyle(0xe3c480,a);g.fillRect(x+10,y+8,4,8);}
+    }
     if(t==='~'){g.fillStyle(0x4f7e87,a);g.fillRect(x+3,y+7,10,2);g.fillRect(x+12,y+17,8,2);}
     if(t===';'){g.fillStyle(0x92a271,a);g.fillRect(x+5,y+5,2,14);g.fillRect(x+11,y+2,2,18);g.fillRect(x+16,y+8,2,12);}
     if(t==='^'){g.fillStyle(0x777d76,a);g.fillTriangle(x+2,y+21,x+12,y+3,x+23,y+21);g.fillStyle(0xa5a998,a);g.fillTriangle(x+8,y+10,x+12,y+3,x+15,y+10);}
@@ -113,6 +120,7 @@ export class DungeonScene extends Phaser.Scene {
       g.fillStyle(raw?0xf6bac1:0xe3af71);g.fillRect(x+12,y+8,4,3);
       g.fillStyle(0xffefcf);g.fillRect(x+17,y+13,3,3);return;
     }
+    if(i.kind==='bridgeMedicine'){g.fillStyle(0xb99869);g.fillRect(x+6,y+9,13,12);g.fillStyle(0x83b18a);g.fillRect(x+8,y+5,9,6);g.fillStyle(0xe6e3bd);g.fillRect(x+11,y+10,3,8);g.fillRect(x+8,y+13,9,3);return;}
     if(i.kind==='bones'){g.fillStyle(0xf3e3be);g.fillRect(x+5,y+12,14,4);g.fillRect(x+4,y+9,4,9);g.fillRect(x+17,y+9,4,9);return;}
     if(i.kind==='skeletonKey'){g.lineStyle(3,0xe4c679);g.strokeCircle(x+8,y+9,4);g.fillStyle(0xe4c679);g.fillRect(x+10,y+12,9,3);g.fillRect(x+16,y+14,3,4);return;}
     const colors={potion:0xf36a83,gold:0xf8cc68,weapon:0xd2e4e8,armor:0x829bb4,chest:0xb98043,amulet:0xb2e7cb,trophy:0xc7ba93,offhand:0xc5a678,stone:0xabb9b0};g.fillStyle(colors[i.kind]??0xb7c5dc);if(i.kind==='potion'){g.fillRect(x+9,y+9,7,10);g.fillStyle(0xe0e9d9);g.fillRect(x+11,y+5,3,5);}else if(i.kind==='weapon'){g.fillRect(x+11,y+4,3,15);g.fillRect(x+7,y+15,11,3);}else{g.fillRect(x+6,y+9,13,10);g.fillStyle(0xffe2a1);g.fillRect(x+11,y+11,3,5);}}
@@ -128,6 +136,7 @@ export class DungeonScene extends Phaser.Scene {
     return this.textures.get(textureKey).getSourceImage().toDataURL();
   }
   actor(e,kind,g=this.paint){const x=e.x*T,y=e.y*T;g.fillStyle(0x000000,0.35);g.fillEllipse(x+12,y+21,19,6);
+    if(kind==='bandit'||e.bridgeBandit){drawPerson(g,x,y,e.name,'bandit');return;}
     if(kind==='player'){drawAdventurer(g,x,y,e);return;}
     if(kind!=='player'&&drawCreature(g,x,y,kind)){drawMiniboss(g,x,y,e.name);return;}
     const colors={player:0x70c6c0,slime:0x8fbd67,skeleton:0xd6ccad,goblin:0xc67d57,boss:0xc56388,guardian:0xb76883,wolf:0xb8b7a6,boar:0x93775c,leech:0xa9b55c,rat:0xa2937a,beetle:0xa18b58,pondFrog:0x86bd72,frog:0x71ab6d,elite:0xc9a16c,goat:0xaea99b,ashling:0xd16a4f};g.fillStyle(colors[kind]);

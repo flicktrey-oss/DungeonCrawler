@@ -12,11 +12,11 @@ export function compareEquipment(p,item,chosen){
  return `${slot}: replaces ${p[slot]?.name??'empty slot'}. ${changes.join(' · ')||'No numeric stat changes.'} ${p[slot]?`Old effect: ${p[slot].description}`:''} New effect: ${item.description}`;
 }
 export function cookAll(g){let count=0,reason='';while(g.state.status==='playing'&&g.atCampfire()&&count<1000){const item=g.state.player.inventory.find(i=>['rawMeat','rawRatMeat'].includes(i.kind));if(!item)break;if(!g.action({type:'cook',kind:item.kind})){reason=g.state.log.at(-1);break;}count++;}g.message(`Cooked ${count} piece${count===1?'':'s'}. ${reason||'One turn per piece.'}`);return count;}
-export const creatureIndexKey=e=>e.miniboss?`${e.kind}:${e.miniboss}`:e.kind;
+export const creatureIndexKey=e=>e.bridgeBandit?'bandit':e.miniboss?`${e.kind}:${e.miniboss}`:e.kind;
 export function recordDiscovery(g){
  if(!g.creatureIndex)return;
  for(const e of g.state.enemies)if(e.hp>0&&g.state.visible.has(`${e.x},${e.y}`)){
   const id=creatureIndexKey(e),old=g.creatureIndex.get(id);
-  g.creatureIndex.set(id,{name:e.miniboss?e.name:enemyTypes[e.kind]?.name??e.name,kind:e.kind,miniboss:e.miniboss,biomes:[...new Set([...(old?.biomes??[]),g.state.biome])],kills:old?.kills??0});
+  g.creatureIndex.set(id,{name:e.bridgeBandit?'Willow-band guard':e.miniboss?e.name:enemyTypes[e.kind]?.name??e.name,kind:e.bridgeBandit?'bandit':e.kind,miniboss:e.miniboss,biomes:[...new Set([...(old?.biomes??[]),g.state.biome])],kills:old?.kills??0});
  }
 }
