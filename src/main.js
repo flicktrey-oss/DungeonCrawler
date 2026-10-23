@@ -1,3 +1,4 @@
+import {InteractionSelection} from './game/interactions.js';
 import {bridgeQuest,BRIDGE_TOLL} from './game/bridge.js';
 import {attackWarning} from './game/combat-feedback.js';
 import {atGravekeeper,boneCount} from './game/gravekeeper.js';
@@ -33,6 +34,7 @@ const scene = new DungeonScene();
 const phaser = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: 768, height: 624, pixelArt: true,
   backgroundColor: '#090c12', scene: [scene], scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   callbacks: { postBoot() { setTimeout(() => { if (model) scene.setGame(model); }, 0); } } });
+const interactionSelection=new InteractionSelection();
 let model = null, paused = true, panel = null, mapView = 'local', inspected = null, inspectedMap = null, targetMode = null, lastShownBlock = 0;
 new ResizeObserver(() => {
   const parent = document.getElementById('game');
@@ -43,7 +45,7 @@ const $ = id => document.getElementById(id);
 const travel=new ClickTravel({
  getGame:()=>model,ready:()=>!paused&&!targetMode&&model?.state.status==='playing'&&!document.hidden,
  perform:action=>act(action,true),
- arrive:intent=>{if(intent.type==='interact')interact();else act({type:intent.type},true);},
+ arrive:intent=>{if(intent.type==='interact')interact(intent);else act({type:intent.type,item:intent.item},true);},
  changed:()=>{scene.travelHighlights=travel.plan?.steps??[];if(scene.ready)scene.draw();}
 });
 
@@ -65,7 +67,7 @@ function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Biomes vary by run; mountains can border camp. At least one neighboring forest offers a starting foothold. Read trail warnings before crossing. Start with rats and beetles in those woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Forests also have a 50% chance of an herbalist, wounded traveler or milestone with a crypt clue. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
-  <p>Desktop: click a visible empty tile to walk; click an item to walk and pick it up, or a friendly site to approach and interact. Each step and pickup is a turn. Travel stops for danger, new enemies, attacks and region changes. Press Escape or give manual input to cancel. Click creatures to inspect; Shift-click friendly people to inspect. WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); G casts Detect Creatures at level 3 (25 Mana, two turns on the local minimap). Mana recovers 0.3 each completed turn; H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
+  <p>Desktop: click a visible empty tile to walk; click an item to walk and pick it up, or a friendly site to approach and interact. Each step and pickup is a turn. Travel stops for danger, new enemies, attacks and region changes. Press Escape or give manual input to cancel. Click creatures to inspect; Shift-click friendly people to inspect. WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect performs the selected nearby action. When actions overlap, tap Next action or press F to cycle for free; the interaction button shows the selected person or item. You can pick up individual items beneath an NPC or camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); G casts Detect Creatures at level 3 (25 Mana, two turns on the local minimap). Mana recovers 0.3 each completed turn; H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
   <p>Ordinary defense has diminishing returns above 3. Trail Boots reduce detection; Iron Bands protect against special attacks. Amber boundary marks warn of territorial guardians; retreat outside their territory to disengage. Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Equipped items remain highlighted in the satchel and still take space. Unequip before selling, dropping or storing. Rats and rabbits drop meat 50% of the time; frogs drop it 35% of the time. Otherwise they drop nothing. Cook meat at the F campfire just south of the tent; eat it from the satchel for 10 HP. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
   <p>Assign spears or ammunition to item quick slots 1–3. An equipped spear opens Reach targeting; ammunition opens Throw targeting. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a charge; violet crosses mark a warden sweep; violet rings around all neighboring tiles warn of Cairnhorn’s stomp. Heavy creatures rest for one action after a charge or sweep (teal ring). Swords gain +1 damage against winding-up enemies; axes pierce extra defense against heavy armor; spears keep their two-tile reach. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. Prince Aldren waits southeast of the tent. Speak to him whenever you wish to begin the main story: escort him to Northwatch (0, -6), then reach its northern keep together. Follow / Stay and tonic aid are available in his dialogue. Stay means you must return for him; a downed prince needs a tonic. There is no departure timer. Select an item in the Satchel to assign it to quick slots 1–3. Shortcuts use/equip items; equipped spears open Reach targeting, while other equipped gear toggles off. Raw meat and trophies open their description. Cook All processes one turn per piece. Open Journal for the creature index. Northwatch has an inn and bounty board. Orren the Grave Keeper waits southwest of the tent beside a bone pile. Skeletons have a 50% bone-drop chance; trade five bones for a key to a locked crypt-depth-two reliquary. In the first neighboring forest, the Willow Crossing offers a toll, a medicine errand, or a fight. A dry detour stays available. Opening the crossing keeps a shorter route available for you and Aldren throughout the run. Medicine travels in your quest pouch, without satchel space. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
@@ -196,7 +198,16 @@ function creatureBook(){if(!model)return;paused=true;panel='index';modal('Creatu
 function activateQuick(slot){if(!model||paused||targetMode)return;const a=quickAction(model,slot);if(!a)return;if(a.type==='targetReach')beginTargeting('reach');else if(a.type==='targetThrow')beginTargeting('throw',a.index);else if(a.type==='inspectItem'){const item=model.state.player.inventory[a.index];paused=true;panel='item';modal(item.name,`<p>${escape(item.description)}</p>`,[['Return',closePanel]]);}else act(a);}
 function renderQuick(){const ready=model&&!paused&&!targetMode&&model.state.status==='playing';for(let n=0;n<3;n++){const b=$('custom-slot-'+n),item=model&&quickItem(model,n);b.textContent=item?itemEmoji(item):'+';const key=document.createElement('kbd');key.textContent=n+1;b.append(key);if(item?.quantity){const count=document.createElement('span');count.className='action-count';count.textContent=model.state.player.inventory.filter(i=>i.kind===item.kind&&i.name===item.name).reduce((n,i)=>n+i.quantity,0);b.append(count);}b.setAttribute('aria-label',`Quick slot ${n+1}: ${item?.name??'Empty'}`);b.classList.toggle('equipped',Boolean(item&&equippedSlot(model.state.player,item)));b.title=item?`${item.name} [${n+1}] · ${({targetReach:'Spear attack',targetThrow:'Throw',equip:'Equip',unequip:'Unequip',use:'Use',inspectItem:'Inspect'})[quickAction(model,n)?.type]??'Unavailable'}`:'Assign any item from the Satchel';b.disabled=!ready||!item;}}
 function graveDialog(){if(!model||!atGravekeeper(model))return;paused=true;panel='gravekeeper';modal('Orren the Grave Keeper',`<p>“Bring the restless dead’s bones home. For five, I will give you a key to what they left below.”</p><p>Your bones: ${boneCount(model.state.player)}</p><p>Five bones → one skeleton key. Keys open locked reliquaries on crypt depth two.</p><p id="grave-result" role="status"></p>`,[['Trade 5 bones for a key',()=>{model.action({type:'tradeBones'});render();graveDialog();$('grave-result').textContent=model.state.log.at(-1);}],['Return',closePanel]]);$('overlay').querySelector('.buttons button').disabled=boneCount(model.state.player)<5;}
-function interact() { if(!model||paused)return;if(model.activeEncounter()?.type==='bridge')bridgeDialog();else if(model.state.city&&(atInn(model)||atTown(model,'N')||model.activeEncounter()?.type==='citizen'))townDialog();else if(model.atCampfire())campfire();else if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['bridge','villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else if(atGravekeeper(model))graveDialog();else if(model.atPrince())princeDialog();else act({type:'pickup'}); }
+function cycleInteraction(){if(!model||paused||targetMode||model.state.status!=='playing')return;travel.cancel();stopMovement();interactionSelection.next(model);syncTouchControls();}
+function interact(intent=null){
+ if(!model||paused||targetMode)return;
+ const {options,selected}=interactionSelection.resolve(model),choice=intent?options.find(o=>intent.event?o.event===intent.event:intent.item?o.item===intent.item:o.type===({M:'merchant',C:'storage',F:'fire',I:'town',N:'town',prince:'prince'})[intent.site]):selected;
+ if(!choice)return;
+ model.interactionTarget=choice.event??null;
+ if(choice.type==='pickup')act({type:'pickup',item:choice.item});
+ else if(choice.type==='bridge')bridgeDialog();else if(choice.type==='town')townDialog();else if(choice.type==='fire')campfire();else if(choice.type==='storage')storage();else if(choice.type==='merchant')merchant();else if(choice.type==='encounter')encounterDialog();else if(choice.type==='grave')graveDialog();else if(choice.type==='prince')princeDialog();
+}
+
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
@@ -340,7 +351,12 @@ function syncTouchControls() {
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
       if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
-      if (control === 'collect') { const townReady=atInn(model)||atTown(model,'N')||model.activeEncounter()?.type==='citizen'; const label = townReady?'Visit':atGravekeeper(model)?'Trade bones':model.atCampfire()?'Cook':model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['bridge','villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':model.atPrince()?'Speak':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = atGravekeeper(model) || townReady || model.atPrince() || model.atCampfire() || model.atCamp() || model.atMerchant() || ['bridge','villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
+      if(control==='collect'){
+        const {options,selected}=interactionSelection.resolve(model),label=selected?.label??'Collect';button.querySelector('.action-label').textContent=label;button.setAttribute('aria-label',label);button.setAttribute('aria-description',selected?.detail??'Nothing to interact with');button.title=selected?`${selected.detail} [E] · Action ${interactionSelection.index+1}/${options.length}`:'Interact / Collect [E]';button.classList.toggle('has-choices',options.length>1);$('interaction-detail').textContent=options.length>1?selected.detail:'';allowed=Boolean(selected);
+      }
+      if(control==='cycle-interaction'){
+        const {options,index}=interactionSelection.resolve(model);button.classList.toggle('hidden',options.length<2);$('interaction-count').textContent=`${index+1}/${options.length}`;allowed=options.length>1;
+      }
     }
     button.disabled = !allowed||Boolean(targetMode);
     if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);
@@ -352,6 +368,7 @@ bindTouchControls($('touch-controls'), control => {
   const directions = { north: [0,-1], south: [0,1], east: [1,0], west: [-1,0] };
   if (directions[control]) act({ type: 'move', dx: directions[control][0], dy: directions[control][1] });
   else if (control === 'collect') interact();
+  else if(control==='cycle-interaction')cycleInteraction();
   else if(control==='reach'||control==='throw')beginTargeting(control);
   else act({ type: ({ collect: 'pickup', vision: 'mindVision' })[control] ?? control });
 });
@@ -406,6 +423,7 @@ window.addEventListener('keydown', event => {
   if(targetMode){if(k==='escape'){event.preventDefault();cancelTargeting();syncTouchControls();}return;}
   if (k === 'escape') { if (model && paused && model.state.status === 'playing') closePanel(); else if (!paused) help(); return; }
   if(k==='i'&&model&&model.state.status==='playing'){if(panel==='bag')closePanel();else if(!paused)bag();return;}
+  if(k==='f'&&!paused){cycleInteraction();return;}
   if(k==='e'&&!paused){interact();return;}
   if(['1','2','3'].includes(k)){activateQuick(Number(k)-1);return;}
   if (k === '.') act({ type: 'wait' });

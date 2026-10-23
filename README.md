@@ -356,3 +356,7 @@ Approach Kestrel and press **E / Interact**, or click the keeper to approach and
 - **Fight:** starts a fight with two human guards for one turn, after which they act. Both must fall before the barrier opens. Once combat begins, the guards will not negotiate.
 
 The open bridge provides a shorter physical route for both you and Aldren. Payment, unfinished errands, medicine, hostile guards, defeated guards, and the opened crossing persist when leaving and returning. New runs reset the encounter. Failed payments and bumping the closed gate do not consume turns. The encounter uses original procedural bridge, barrier, medicine-pouch and bandit graphics.
+
+## v0.22.0 — Choose your action
+
+When several interactions are available at your tile, the action dock shows **Next action** and a counter such as **1/3**. Tap it, or press **F**, to cycle between speaking, trading, storage, cooking, and each individual item on the ground. The main action button shows the selected person/item; tap it or press **E** to perform that action. Cycling is free and never advances enemies. Moving resets the selection. Clicking a specific person or item still targets that person/item directly.

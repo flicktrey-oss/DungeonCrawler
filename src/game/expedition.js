@@ -96,7 +96,9 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='bridge'||e.type==='villager'||e.type==='citizen'||e.type==='innkeeper'||e.type==='gravekeeper'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
+  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['bridge','villager','citizen','innkeeper','gravekeeper'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
+  activeEncounter(){const events=this.nearbyEncounters();return events.includes(this.interactionTarget)?this.interactionTarget:events[0];}
+
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
@@ -143,7 +145,7 @@ export class Expedition extends Game {
       if(a.type==='store')this.stash.push(looseItem(item));source.splice(a.index,1);this.message(`${a.type==='store'?'Stored':'Retrieved'} ${item.name}.`);return true;
     }
     if(a.type==='pickup'){
-      const index=s.items.findIndex(i=>i.x===p.x&&i.y===p.y);if(index<0){this.message('Nothing here to collect.');return false;}
+      const index=a.item?s.items.indexOf(a.item):s.items.findIndex(i=>i.x===p.x&&i.y===p.y);if(index<0||s.items[index].x!==p.x||s.items[index].y!==p.y){this.message('Nothing here to collect.');return false;}
       const ground=s.items[index];
       if(ground.kind==='bridgeMedicine')return collectMedicine(this,ground);
       if(ground.locked&&!p.inventory.some(i=>i.kind==='skeletonKey'&&i.quantity>0)){this.message('The reliquary needs a skeleton key. Orren at camp trades keys for bones.');return false;}

@@ -56,7 +56,8 @@
       <div id="quick-slots" aria-label="Item quick slots"><button id="custom-slot-0" class="custom-slot" aria-label="Quick slot 1: Empty">+</button><button id="custom-slot-1" class="custom-slot" aria-label="Quick slot 2: Empty">+</button><button id="custom-slot-2" class="custom-slot" aria-label="Quick slot 3: Empty">+</button>
       </div>
       <div class="touch-actions">
-        <button data-control="collect" class="context-action" aria-label="Collect" title="Interact / Collect [E]"><span data-icon="hand" aria-hidden="true"></span><span class="action-label">Collect</span><kbd>E</kbd></button>
+        <button data-control="collect" class="context-action" aria-label="Collect" title="Interact / Collect [E]"><span data-icon="hand" aria-hidden="true"></span><span class="action-label">Collect</span><small id="interaction-detail"></small><kbd>E</kbd></button>
+        <button data-control="cycle-interaction" class="hidden" aria-label="Next action" title="Cycle nearby actions [F] · no turn"><span aria-hidden="true">↻</span><span class="action-label">Next action</span><small id="interaction-count"></small><kbd>F</kbd></button>
         <button data-control="potion" aria-label="Potion" title="Drink healing potion [H]"><span data-icon="potion" aria-hidden="true"></span><span class="action-label">Potion</span><span id="potion-count" class="action-count"></span><kbd>H</kbd></button>
         <button data-control="vision" aria-label="Vision · 25" title="Mind Vision · 25 Mana [M]"><span data-icon="vision" aria-hidden="true"></span><span class="action-label">Mind Vision</span><span class="action-cost">25 MP</span><kbd>M</kbd></button>
         <button id="manage-bag" aria-label="Open satchel [I]" title="Open 10×10 satchel [I]"><span data-icon="bag" aria-hidden="true"></span><span class="action-label">Satchel</span><span id="bag-capacity" class="action-count"></span><kbd>I</kbd></button>
