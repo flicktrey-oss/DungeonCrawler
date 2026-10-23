@@ -5,7 +5,7 @@ export function combatFeedback(state, target, text, kind='hit', from=null) {
   (state.combatEvents??=[]).push(event);
   if(state.combatEvents.length>40)state.combatEvents.shift();
 }
-export const attackNames={tongue:'Tongue lash',spit:'Sap spit',charge:'Charging horns',cleave:'Warden sweep'};
+export const attackNames={stomp:'Stone stomp',tongue:'Tongue lash',spit:'Sap spit',charge:'Charging horns',cleave:'Warden sweep'};
 export function attackWarning(enemy, target) {
   if(!enemy.intent)return enemy.recovering?'Recovering · one enemy action before it can attack again.':null;
   const threatened=enemy.intent.tiles.some(t=>t.x===target.x&&t.y===target.y);

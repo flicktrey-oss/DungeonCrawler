@@ -3,7 +3,7 @@ import {drawPerson} from './people.js';
 import { drawDangerPockets } from './danger-pockets.js';
 import { drawAdventurer } from './adventurer.js';
 import Phaser from 'phaser';
-import {drawCreature} from './creature-sprites.js';
+import {drawCreature,drawMiniboss} from './creature-sprites.js';
 import {rememberedTile} from '../game/map-memory.js';
 import {key} from '../game/dungeon.js';
 const T=24;
@@ -70,10 +70,10 @@ export class DungeonScene extends Phaser.Scene {
     const g=this.paint;
     for(const e of s.enemies)if(e.hp>0&&e.recovering&&s.visible.has(key(e.x,e.y))){g.lineStyle(2,0x9ccecb);g.strokeCircle(e.x*T+12,e.y*T+12,11);g.fillStyle(0x9ccecb);g.fillRect(e.x*T+8,e.y*T-12,3,5);g.fillRect(e.x*T+14,e.y*T-12,3,5);}
     for(const e of s.enemies)if(e.hp>0&&e.intent&&s.visible.has(key(e.x,e.y))){
-      const color=e.intent.kind==='tongue'?0xef9ab8:e.intent.kind==='spit'?0xe7c66e:e.intent.kind==='cleave'?0xc6a0ef:0xee9b60;
+      const color=e.intent.kind==='tongue'?0xef9ab8:e.intent.kind==='spit'?0xe7c66e:['cleave','stomp'].includes(e.intent.kind)?0xc6a0ef:0xee9b60;
       for(const tile of e.intent.tiles)if(s.visible.has(key(tile.x,tile.y))){
         const x=tile.x*T,y=tile.y*T;g.fillStyle(color,.23);g.fillRect(x+1,y+1,22,22);g.lineStyle(1,color,.95);g.strokeRect(x+2,y+2,20,20);
-        if(e.intent.kind==='spit'){g.lineBetween(x+7,y+7,x+17,y+17);g.lineBetween(x+17,y+7,x+7,y+17);}else{g.lineBetween(x+7,y+15,x+12,y+9);g.lineBetween(x+12,y+9,x+17,y+15);}
+        if(e.intent.kind==='stomp'){g.strokeCircle(x+12,y+12,6);}else if(e.intent.kind==='spit'){g.lineBetween(x+7,y+7,x+17,y+17);g.lineBetween(x+17,y+7,x+7,y+17);}else{g.lineBetween(x+7,y+15,x+12,y+9);g.lineBetween(x+12,y+9,x+17,y+15);}
       }
       g.fillStyle(color);g.fillTriangle(e.x*T+8,e.y*T-7,e.x*T+16,e.y*T-7,e.x*T+12,e.y*T-14);g.fillStyle(0x17242d);g.fillRect(e.x*T+11,e.y*T-12,2,3);
     }
@@ -122,14 +122,14 @@ export class DungeonScene extends Phaser.Scene {
     if(!this.textures.exists(textureKey)){
       const brush=this.make.graphics({x:0,y:0},false);
       if(kind==='merchant'||kind==='villager')drawPerson(brush,0,0,name,kind);
-      else this.actor({...player,x:0,y:0},kind,brush);
+      else this.actor({...player,x:0,y:0,name},kind,brush);
       brush.generateTexture(textureKey,T,T);brush.destroy();
     }
     return this.textures.get(textureKey).getSourceImage().toDataURL();
   }
   actor(e,kind,g=this.paint){const x=e.x*T,y=e.y*T;g.fillStyle(0x000000,0.35);g.fillEllipse(x+12,y+21,19,6);
     if(kind==='player'){drawAdventurer(g,x,y,e);return;}
-    if(kind!=='player'&&drawCreature(g,x,y,kind))return;
+    if(kind!=='player'&&drawCreature(g,x,y,kind)){drawMiniboss(g,x,y,e.name);return;}
     const colors={player:0x70c6c0,slime:0x8fbd67,skeleton:0xd6ccad,goblin:0xc67d57,boss:0xc56388,guardian:0xb76883,wolf:0xb8b7a6,boar:0x93775c,leech:0xa9b55c,rat:0xa2937a,beetle:0xa18b58,pondFrog:0x86bd72,frog:0x71ab6d,elite:0xc9a16c,goat:0xaea99b,ashling:0xd16a4f};g.fillStyle(colors[kind]);
     if(['wolf','boar','leech','rat','beetle','frog','pondFrog','elite','goat'].includes(kind)){g.fillRect(x+3,y+9,18,9);g.fillRect(x+3,y+17,4,5);g.fillRect(x+16,y+17,4,5);g.fillRect(x+15,y+5,7,7);g.fillStyle(0xe5db9f);g.fillRect(x+19,y+7,2,2);}else if(kind==='slime'){g.fillEllipse(x+12,y+15,19,14);}else{g.fillRect(x+6,y+9,13,11);g.fillRect(x+8,y+3,9,9);g.fillRect(x+6,y+19,4,4);g.fillRect(x+15,y+19,4,4);}
     g.fillStyle(0x15202b);g.fillRect(x+9,y+(kind==='slime'?13:6),2,2);g.fillRect(x+14,y+(kind==='slime'?13:6),2,2);

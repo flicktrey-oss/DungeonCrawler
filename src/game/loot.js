@@ -7,7 +7,7 @@ export const ITEM_CATALOG=[
  ['knives',I.throwingKnives,1,3],['smoke',I.smokeFlask,1,3],['thunder',I.thunderstone,1,6],['lastLight',I.lastLight,1,9],
  ['trailBoots',I.trailBoots,4,1],['softstep',I.softstepBoots,2,3],['ironRing',I.ironRing,3,1],['hunterRing',I.huntersRing,2,3],['moonRing',I.moonRing,2,3],['lantern',I.lanternRelic,1,2],['waystone',I.waystoneFocus,1,3]
 ].map(([id,create,weight,minDanger])=>({id,create,weight,minDanger}));
-export const MODIFIER_ODDS={champion:[0,.85,.99],ordinary:[.70,.95,.995],cache:[.50,.85,.99],caravan:[.50,.85,.99],crypt:[.30,.75,.97],den:[.15,.80,.99],quest:[.30,.75,.97],boss:[0,.50,.90]};
+export const MODIFIER_ODDS={miniboss:[0,.60,.95],champion:[0,.85,.99],ordinary:[.70,.95,.995],cache:[.50,.85,.99],caravan:[.50,.85,.99],crypt:[.30,.75,.97],den:[.15,.80,.99],quest:[.30,.75,.97],boss:[0,.50,.90]};
 function weighted(rng,entries,weight=e=>e.weight){let roll=rng.next()*entries.reduce((n,e)=>n+weight(e),0);for(const e of entries){roll-=weight(e);if(roll<0)return e;}return entries.at(-1);}
 export function modifyItem(item,rng,source='ordinary'){
  const result={...item,size:item.size?[...item.size]:undefined,rarity:'ordinary'};
@@ -50,4 +50,14 @@ export function ordinaryDrop(rng,danger,kind,elite=false){
  if(roll<.42)return I.trophy(kind==='pondFrog'?'frog':kind);
  if(roll<.42+itemChance)return itemReward(rng,danger,elite?'den':'ordinary');
  return null;
+}
+
+// Dungeon-only relics make a completed descent offer a different reward pool.
+export function cryptRelic(rng){
+ const relics=[
+  {id:'ossuaryLantern',kind:'offhand',name:'Ossuary Lantern',relic:true,bonus:0,sightBonus:1,wardedBonus:1,manaBonus:.2,size:[2,3],sellValue:16,appearance:0xb3dcca,description:'Off hand: +1 sight, +1 defense against special attacks, +0.2 Mana per turn. Replaces a shield.'},
+  {id:'cryptstep',kind:'boots',name:'Cryptstep Boots',bonus:0,stealthBonus:1,wardedBonus:1,size:[2,2],sellValue:16,appearance:0x9c91b5,description:'Boots: reduces detection by 1 tile and grants +1 defense against special attacks.'},
+  {id:'wardenSpear',kind:'weapon',name:'Warden’s Spire',weaponType:'spear',bonus:1,reach:2,armorPierce:1,size:[7,2],sellValue:18,description:'Main hand: +1 attack, 2-tile cardinal reach, and ignores 1 enemy defense on melee strikes.'}
+ ];
+ return {...rng.pick(relics),rarity:'powerful',dungeonExclusive:true};
 }

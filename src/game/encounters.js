@@ -1,6 +1,6 @@
 import { itemReward } from './loot.js';
 export const ENCOUNTERS = {
-  crypt:{tile:'D',name:'Forgotten crypt',description:'Two dangerous depths. Enter to descend; retreat on upward stairs.'},
+  crypt:{tile:'D',name:'Forgotten crypt',description:'Two dangerous depths. Defeat the Warden for a guaranteed dungeon-only relic. Each crypt’s first-clear prize is available once per run. Retreat on upward stairs.'},
   den:{tile:'B',name:'Creature den',description:'A named beast guards this territory. Defeat it for its hoard.'},
   villager:{tile:'V',name:'Mirekeeper',description:'A villager needs help clearing three troublesome frogs.'},
   caravan:{tile:'W',name:'Abandoned caravan',description:'An old supply coffer, watched by scavengers.'},

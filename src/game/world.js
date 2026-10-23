@@ -1,3 +1,4 @@
+import {marshSpawns,trailDistance} from './marsh.js';
 import {isKingdom,generateCity} from './city.js';
 import { MERCHANT } from './merchant.js';
 import { Random } from './random.js';
@@ -78,8 +79,8 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++)if(walkable(map,x,y)&&!seen.has(key(x,y)))map[y][x]=blocker;
   const occupied=new Set([key(20,15),...(home?['24,17','16,18','15,18','15,17']:[]),...encounters.map(e=>key(e.x,e.y))]),available=[];
   for(let y=5;y<25;y++)for(let x=5;x<35;x++)if(walkable(map,x,y)&&!occupied.has(key(x,y))&&Math.abs(x-20)+Math.abs(y-15)>5)available.push({x,y});
-  const spot=(near=null)=>{let choices=available.map((p,i)=>({p,i}));if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
-  const spawns=home?[]:Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[biome].enemies)}));
+  const spot=(near=null)=>{let choices=available.map((p,i)=>({p,i}));if(near?.trail||near?.deep){const filtered=choices.filter(({p})=>near.trail?trailDistance(p)<=2:trailDistance(p)>=6);if(filtered.length)choices=filtered;}else if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
+  const spawns=home?[]:biome==='marsh'?marshSpawns(spot,rng):Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[biome].enemies)}));
   for(const e of encounters){
     if(e.type==='villager')for(let i=0;i<3;i++)spawns.push({...spot(e),kind:'pondFrog',questId:e.id});
     if(e.type==='den')spawns.push({x:e.x,y:e.y,kind:'elite',eventId:e.id});
@@ -110,8 +111,8 @@ function populateVisit(base,rng,visit){
  }
  const occupied=new Set(encounters.map(e=>key(e.x,e.y))),available=[];
  for(let y=5;y<25;y++)for(let x=5;x<35;x++)if(walkable(map,x,y)&&!occupied.has(key(x,y))&&Math.abs(x-20)+Math.abs(y-15)>5)available.push({x,y});
- const spot=near=>{let choices=available.map((p,i)=>({p,i}));if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
- const spawns=Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[base.biome].enemies)}));
+ const spot=near=>{let choices=available.map((p,i)=>({p,i}));if(near?.trail||near?.deep){const filtered=choices.filter(({p})=>near.trail?trailDistance(p)<=2:trailDistance(p)>=6);if(filtered.length)choices=filtered;}else if(near){const local=choices.filter(({p})=>Math.abs(p.x-near.x)+Math.abs(p.y-near.y)<=5);if(local.length)choices=local;}const chosen=rng.pick(choices);if(!chosen)throw Error('No spawn tile');available.splice(chosen.i,1);return chosen.p;};
+ const spawns=base.biome==='marsh'?marshSpawns(spot,rng):Array.from({length:7},()=>({...spot(),kind:rng.pick(BIOMES[base.biome].enemies)}));
  for(const e of encounters){
   if(e.type==='villager')for(let i=0;i<3;i++)spawns.push({...spot(e),kind:'pondFrog',questId:e.id});
   if(e.type==='den')spawns.push({x:e.x,y:e.y,kind:'elite',eventId:e.id});

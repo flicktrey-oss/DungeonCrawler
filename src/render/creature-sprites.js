@@ -62,3 +62,11 @@ export function drawCreature(g,x,y,kind){
  }
  return false;
 }
+
+// Overlays preserve a familiar animal silhouette while making named den owners
+// recognizable both on the map and in their enlarged inspection portrait.
+export function drawMiniboss(g,x,y,name){
+ if(name==='Old Bristleback'){g.fillStyle(0xe8b878);g.fillRect(x+2,y+10,4,6);g.fillRect(x+19,y+10,3,6);g.fillStyle(0x7a3446);g.fillRect(x+9,y+5,3,10);}
+ if(name==='Reedmaw, the Pond Sovereign'){g.fillStyle(0xefd18a);for(const dx of [7,11,15])g.fillRect(x+dx,y+1,2,4);g.fillRect(x+7,y+4,10,2);g.fillStyle(0xd178b6);g.fillRect(x+10,y+16,6,3);}
+ if(name==='Cairnhorn, the Ridge Keeper'){g.fillStyle(0x807a9c);g.fillRect(x+2,y+6,5,10);g.fillRect(x+17,y+6,5,10);g.fillStyle(0xd8c9ef);g.fillRect(x+3,y+7,3,3);g.fillRect(x+18,y+7,3,3);g.fillRect(x+10,y+2,4,3);}
+}

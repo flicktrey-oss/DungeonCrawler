@@ -334,3 +334,13 @@ This release focuses on combat readability and weapon choices:
 - Brief floating damage, countercut labels, hit marks, block shields, and miss feedback make outcomes visible on the map. Effects never spend turns, gate input, or change combat rules. Reduced-motion settings suppress floating movement. No downloaded art or sound assets.
 
 Balance remains a playtesting task: these mechanics provide readable opportunities, rather than a guarantee that every loadout can beat every region. This is the first combat-focused batch of the improvement roadmap; additional quests, townspeople, exploration content, and audio are future work.
+
+## v0.20.0 — Trails and guardians
+
+- **A marsh foothold:** ordinary marsh populations include four small pond frogs near the coordinate-aligned main trails, at starter strength. Up to three stronger frogs/leeches defend marked side pools, remain inside their territories, and do not chase onto the main trail. Dens and quest encounters are still dangerous; the region recommendation remains level 4. Mountains retain their higher difficulty.
+- **Three den owners:** Old Bristleback in forests charges in a marked line; Reedmaw in marshes prepares a three-tile tongue lash; Cairnhorn in highlands/ashlands marks an eight-neighbor stomp. All have a recovery action to exploit, original portrait details, visible territorial boundaries, and their own discovered-creature journal entries. Dens use the existing randomized encounter slots.
+- **Themed hoards:** a defeated den owner guarantees modified equipment: 60% useful, 35% powerful, 5% exceptional. Bristleback favors hunting weapons/boots, Reedmaw favors spears/shields, Cairnhorn favors armor/protection/hatchets. Ordinary surface loot odds are unchanged.
+- **Crypt completion rewards:** each depth-two Warden’s first defeat guarantees one powerful dungeon-only item: Ossuary Lantern, Cryptstep Boots, or Warden’s Spire. Each has a distinct equipment tradeoff and can be equipped, compared, sold, and assigned to quickslots normally. These three items are outside the ordinary surface loot pool.
+- **Remembered crypt treasure:** crypt supplies, collected chests, unclaimed rewards, dropped items, and first-clear status persist for the run. Leaving does not reroll a prize or restore looted supplies. Enemies still repopulate; a new run resets everything. Skeleton-key reliquaries remain separate bonus rewards.
+
+Play the revised marsh edges, use inspection to learn den-owner attacks, and prepare before entering side pools or crypts. This release focuses on difficulty transitions and meaningful encounter rewards; later roadmap items remain future work.
