@@ -46,7 +46,9 @@ Dens guarantee eligible equipment and triple weapon/boot weights. Crypt coffers 
 | --- | ---: | ---: | ---: | ---: |
 | Ordinary | 70% | 25% | 4.5% | 0.5% |
 | Cache / caravan | 50% | 35% | 14% | 1% |
-| Den / crypt / quest | 30% | 45% | 22% | 3% |
+| Crypt / ordinary quest | 30% | 45% | 22% | 3% |
+| Den | 15% | 65% | 19% | 1% |
+| Hunt quest / bounty | 0% | 85% | 14% | 1% |
 | Boss | 0% | 50% | 40% | 10% |
 
 These are conditional odds for equipment, not the chance that an enemy drops a particular item. Useful modifiers can reduce footprint, increase attack/defense, or add Mana capacity. Powerful weapons bleed; powerful other gear protects against special attacks. Exceptional gear offers stronger bonuses. Blocks cap at 60%. Rewards lock before a failed collection/claim, preventing full-bag rerolls.

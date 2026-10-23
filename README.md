@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.16.1 — Better hunting** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.17.0 — Roads and townsfolk** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -290,10 +290,26 @@ Prince Aldren’s convoy was ambushed on the southern road. He shelters southeas
 - **Crossings.** A following prince must be within two tiles for region or crypt crossings. Wait for him if he falls behind. He crosses with you onto a vacant tile, with arrival grace. Stay leaves him in that region, including crypt depth; return beside him to resume. Inactive regions stay frozen. The Journal records his region, health and orders; his last known tile remains gold on explored local maps.
 - **Wounds.** Enemies can target Aldren. At zero health he becomes downed and waits for aid. Give a healing tonic from his dialogue to restore 16 HP, then ask him to follow. Tonics are consumed and aid takes a turn. Player death still ends the entire run; there is no save/load.
 - **Destination.** Reach **Northwatch (0, -6)**, six regions north of camp, then escort him to its northern keep at tile (20, 7). Each seed has a connected route through forest and marsh (up to recommended level 4); surrounding regions retain stronger biomes and dangerous pockets. The route can involve detours. Accepted main quests mark the destination on the world map without revealing its terrain. You can track it again in the Journal.
-- **Chapter one complete.** Arrival together at the keep awards 30 gold and full recovery once. Aldren stays in the city; dismiss the chapter popup to keep exploring. Northwatch is a safe stone city with walls, gates, paved streets, enterable buildings and a keep. City shops, additional residents and later chapters are deferred.
+- **Chapter one complete.** Arrival together at the keep awards 30 gold and full recovery once. Aldren stays in the city; dismiss the chapter popup to keep exploring. Northwatch is a safe stone city with walls, gates, paved streets, enterable buildings and a keep. An inn, innkeeper, bounty board and rescued residents are available. Other city shops and later chapters are deferred.
 
 The escort is an optional story within the same permadeath expedition, rather than a separate difficulty mode. All companion rules run through the central turn manager; elapsed time never moves the prince or enemies.
 
 ## Better hunting (v0.16.1)
 
 Rats and rabbits now drop meat 50% of the time; frogs remain at 35%. Successful meat drops are announced in the Chronicle and shown as a distinct steak-and-bone sprite on the ground. Drops still need collecting and cooking; food healing and stack sizes are unchanged.
+
+## Roads and townsfolk (v0.17.0)
+
+- **Any-item quick slots:** select any satchel item and choose Assign to quick slot 1, 2 or 3. Assignment and clearing are free. The three emoji buttons beside Reach/Throw use keyboard shortcuts **1–3**. Consumables are used, ammunition opens targeting, equipment equips/unequips, and raw materials/trophies open their description. Identical replenished supplies reconnect to their slot. Missing supplies disable it. Worn gear is green.
+- **Cook All:** the campfire processes both meat types, one turn per piece, stopping when output cannot fit. No ingredient is lost on failure.
+- **Equipment comparisons:** satchel selections and equipment listings preview attack, effective/raw defense, block chances, reach, Mana, stealth and special protection. Replacement and new ability descriptions appear together. Ring previews respect the selected slot.
+- **Animal tracks:** discover fixed footprint trails near hunting grounds and dens. They suggest a place to investigate, not live creature positions; old tracks persist with terrain.
+- **Better tough-encounter rewards:** hunt-quest and town-bounty rewards always receive a modifier (85% useful, 14% powerful, 1% exceptional). Den equipment has 15% plain, 65% useful, 19% powerful, 1% exceptional odds. General enemy stats and ordinary loot are unchanged.
+- **Northwatch inn:** the west building has a bed marked **I**, an open south doorway and **Maren the Innkeeper**. Visit the bed or speak beside Maren to pay 6 gold for full health and Mana. Full recovery is not sold when already full.
+- **Bounty board:** use **E / Visit** on **B** near the fountain. Three optional hunts count rats, Mire frogs or wolves killed after acceptance. Accepted bounties appear in the Journal and have no timer. Return to the board for modified equipment plus 8 gold. Rewards are once per run and remain claimable if the bag is full.
+- **Rescued residents and choices:** a wounded woodland traveler accepts a tonic (8 gold thanks) or cooked regular meat (4 gold thanks). Up to three rescued travelers appear in Northwatch on your next arrival and remember your help. Existing herbalist gold/trophy choices remain. More complex alternate quest resolutions are future additions.
+- **Creature index:** open Journal → Creature index. Only directly seen species are recorded, with portraits, observed biomes, attacks, drop hints and kill counts. Detection does not reveal entries through fog.
+- **Death recap:** Game Over records the killing blow and a turn-by-turn history of recent actions and events. Retry this seed starts a fresh character in the same seeded world. The history uses game turns, not elapsed seconds.
+- **Distinct people:** named people have original adventurer-like bodies, varied hair, skin, clothing and hats. Iona and wardens carry protective gear; Nessa carries herbs; Mara has merchant clothing and a satchel. Inspection portraits match each person.
+
+Shove and extra prince dialogue are intentionally excluded. All of these features remain within one permadeath run; no save system, crafting tree or persistent power progression is introduced.

@@ -1,3 +1,4 @@
+import {assignQuick,quickMatches,compareEquipment} from './game/quality.js';
 import { equippedSlot, consumableKinds, isEquipment } from './game/items.js';
 import { itemEmoji } from './item-icons.js';
 import { inventoryLayout, footprint } from './game/inventory.js';
@@ -28,6 +29,7 @@ export function mountInventory(container, game, perform) {
     button(slot?'Unequip item':projectile?'Throw stones':'Use / equip',()=>perform(slot?{type:'unequip',slot}:{type:projectile?'targetThrow':consumableKinds.includes(item.kind)?'use':'equip',index:selected}),!item||!slot&&!projectile&&!consumableKinds.includes(item.kind)&&!isEquipment(item));
     button('Drop item',()=>perform({type:'drop',index:selected}),!item||Boolean(slot));
     if(slot){const note=document.createElement('p');note.className='hint';note.textContent='Equipped · '+slot+'. Still occupies satchel cells. Unequip before dropping, storing or selling.';controls.append(note);}
+    if(item){for(let n=0;n<3;n++)button((quickMatches(game,n,item)?'Clear':'Assign to')+' quick slot '+(n+1),()=>{if(quickMatches(game,n,item)){game.quickSlots[n]=null;notice='Quick slot cleared. No turn spent.';}else{assignQuick(game,n,selected);notice='Assigned '+item.name+' to slot '+(n+1)+'. No turn spent.';}draw();});const comparison=compareEquipment(player,item);if(comparison){const p=document.createElement('p');p.className='equipment-comparison';p.textContent=comparison;container.append(p);}}
     container.append(controls);
   }
   draw();

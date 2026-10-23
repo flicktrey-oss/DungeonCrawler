@@ -10,7 +10,7 @@ export class Game {
     this.rng=new Random(seed); this.state={seed,floor:1,turn:0,status:'playing',log:[],player:{x:0,y:0,hp:32,maxHp:32,mana:100,maxMana:100,attack:5,defense:1,level:1,xp:0,gold:0,inventory:[potion(),potion()],weapon:null,armor:null}};
     this.turns=new TurnManager(this); this.loadFloor(); this.message('You enter the Ember Vault. Find the Ash Warden below.');
   }
-  message(text){this.state.log.push(text);if(this.state.log.length>80)this.state.log.shift();}
+  message(text){this.state.timeline??=[];this.state.timeline.push({turn:this.state.turn,text});if(this.state.timeline.length>100)this.state.timeline.shift();this.state.log.push(text);if(this.state.log.length>80)this.state.log.shift();}
   loadFloor(){
     const s=this.state,d=generateDungeon(this.rng); Object.assign(s,d);Object.assign(s.player,d.start);
     s.enemies=[];s.items=[];s.explored=new Set();s.visible=new Set();s.mindVisionUntil=0;s.detectCreaturesUntil=0;
@@ -83,7 +83,7 @@ export class Game {
     const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${p.companion?verb.replace('you',p.name):verb} for ${hit}.`);
     if(p.companion){if(p.hp===0){p.mode='downed';this.message('Aldren is wounded and cannot follow. Bring him a healing tonic; he remains here.');}return hit;}
     if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');const index=p.inventory.indexOf(p.amulet);if(index>=0)p.inventory.splice(index,1);p.amulet=null;p.hp=1;recalculateGear(p);}
-    if(p.hp===0){s.status='dead';this.message('Your light fades in the vault.');}return hit;
+    if(p.hp===0){s.deathCause=`${e.name} ${verb} for ${hit} damage`;s.status='dead';this.message('Your light fades in the vault.');}return hit;
   }
   actEnemy(e){
     const s=this.state,p=s.player;e.actions++;

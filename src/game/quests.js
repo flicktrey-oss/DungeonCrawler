@@ -21,7 +21,7 @@ export function questProgress(q){
 function createQuest(g,kind,id,region,giver,camp=false){
  const info=QUEST_TYPES[kind],rng=new Random(regionSeed(g.state.seed,region.rx,region.ry,id));
  const factory={hunt:trailBoots,recovery:ironRing,ward:lanternRelic}[kind];
- return {id,kind,...info,giver:camp?'Trailwarden Iona':info.giver,region,giverRegion:camp?{rx:0,ry:0}:region,giverPosition:{...giver},camp,accepted:false,claimed:false,complete:false,activated:[],reward:modifyItem(factory(),rng,'quest')};
+ return {id,kind,...info,giver:camp?'Trailwarden Iona':info.giver,region,giverRegion:camp?{rx:0,ry:0}:region,giverPosition:{...giver},camp,accepted:false,claimed:false,complete:false,activated:[],reward:modifyItem(factory(),rng,kind==='hunt'?'champion':'quest')};
 }
 export function campQuest(g,data){
  const rng=new Random(regionSeed(g.state.seed,0,0,'trailwarden')),target=startingForest(g.state.seed);rng.next();

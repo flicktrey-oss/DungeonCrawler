@@ -6,7 +6,10 @@ export class TurnManager {
     if(this.busy||g.state.status!=='playing') return false;
     this.busy=true;
     try {
+      const before=new Set(g.state.timeline??[]);
       if(!g.resolvePlayer(action)) return false;
+      for(const entry of g.state.timeline??[])if(!before.has(entry))entry.turn=g.state.turn+1;
+      g.state.timeline??=[];g.state.timeline.push({turn:g.state.turn+1,text:'Action: '+action.type});if(g.state.timeline.length>100)g.state.timeline.shift();
       g.state.enemyEffects=[];
       {const p=g.state.player;p.mana=Math.min(p.maxMana,Math.round((p.mana+recovery(p))*10)/10);}
       g.state.turn++;

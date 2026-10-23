@@ -1,3 +1,5 @@
+import {recordDiscovery} from './quality.js';
+import {townAction,townBounties,placeCitizens} from './town.js';
 import {createStory,princeHere,nearPrince,princeAction,escortCanLeave,carryPrince,actPrince,princeEnemyTarget,finishStory} from './story.js';
 import {isKingdom} from './city.js';
 import {addWoodland,woodlandAction} from './woodland.js';
@@ -17,16 +19,16 @@ import { ENCOUNTERS, treasure } from './encounters.js';
 const fields=['baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
-    super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.story=createStory();this.quests.set(this.story.id,this.story);
+    super(seed);this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
     Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);
-    Object.assign(this.state,{log:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
+    Object.assign(this.state,{log:[],timeline:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
     this.message('Trailwarden Iona stands west of the campfire. Speak to her for an optional expedition goal.');
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
     this.message('Three throwing stones are in your satchel. Use the stone quick slot or T to throw. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Terrain and explored maps persist. Ordinary enemies return. Accepted quests and their progress stay with you for this run.');
   }
-  refresh(){super.refresh();this.state.companion=princeHere(this);}
+  refresh(){super.refresh();this.state.companion=princeHere(this);recordDiscovery(this);}
   princeHere(){return princeHere(this);}
   atPrince(){return nearPrince(this);}
   actCompanion(){actPrince(this);}
@@ -64,6 +66,7 @@ export class Expedition extends Game {
       addWoodland(this,data,rx,ry);
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
+    placeCitizens(this,data);
     this.activate({id,kind:'world',rx,ry,depth:0},data,spawn);
     const info=BIOMES[data.biome];this.message(`${info.name} (${rx}, ${ry}) · ${home?'safe camp':`recommended level ${info.recommended}${this.state.player.level<info.recommended?' — DANGER: you are underleveled!':''}`}.`);
   }
@@ -83,12 +86,13 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
+  activeEncounter(){const p=this.state.player;return this.state.encounters?.find(e=>e.type!=='villager'&&!(e.type==='woodland'&&e.kind!=='milestone')&&e.x===p.x&&e.y===p.y)??this.state.encounters?.find(e=>(e.type==='villager'||e.type==='citizen'||e.type==='innkeeper'||e.type==='woodland'&&e.kind!=='milestone')&&Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1);}
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(['innRest','acceptBounty','claimBounty'].includes(a.type))return townAction(this,a);
     if(['acceptEscort','princeStay','princeFollow','healPrince'].includes(a.type))return princeAction(this,a);
     if(['descend','ascend'].includes(a.type)&&!escortCanLeave(this))return false;
     if(a.type==='cook'){
@@ -203,6 +207,7 @@ export class Expedition extends Game {
   finishTurn(){const p=this.state.player;if(this.state.status!=='playing')return;finishStory(this);if(p.rationTurns>0){p.hp=Math.min(p.maxHp,p.hp+healAmount(p,3));p.rationTurns--;}if(p.smokeTurns>0)p.smokeTurns--;if(p.corrosion>0)p.corrosion--;}
   awardExperience(amount){const p=this.state.player;p.xp+=amount;while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=3;p.hp=Math.min(p.maxHp,p.hp+4);if(p.level%2===0)p.attack++;if(p.level%4===0)p.defense++;this.message(`Level ${p.level}. You grow a little stronger.`);}}
   kill(enemy){
+    this.killCounts[enemy.kind]=(this.killCounts[enemy.kind]??0)+1;const entry=this.creatureIndex.get(enemy.kind);if(entry)entry.kills++;
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
     const loot=ordinaryDrop(this.rng,this.state.danger,enemy.kind,Boolean(enemy.eventId));if(loot){this.state.items.push({...loot,x:enemy.x,y:enemy.y});if(['rawMeat','rawRatMeat'].includes(loot.kind))this.message(`${loot.name} dropped. Collect it from the ground.`);}
     if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:'Beast hoard',reward:treasure(this.rng,this.state.danger+2,'den'),x:enemy.x,y:enemy.y});}}

@@ -1,3 +1,4 @@
+import {cookAll} from '../../src/game/quality.js';
 import {test,expect} from '@playwright/test';
 import {expeditionDriver} from './expedition-driver.js';
 for(const touch of [false,true])test.describe(touch?'phone provisions':'desktop provisions',()=>{
@@ -13,11 +14,11 @@ for(const touch of [false,true])test.describe(touch?'phone provisions':'desktop 
  });
  test('hunts frogs, collects raw meat, cooks at camp and eats from the satchel',async({page})=>{
   const d=await expeditionDriver(page,5,touch),click=async loc=>touch?loc.tap():loc.click();
-  await d.east();const frogs=d.game.state.enemies.filter(e=>e.questId);await d.hunt(frogs[0]);await d.hunt(frogs[1]);
+  await d.east();const frogs=d.game.state.enemies.filter(e=>e.questId);for(const prey of [...frogs,...d.game.state.enemies.filter(e=>e.kind==='rabbit')]){await d.hunt(prey);if(d.game.state.items.some(i=>i.kind==='rawMeat'))break;}
   const meat=d.game.state.items.find(i=>i.kind==='rawMeat');expect(meat).toBeTruthy();await d.walk(meat);await d.send({type:'pickup'});
   await d.walk({x:0,y:15});await d.send({type:'move',dx:-1,dy:0});await d.walk({x:20,y:16});
   await click(page.getByRole('button',{name:'Cook',exact:true}));await expect(page.getByText('Raw meat: 1',{exact:true})).toBeVisible();
-  await click(page.getByRole('button',{name:'Cook one meat',exact:true}));d.game.action({type:'cook'});await expect(page.getByText('Raw meat: 0',{exact:true})).toBeVisible();await expect(page.locator('#cooking-result')).toContainText('Cooked one');
+  await click(page.getByRole('button',{name:'Cook All',exact:true}));cookAll(d.game);await expect(page.getByText('Raw meat: 0',{exact:true})).toBeVisible();await expect(page.locator('#cooking-result')).toContainText('Cooked 1 piece');
   await click(page.getByRole('button',{name:'Return',exact:true}));await click(page.getByRole('button',{name:'Open satchel [I]',exact:true}));
   const food=page.getByRole('button',{name:'Select Campfire meat, 1 by 1',exact:true});await expect(food).toBeVisible();await expect(food.locator('.bag-item-icon')).toHaveText('🍖');
   await click(food);const index=d.game.state.player.inventory.findIndex(i=>i.kind==='cookedMeat'),old=d.game.state.player.hp;expect(old).toBeLessThan(d.game.state.player.maxHp);

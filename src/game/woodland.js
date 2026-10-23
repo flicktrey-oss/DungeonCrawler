@@ -5,7 +5,7 @@ import {potion} from './items.js';
 import {addItem} from './inventory.js';
 export const WOODLAND={
  herbalist:{name:'Nessa the Herbalist',description:'A traveling herbalist offers one tonic for 6 gold, or in exchange for one hunting trophy.'},
- traveler:{name:'A Wounded Traveler',description:'A stranded traveler needs an Ember tonic. Help them for 8 gold and their gratitude.'},
+ traveler:{name:'A Wounded Traveler',description:'A stranded traveler needs aid: give an Ember tonic for 8 gold, or a cooked meal for 4 gold. They will return to Northwatch.'},
  milestone:{name:'Forgotten Milestone',description:'Weathered carvings may point toward a forgotten crypt. Read them to learn a region, without revealing its terrain.'}
 };
 export function addWoodland(g,data,rx,ry){
@@ -39,8 +39,9 @@ export function woodlandAction(g,a){
  if(!addItem({inventory},potion())){g.message('Make room for the tonic first. Nothing was spent.');return false;}
  p.inventory=inventory;if(a.choice==='gold')p.gold-=6;g.message('Nessa gives you an Ember tonic. Her traveling stock is now spent.');
  }else if(event.kind==='traveler'){
- const index=p.inventory.findIndex(i=>i.kind==='potion');if(index<0){g.message('You need an Ember tonic to help the traveler.');return false;}
- p.inventory.splice(index,1);p.gold+=8;g.message('The traveler drinks your tonic and thanks you with 8 gold.');
+ const kind=a.choice==='meal'?'cookedMeat':'potion',index=p.inventory.findIndex(i=>i.kind===kind);if(index<0){g.message('You need '+(kind==='potion'?'an Ember tonic':'a cooked meal')+' to help the traveler.');return false;}
+ if(kind==='cookedMeat'){if(--p.inventory[index].quantity===0)p.inventory.splice(index,1);}else p.inventory.splice(index,1);p.gold+=kind==='potion'?8:4;
+ g.rescued.push({name:['Elowen the Wayfarer','Orrin the Miller','Mira the Courier'][g.rescued.length%3],region:{rx:g.location.rx,ry:g.location.ry}});g.message('The traveler recovers and thanks you with '+(kind==='potion'?8:4)+' gold. You will meet them again in Northwatch.');
  }else{
  if(event.clue)g.message('Milestone: a crypt lies in region ('+event.clue.rx+', '+event.clue.ry+'). Explore there to find its entrance.');
  else g.message('The milestone reads: “Shelter waits below. Seek the old stone doorways.”');

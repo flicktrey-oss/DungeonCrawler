@@ -1,3 +1,7 @@
+import {assignQuick,quickItem,quickAction,cookAll} from './game/quality.js';
+import {itemEmoji} from './item-icons.js';
+import {atTown,atInn} from './game/town.js';
+import {creatureTraits} from './game/enemy-actions.js';
 import {princeProgress} from './game/story.js';
 import { ClickTravel } from './click-travel.js';
 import { mountQuestJournal } from './quest-ui.js';
@@ -53,14 +57,14 @@ function modal(title, body, buttons) {
   $('overlay').querySelector('article').focus({preventScroll:true});
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls();if(model)renderMinimap(); }
-function start() { travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(); closePanel(); render(); }
+function start(seed) {if(!Number.isInteger(seed))seed=Date.now(); travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(seed); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Biomes vary by run; mountains can border camp. At least one neighboring forest offers a starting foothold. Read trail warnings before crossing. Start with rats and beetles in those woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
   <p>Each wilderness map rolls one or two discoveries: crypt, creature den, villager quest, caravan, shrine, or cache. <b>Terrain, crypt layouts and explored maps persist for this run; ordinary enemies return.</b> Accepted quests, their givers and progress persist across travel, including after completion. Unaccepted regions refresh their discoveries and loose loot. Camp storage and merchant stock stay stable. Forests also have a 50% chance of an herbalist, wounded traveler or milestone with a crypt clue. Previously explored terrain remains mapped. Crypt entrances stay fixed; new encounters must be discovered again.</p>
   <p>Desktop: click a visible empty tile to walk; click an item to walk and pick it up, or a friendly site to approach and interact. Each step and pickup is a turn. Travel stops for danger, new enemies, attacks and region changes. Press Escape or give manual input to cancel. Click creatures to inspect; Shift-click friendly people to inspect. WASD/arrows move/bump attack; hold to keep taking turns (release to stop). Touch arrows move once per tap. E / Collect interacts, loots, trades, or opens camp storage. Enter enters crypts; Q on upward stairs retreats. M casts Mind Vision (25 Mana); G casts Detect Creatures at level 3 (25 Mana, two turns on the local minimap). Mana recovers 0.3 each completed turn; H drinks a tonic; period waits. I opens the 10×10 satchel; its Equipment tab shows your character and equipped gear; Esc pauses. Every valid action takes one turn, with arrival grace on transitions. Your action dock sits at the bottom; open Map for local/world views, Journal for all accepted quests, or Chronicle for event history.</p>
   <p>Ordinary defense has diminishing returns above 3. Trail Boots reduce detection; Iron Bands protect against special attacks. Amber boundary marks warn of territorial guardians; retreat outside their territory to disengage. Inventory: potion 1×1, sword 7×2, armor 4×4, amulet 2×2. Select an item and place or rotate it; arrangement is free. Using/equipping/dropping costs one turn. Equipped items remain highlighted in the satchel and still take space. Unequip before selling, dropping or storing. Rats and rabbits drop meat 50% of the time; frogs drop it 35% of the time. Otherwise they drop nothing. Cook meat at the F campfire just south of the tent; eat it from the satchel for 10 HP. Full-bag failures preserve items and gold. Mara buys carried trophies/equipment.</p>
-  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. Prince Aldren waits southeast of the tent. Speak to him whenever you wish to begin the main story: escort him to Northwatch (0, -6), then reach its northern keep together. Follow / Stay and tonic aid are available in his dialogue. Stay means you must return for him; a downed prince needs a tonic. There is no departure timer. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
+  <p>Use the Reach and Throw quick slots, or R and T. An equipped buckler passively blocks 35% of incoming attacks; no defensive action is needed. Choose highlighted targets; Cancel/Escape is free. Pink tiles warn of a frog tongue lash; amber crosses mark sap spit; orange lanes mark a ram charge. Move off marked tiles before the next enemy phase. Click a creature to read its attack. Strength is the attack stat. Click or tap a visible character to inspect their portrait, race and combat stats for free. Idle time never advances turns. Holding touch controls does not repeat. Death, refreshing, or closing the page ends the run. Speak to Trailwarden Iona west of camp for an expedition goal. Accepted quests persist across travel, have no timers, and are listed in the Journal. Prince Aldren waits southeast of the tent. Speak to him whenever you wish to begin the main story: escort him to Northwatch (0, -6), then reach its northern keep together. Follow / Stay and tonic aid are available in his dialogue. Stay means you must return for him; a downed prince needs a tonic. There is no departure timer. Select an item in the Satchel to assign it to quick slots 1–3. Shortcuts use/equip items; equipped gear toggles off. Raw meat and trophies open their description. Cook All processes one turn per piece. Open Journal for the creature index. Northwatch has an inn and bounty board. No saving, crafting or building.</p>`,[[model?'Resume':'Back',()=>model?closePanel():menu()]]);
 }
 function menu() {
   paused = true;
@@ -70,8 +74,8 @@ function campfire(){
  if(!model?.atCampfire())return;paused=true;panel='campfire';
  const count=kind=>model.state.player.inventory.filter(i=>i.kind===kind).reduce((n,i)=>n+i.quantity,0),raw=count('rawMeat'),rat=count('rawRatMeat');
  const cook=kind=>{model.action({type:'cook',kind});render();campfire();$('cooking-result').textContent=model.state.log.at(-1);};
- modal('Lantern Camp fire',`<p>Cook raw meat into a 10-health meal, or raw rat meat into a 5-health meal. Each piece takes one turn. Each food type stacks to nine per cell.</p><p>Raw meat: ${raw}</p><p>Raw rat meat: ${rat}</p><p id="cooking-result" role="status"></p>`,[['Cook one meat',()=>cook('rawMeat')],['Cook rat meat',()=>cook('rawRatMeat')],['Return',closePanel]]);
- const buttons=$('overlay').querySelectorAll('.buttons button');buttons[0].disabled=raw===0;buttons[1].disabled=rat===0;
+ modal('Lantern Camp fire',`<p>Cook raw meat into a 10-health meal, or raw rat meat into a 5-health meal. Each piece takes one turn. Each food type stacks to nine per cell.</p><p>Raw meat: ${raw}</p><p>Raw rat meat: ${rat}</p><p id="cooking-result" role="status"></p>`,[['Cook one meat',()=>cook('rawMeat')],['Cook rat meat',()=>cook('rawRatMeat')],['Cook All',()=>{cookAll(model);render();campfire();$('cooking-result').textContent=model.state.log.at(-1);}],['Return',closePanel]]);
+ const buttons=$('overlay').querySelectorAll('.buttons button');buttons[0].disabled=raw===0;buttons[1].disabled=rat===0;buttons[2].disabled=raw+rat===0;
 }
 function storage() {
   if (!model?.atCamp()) return;
@@ -115,7 +119,7 @@ function bag(view='satchel',slot='weapon') {
   modal('Your equipment',`<div class="equipment-tabs" role="tablist" aria-label="Character inventory view">
     <button role="tab" id="satchel-tab" aria-selected="${view==='satchel'}" aria-controls="character-panel">Satchel</button>
     <button role="tab" id="equipment-tab" aria-selected="${view==='equipment'}" aria-controls="character-panel">Equipment</button>
-    </div><p class="hint">Viewing and switching tabs are free. Equipping and unequipping cost one turn. Unequipped items need room in your satchel.</p>
+    </div><p class="hint">Viewing and switching tabs are free. Equipping and unequipping cost one turn. Equipped items keep occupying satchel space. Select an item to compare gear or assign quick slots 1–3.</p>
     <div id="character-panel" role="tabpanel" aria-labelledby="${view==='satchel'?'satchel-tab':'equipment-tab'}"><div id="bag-editor"></div></div><p id="bag-result" role="status"></p>`,buttons);
   const switchView=next=>bag(next,slot);
   $('satchel-tab').onclick=()=>switchView('satchel');$('equipment-tab').onclick=()=>switchView('equipment');
@@ -134,7 +138,7 @@ function encounterDialog() {
     const buttons=[['Return',closePanel]];
     if(!event.used){
       if(event.kind==='herbalist')buttons.unshift(['Buy tonic · 6 gold',()=>perform({type:'woodland',choice:'gold'})],['Exchange hunting trophy',()=>perform({type:'woodland',choice:'trophy'})]);
-      else buttons.unshift([event.kind==='traveler'?'Give Ember tonic':'Read the milestone',()=>perform({type:'woodland'})]);
+      else if(event.kind==='traveler')buttons.unshift(['Give Ember tonic',()=>perform({type:'woodland'})],['Give cooked meal',()=>perform({type:'woodland',choice:'meal'})]);else buttons.unshift(['Read the milestone',()=>perform({type:'woodland'})]);
     }
     const result=event.kind==='milestone'&&event.used?(event.clue?'A crypt lies in region ('+event.clue.rx+', '+event.clue.ry+'). Its entrance must still be discovered.':'Seek old stone doorways for shelter below.'):event.used?'This encounter is resolved for the run.':event.description;
     modal(event.name,`<p>${escape(result)}</p><p class="hint">Browsing is free. Each successful exchange, aid or reading takes one turn. You may leave and return.</p><p id="encounter-result" role="status"></p>`,buttons);
@@ -164,7 +168,15 @@ function princeDialog(){
  const introduction=q.complete?'Aldren has rejoined his court. The road remains open to you.':q.accepted?'“Lead on. I will stay close and defend myself.”':'“My convoy was ambushed. I found shelter here, but my home is beyond the marshes. Will you guide me to Northwatch?”';
  modal('Prince Aldren',`<p>${introduction}</p><p id="prince-status">${escape(princeProgress(model))}</p><p>Northwatch (0, -6): six regions north. Reach the northern keep together. Prepare locally as long as you wish; there is no timer.</p><p class="hint">Sword: 5 ATK · Mail: 2 DEF. Commands and aid take one turn. Stay leaves Aldren here until you return. Crossings require him within two tiles. A downed prince needs a tonic; he does not die.</p><p id="prince-result" role="status"></p>`,buttons);
 }
-function interact() { if(!model||paused)return;if(model.atCampfire())campfire();else if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else if(model.atPrince())princeDialog();else act({type:'pickup'}); }
+function townDialog(){if(!model||!model.state.city)return;paused=true;panel='town';const s=model.state,p=s.player,inn=atInn(model),citizen=model.activeEncounter();
+ if(citizen?.type==='citizen'){modal(citizen.name,`<p>${escape(citizen.description)}</p>`,[['Return',closePanel]]);return;}
+ if(inn){modal('The Lantern & Crown Inn',`<p>A warm bed and supper: 6 gold for full health and Mana.</p><p>Your gold: ${p.gold}</p><p class="hint">Rumor: the marsh crossings shelter frogs, while wolves roam the highlands. Read the trail warnings before hunting.</p>`,[['Rest · 6 gold',()=>{model.action({type:'innRest'});render();townDialog();}],['Return',closePanel]]);$('overlay').querySelector('.buttons button').disabled=p.gold<6||p.hp===p.maxHp&&p.mana===p.maxMana;return;}
+ modal('Northwatch bounty board','<p>Choose optional hunts. Kills count after acceptance. Return here for rewards; no deadline.</p><div id="bounty-offers"></div><p id="town-result" role="status"></p>',[['Return',closePanel]]);model.bounties.forEach((b,id)=>{const button=document.createElement('button');button.className='item';const count=Math.min(b.count,Math.max(0,(model.killCounts[b.kind]??0)-b.start));button.textContent=b.claimed?'Completed: '+b.title:!b.accepted?'Accept: '+b.title:`${b.title} · ${count}/${b.count} · Claim reward`;const reward=document.createElement('small');reward.className='item-description';reward.textContent='Reward: modified '+(['boots','ring','armor'][id])+' and 8 gold';button.append(reward);button.disabled=b.claimed||b.accepted&&count<b.count;button.onclick=()=>{model.action({type:b.accepted?'claimBounty':'acceptBounty',id});render();townDialog();$('town-result').textContent=model.state.log.at(-1);};$('bounty-offers').append(button);});
+}
+function creatureBook(){if(!model)return;paused=true;panel='index';modal('Creature index','<p>Only creatures seen this run are recorded. Detection alone does not add entries.</p><div id="creature-entries"></div>',[['Return',closePanel]]);for(const entry of model.creatureIndex.values()){const section=document.createElement('section'),h=document.createElement('h3'),p=document.createElement('p'),img=document.createElement('img');h.textContent=entry.name;img.src=scene.portrait(entry.kind);img.alt=entry.name;img.className='inspection-portrait';const drop=entry.kind==='rat'?'50% raw rat meat':entry.kind==='rabbit'?'50% raw meat':['frog','pondFrog'].includes(entry.kind)?'35% raw meat':'Coins, trophies or occasional supplies';p.textContent=`${creatureTraits[entry.kind]??'Adjacent melee attacks.'} Habitat: ${entry.biomes.map(b=>BIOMES[b]?.name??b).join(', ')}. Defeated: ${entry.kills}. Loot: ${drop}.`;section.append(h,img,p);$('creature-entries').append(section);}}
+function activateQuick(slot){if(!model||paused||targetMode)return;const a=quickAction(model,slot);if(!a)return;if(a.type==='targetThrow')beginTargeting('throw',a.index);else if(a.type==='inspectItem'){const item=model.state.player.inventory[a.index];paused=true;panel='item';modal(item.name,`<p>${escape(item.description)}</p>`,[['Return',closePanel]]);}else act(a);}
+function renderQuick(){const ready=model&&!paused&&!targetMode&&model.state.status==='playing';for(let n=0;n<3;n++){const b=$('custom-slot-'+n),item=model&&quickItem(model,n);b.textContent=item?itemEmoji(item):'+';const key=document.createElement('kbd');key.textContent=n+1;b.append(key);b.setAttribute('aria-label',`Quick slot ${n+1}: ${item?.name??'Empty'}`);b.classList.toggle('equipped',Boolean(item&&equippedSlot(model.state.player,item)));b.title=item?`${item.name} [${n+1}] · ${quickAction(model,n)?.type??'Unavailable'}`:'Assign any item from the Satchel';b.disabled=!ready||!item;}}
+function interact() { if(!model||paused)return;if(model.state.city&&(atInn(model)||atTown(model,'N')||model.activeEncounter()?.type==='citizen'))townDialog();else if(model.atCampfire())campfire();else if(model.atCamp())storage();else if(model.atMerchant())merchant();else if(['villager','shrine','woodland'].includes(model.activeEncounter()?.type))encounterDialog();else if(model.atPrince())princeDialog();else act({type:'pickup'}); }
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
@@ -172,7 +184,7 @@ function renderMinimap() {
   else drawMinimap($('minimap'), model.state, loc);
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
   $('camp-bearing').textContent = campBearing(loc);
-  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · Pink: detected creatures · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
+  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · Purple: discovered entrance · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · I Inn · B Bounties · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · Pink: detected creatures · M Merchant · > Crypt · ? People · ! Den · S Shrine · K Cache';
   const detect=$('detect-creatures'),p=model.state.player;detect.disabled=paused||p.level<3||p.mana<25||model.state.status!=='playing'||Boolean(targetMode);detect.textContent=p.level<3?'Detect Creatures · Lv 3':'Detect Creatures · 25 MP [G]';detect.classList.toggle('hidden',mapView!=='local');
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
   for (const tab of document.querySelectorAll('[data-map-view]')) {
@@ -222,7 +234,7 @@ function render() {
   if(s.status==='playing'&&model.story.complete&&!model.story.noticeShown){model.story.noticeShown=true;paused=true;panel='chapter';modal('Chapter one complete', '<p>Beyond the marsh roads, Northwatch opens its gates. Aldren reaches the northern keep and rejoins his court.</p><p>You receive 30 gold and a full recovery. Aldren remains in the city. Your expedition continues; future chapters will build on this arrival.</p>', [['Continue exploring',closePanel]]);}
   if (s.status === 'dead') {
     paused = true; panel = 'dead';
-    modal('Your lantern goes dark.', `<p>Your expedition ends here. The camp and its supplies are lost.</p><p>Level ${p.level} · ${s.regionsDiscovered} regions · ${s.cryptsCleared} crypts cleared · ${p.gold} gold</p><p class="hint">Seed: ${s.seed}</p>`, [['New Run', start], ['Title', () => { model = null; menu(); }]]);
+    modal('Your lantern goes dark.', `<p>Your expedition ends here. The camp and its supplies are lost.</p><p>Level ${p.level} · ${s.regionsDiscovered} regions · ${s.cryptsCleared} crypts cleared · ${p.gold} gold</p><p>Last hit: ${escape(s.deathCause??'Your expedition ended.')}</p><details><summary>Turn-by-turn recap</summary>${(s.timeline??[]).slice(-30).map(e=>`<p>Turn ${e.turn}: ${escape(e.text)}</p>`).join('')}</details><p class="hint">Seed: ${s.seed}</p>`, [['New Run', start],['Retry this seed',()=>start(s.seed)], ['Title', () => { model = null; menu(); }]]);
   }
 }
 function renderInspection(){
@@ -231,7 +243,7 @@ function renderInspection(){
   $('character-inspector').classList.toggle('hidden',!inspected);
   if(!inspected)return;
   const d=characterDetails(model,inspected);
-  $('inspection-details').innerHTML=`<h3>${escape(d.name)}</h3><img class="inspection-portrait" alt="${escape(d.name)} portrait" src="${scene.portrait(d.kind)}"><p class="inspection-race">${escape(d.race)}</p>
+  $('inspection-details').innerHTML=`<h3>${escape(d.name)}</h3><img class="inspection-portrait" alt="${escape(d.name)} portrait" src="${scene.portrait(d.kind,d.name)}"><p class="inspection-race">${escape(d.race)}</p>
     <dl><dt>Strength</dt><dd>${d.strength??'—'}</dd><dt>Defense</dt><dd>${d.defense??'—'}</dd><dt>Health</dt><dd>${d.hp===null?'Noncombatant':`${d.hp} / ${d.maxHp}`}</dd></dl>
     ${d.ability?`<p class="creature-trait">${escape(d.ability)}</p>`:''}${d.warning?`<p class="creature-warning">${escape(d.warning)}</p>`:''}
     ${d.hp===null?'<p class="hint">Friendly · use Interact nearby.</p>':`<div class="bar inspection-health"><div style="width:${Math.max(0,d.hp/d.maxHp*100)}%"></div></div>`}`;
@@ -293,6 +305,7 @@ function act(action,automatic=false) {
  render();return completed;
 }
 function syncTouchControls() {
+  renderQuick();
   const ready = model && !paused && model.state.status === 'playing';
   const s = model?.state, p = s?.player;
   for (const button of document.querySelectorAll('#touch-controls button')) {
@@ -305,7 +318,7 @@ function syncTouchControls() {
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
       if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
-      if (control === 'collect') { const label = model.atCampfire()?'Cook':model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':model.atPrince()?'Speak':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = model.atPrince() || model.atCampfire() || model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
+      if (control === 'collect') { const townReady=atInn(model)||atTown(model,'N')||model.activeEncounter()?.type==='citizen'; const label = townReady?'Visit':model.atCampfire()?'Cook':model.atCamp() ? 'Camp chest' : model.atMerchant() ? 'Trade' : ['villager','shrine','woodland'].includes(model.activeEncounter()?.type)?'Interact':model.atPrince()?'Speak':'Collect'; button.querySelector('.action-label').textContent=label; button.setAttribute('aria-label',label); allowed = townReady || model.atPrince() || model.atCampfire() || model.atCamp() || model.atMerchant() || ['villager','shrine','woodland'].includes(model.activeEncounter()?.type) || s.items.some(i => i.x === p.x && i.y === p.y); }
     }
     button.disabled = !allowed||Boolean(targetMode);
     if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);
@@ -344,6 +357,7 @@ for(const id of ['minimap-widget','quest-panel','chronicle-panel'])$(id).addEven
   if(id==='quest-panel')$('minimap-widget').open=false;
 });
 $('detect-creatures').onclick=()=>act({type:'detectCreatures'});
+$('creature-index').onclick=creatureBook;for(let n=0;n<3;n++)$('custom-slot-'+n).onclick=()=>activateQuick(n);
 $('help').onclick = help;
 $('manage-bag').onclick=()=>{if(!paused)bag();};
 $('open-equipment').onclick=()=>{if(!paused)bag('equipment','amulet');};
@@ -373,6 +387,7 @@ window.addEventListener('keydown', event => {
   if(!paused&&k==='r'){beginTargeting('reach');return;}
   if(!paused&&k==='t'){beginTargeting('throw');return;}
   if(k==='e'&&!paused){interact();return;}
+  if(['1','2','3'].includes(k)){activateQuick(Number(k)-1);return;}
   if (k === '.') act({ type: 'wait' });
   else if (k === 'h') act({ type: 'potion' }); else if (k === 'm') act({ type: 'mindVision' }); else if(k==='g')act({type:'detectCreatures'});
   else if (k === 'enter' || k === '>') act({ type: 'descend' }); else if (k === 'q' || k === '<') act({ type: 'ascend' });

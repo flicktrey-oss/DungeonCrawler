@@ -24,5 +24,5 @@ export async function expeditionDriver(page,seed=1,touch=false){
   async function walk(target,stopWhen=()=>false){for(let i=0;i<250;i++){if(stopWhen())return;const p=game.state.player;if(p.x===target.x&&p.y===target.y)return;await care();await send(firstStep(target));}throw Error('Route did not finish');}
   async function east(){for(let i=0;i<20;i++)await send({type:'move',dx:1,dy:0});}
   async function hunt(enemy){for(let i=0;i<100&&enemy.hp>0;i++){await care();await send(firstStep(enemy));}if(enemy.hp>0)throw Error('Hunt did not finish');}
-  return {game,send,walk,east,hunt,care};
+  return {game,send,walk,east,hunt,care,firstStep};
 }

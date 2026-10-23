@@ -1,3 +1,4 @@
+import {drawPerson} from './people.js';
 import { drawDangerPockets } from './danger-pockets.js';
 import { drawAdventurer } from './adventurer.js';
 import Phaser from 'phaser';
@@ -40,6 +41,7 @@ export class DungeonScene extends Phaser.Scene {
     if(s.location?.kind==='crypt'){const u=s.upstairs; if(s.explored.has(key(u.x,u.y))){g.lineStyle(2,0x86d6c0,s.visible.has(key(u.x,u.y))?1:.3);g.strokeTriangle(u.x*T+6,u.y*T+17,u.x*T+18,u.y*T+17,u.x*T+12,u.y*T+5);}}
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
     for(const e of s.encounters??[])if(e.type==='villager'&&e.quest&&s.visible.has(key(e.x,e.y))){g.fillStyle(e.quest.camp?0xc8ab63:({hunt:0x8b9d6b,recovery:0xba8ca6,ward:0x8e9cd0})[e.quest.kind]??0x8fa682);g.fillRect(e.x*T+8,e.y*T+12,9,8);}
+    for(let y=0;y<s.map.length;y++)for(let x=0;x<s.map[y].length;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
     drawDangerPockets(g,s,T);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);
@@ -63,6 +65,7 @@ export class DungeonScene extends Phaser.Scene {
     if(t==='#'){g.fillStyle(0x3b4a5e,a);g.fillRect(x,y,24,24);g.fillStyle(0x91a0af,a);g.fillRect(x+1,y+1,22,5);g.fillStyle(0x566b81,a);g.fillRect(x+2,y+9,20,11);if((tx+ty)%4===0){g.fillStyle(0xc4a76b,a);g.fillRect(x+9,y+9,6,8);}}
     if(t==='O'){g.fillStyle(0x654a39,a);g.fillRect(x+3,y+1,18,22);g.fillStyle(0xd2ac69,a);g.fillRect(x+5,y+3,3,18);g.fillRect(x+16,y+3,3,18);}
     if(t==='J'){g.fillStyle(0x9e4c68,a);g.fillRect(x+3,y+1,18,22);g.fillStyle(0xe7c576,a);g.fillRect(x+6,y+2,12,6);g.fillRect(x+5,y+11,14,9);}
+    if(t==='I'||t==='N'){g.fillStyle(0x785439,a);g.fillRect(x+4,y+6,16,16);g.fillStyle(0xf0d49c,a);g.fillRect(x+6,y+8,12,10);g.fillStyle(0x574f44,a);if(t==='I'){g.fillRect(x+8,y+12,9,3);g.fillRect(x+8,y+10,2,7);}else{g.fillRect(x+8,y+10,8,2);g.fillRect(x+8,y+14,6,2);}}
     if(t==='Z'){g.fillStyle(0xc0c8c9,a);g.fillEllipse(x+12,y+13,22,18);g.fillStyle(0x598aab,a);g.fillEllipse(x+12,y+12,17,12);g.fillStyle(0xe0d5b2,a);g.fillRect(x+10,y+4,4,12);}
   }
   drawEnemyWarnings(s){
@@ -100,7 +103,7 @@ export class DungeonScene extends Phaser.Scene {
     if(t==='F'){g.fillStyle(0x756e60,a);g.fillEllipse(x+12,y+19,22,8);g.fillStyle(0x714b35,a);g.fillRect(x+5,y+16,14,4);g.fillStyle(0xe77c40,a);g.fillTriangle(x+5,y+18,x+12,y+3,x+19,y+18);g.fillStyle(0xffd88a,a);g.fillTriangle(x+9,y+18,x+13,y+10,x+16,y+18);}
     if(t==='C'){g.fillStyle(0xad8050,a);g.fillTriangle(x+1,y+22,x+11,y+2,x+21,y+22);g.fillStyle(0x3a3128,a);g.fillTriangle(x+7,y+22,x+11,y+9,x+16,y+22);g.fillStyle(0xffd180,a);g.fillRect(x+20,y+15,3,6);g.fillStyle(0xf18f53,a);g.fillRect(x+19,y+19,5,3);}
   }
-  scenery(d,a){const g=this.paint,x=d.x*T,y=d.y*T;g.fillStyle(d.type==='flowers'?0xbea273:d.type==='reeds'?0x9ca569:d.type==='log'?0x796047:0xa3a699,a);if(d.type==='log'){g.fillRect(x+2,y+14,20,5);g.fillStyle(0xb89a69,a);g.fillRect(x+2,y+14,3,5);}else if(d.type==='grave'){g.fillRect(x+9,y+7,6,13);g.fillRect(x+5,y+11,14,3);}else{g.fillRect(x+5,y+11,3,3);g.fillRect(x+14,y+17,4,2);g.fillRect(x+11,y+5,2,4);}}
+  scenery(d,a){const g=this.paint,x=d.x*T,y=d.y*T;if(d.type==='tracks'){g.fillStyle(0xcab78b,a*.7);for(const[dx,dy]of [[6,6],[12,11],[7,17]]){g.fillEllipse(x+dx,y+dy,4,6);g.fillRect(x+dx-2,y+dy-5,1,2);g.fillRect(x+dx+1,y+dy-5,1,2);}return;}g.fillStyle(d.type==='flowers'?0xbea273:d.type==='reeds'?0x9ca569:d.type==='log'?0x796047:0xa3a699,a);if(d.type==='log'){g.fillRect(x+2,y+14,20,5);g.fillStyle(0xb89a69,a);g.fillRect(x+2,y+14,3,5);}else if(d.type==='grave'){g.fillRect(x+9,y+7,6,13);g.fillRect(x+5,y+11,14,3);}else{g.fillRect(x+5,y+11,3,3);g.fillRect(x+14,y+17,4,2);g.fillRect(x+11,y+5,2,4);}}
   item(i){const g=this.paint,x=i.x*T,y=i.y*T;
     if(['rawMeat','rawRatMeat','cookedMeat','ratMeat'].includes(i.kind)){
       const raw=i.kind.startsWith('raw'),rat=['rawRatMeat','ratMeat'].includes(i.kind);
@@ -112,12 +115,12 @@ export class DungeonScene extends Phaser.Scene {
       g.fillStyle(0xffefcf);g.fillRect(x+17,y+13,3,3);return;
     }
     const colors={potion:0xf36a83,gold:0xf8cc68,weapon:0xd2e4e8,armor:0x829bb4,chest:0xb98043,amulet:0xb2e7cb,trophy:0xc7ba93,offhand:0xc5a678,stone:0xabb9b0};g.fillStyle(colors[i.kind]??0xb7c5dc);if(i.kind==='potion'){g.fillRect(x+9,y+9,7,10);g.fillStyle(0xe0e9d9);g.fillRect(x+11,y+5,3,5);}else if(i.kind==='weapon'){g.fillRect(x+11,y+4,3,15);g.fillRect(x+7,y+15,11,3);}else{g.fillRect(x+6,y+9,13,10);g.fillStyle(0xffe2a1);g.fillRect(x+11,y+11,3,5);}}
-  portrait(kind){
+  portrait(kind,name='Traveler'){
     const player=this.model?.state?.player??this.gameModel?.state?.player;
-    const textureKey=`portrait-${kind}-${kind==='player'?JSON.stringify(['weapon','armor','offhand','amulet','boots','ring1','ring2'].map(slot=>player?.[slot]?.name)):''}`;
+    const textureKey=`portrait-${kind}-${name}-${kind==='player'?JSON.stringify(['weapon','armor','offhand','amulet','boots','ring1','ring2'].map(slot=>player?.[slot]?.name)):''}`;
     if(!this.textures.exists(textureKey)){
       const brush=this.make.graphics({x:0,y:0},false);
-      if(kind==='merchant'||kind==='villager')this.outdoorTile(kind==='merchant'?'M':'V',0,0,1,'forest',0,0,brush);
+      if(kind==='merchant'||kind==='villager')drawPerson(brush,0,0,name,kind);
       else this.actor({...player,x:0,y:0},kind,brush);
       brush.generateTexture(textureKey,T,T);brush.destroy();
     }

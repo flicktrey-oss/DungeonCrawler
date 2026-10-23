@@ -16,6 +16,7 @@ export function mountQuestJournal(container,game,onTrack=()=>{},onPrince=()=>{})
  if(!q.claimed){const button=document.createElement('button');button.textContent=game.trackedQuest===q.id?'Stop tracking':'Track quest';button.setAttribute('aria-label',button.textContent+' '+q.title);button.onclick=()=>{game.trackedQuest=game.trackedQuest===q.id?null:q.id;mountQuestJournal(container,game,onTrack,onPrince);onTrack();};section.append(button);}
  container.append(section);
  }
+ for(const b of game.bounties??[]){if(!b.accepted)continue;const section=document.createElement('section'),h=document.createElement('h3'),p=document.createElement('p');h.textContent='Bounty · '+b.title;p.textContent=b.claimed?'Reward claimed.':`${Math.min(b.count,Math.max(0,(game.killCounts[b.kind]??0)-b.start))}/${b.count} defeated. Return to the board in Northwatch (0, -6).`;section.append(h,p);container.append(section);}
  const available=game.state.encounters.filter(e=>e.type==='villager'&&e.quest&&!e.quest.accepted).length;
  if(available){const p=document.createElement('p');p.textContent=`${available} local quest offer${available===1?'':'s'} available. Discover the people marked ? on your explored minimap.`;container.append(p);}
 }

@@ -7,7 +7,7 @@ export const ITEM_CATALOG=[
  ['knives',I.throwingKnives,1,3],['smoke',I.smokeFlask,1,3],['thunder',I.thunderstone,1,6],['lastLight',I.lastLight,1,9],
  ['trailBoots',I.trailBoots,4,1],['softstep',I.softstepBoots,2,3],['ironRing',I.ironRing,3,1],['hunterRing',I.huntersRing,2,3],['moonRing',I.moonRing,2,3],['lantern',I.lanternRelic,1,2],['waystone',I.waystoneFocus,1,3]
 ].map(([id,create,weight,minDanger])=>({id,create,weight,minDanger}));
-export const MODIFIER_ODDS={ordinary:[.70,.95,.995],cache:[.50,.85,.99],caravan:[.50,.85,.99],crypt:[.30,.75,.97],den:[.30,.75,.97],quest:[.30,.75,.97],boss:[0,.50,.90]};
+export const MODIFIER_ODDS={champion:[0,.85,.99],ordinary:[.70,.95,.995],cache:[.50,.85,.99],caravan:[.50,.85,.99],crypt:[.30,.75,.97],den:[.15,.80,.99],quest:[.30,.75,.97],boss:[0,.50,.90]};
 function weighted(rng,entries,weight=e=>e.weight){let roll=rng.next()*entries.reduce((n,e)=>n+weight(e),0);for(const e of entries){roll-=weight(e);if(roll<0)return e;}return entries.at(-1);}
 export function modifyItem(item,rng,source='ordinary'){
  const result={...item,size:item.size?[...item.size]:undefined,rarity:'ordinary'};

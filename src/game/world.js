@@ -87,6 +87,7 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   }
   const scenery=[];
   for(let i=0;i<18;i++){const p=spot();scenery.push({...p,type:rng.pick(biome==='forest'?['log','flowers','grave']:biome==='marsh'?['bones','reeds','grave']:['bones','grave','log'])});}
+  if(!home){const landmark=encounters.find(e=>e.type==='den')??spawns.find(e=>e.kind==='rabbit'||e.kind==='rat');if(landmark)for(let n=1;n<=4;n++){const x=landmark.x+(landmark.x<20?n:-n),y=landmark.y;if(walkable(map,x,y)&&!scenery.some(d=>d.x===x&&d.y===y))scenery.push({x,y,type:'tracks'});}}
   const baseMap=map.map(row=>row.map(t=>['B','V','W','S','K'].includes(t)?',':t));
   return {map,baseMap,biome,danger,recommended:BIOMES[biome].recommended,encounters,scenery,entrance:encounters.find(e=>e.type==='crypt')??null,landmark:null,spawns,lootSpots:[],home,rx,ry,visit};
 }
