@@ -1,3 +1,4 @@
+import {combatFeedback,weaponTechnique} from './combat-feedback.js';
 import { Random } from './random.js';
 import { generateDungeon, walkable, key } from './dungeon.js';
 import { pathStep } from './ai.js';
@@ -73,14 +74,16 @@ export class Game {
   }
   strikeEnemy(enemy,power,label='You strike',melee=true){
     const p=this.state.player,isolated=!this.state.enemies.some(o=>o!==enemy&&o.hp>0&&Math.abs(o.x-enemy.x)+Math.abs(o.y-enemy.y)<=2);
-    const hit=damage(power+(melee&&isolated?gearBonus(p,'isolatedBonus'):0),Math.max(0,enemy.defense-(melee?(p.weapon?.armorPierce??0):0)));
+    const technique=weaponTechnique(p,enemy,melee);
+    const hit=damage(power+technique.bonus+(melee&&isolated?gearBonus(p,'isolatedBonus'):0),Math.max(0,enemy.defense-technique.pierce));
     enemy.hp-=hit;if(melee&&p.weapon?.bleedBonus)enemy.bleeding=2;
-    this.message(`${label} ${enemy.name} for ${hit}.`);if(enemy.hp<=0)this.kill(enemy);
+    combatFeedback(this.state,enemy,`${technique.label?technique.label+' ':''}−${hit}`,'strike',p);
+    this.message(`${label} ${enemy.name} for ${hit}.${technique.label?' '+technique.label+'!':''}`);if(enemy.hp<=0)this.kill(enemy);
   }
   receiveEnemyAttack(e,verb='hits you',options={}){
     const s=this.state,p=options.target??s.player;
-    if(shieldChance(p,options.ranged)>0&&this.rng.next()<shieldChance(p,options.ranged)){s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand?.name??'ward'} stops ${e.name}'s attack.`);return;}
-    const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${p.companion?verb.replace('you',p.name):verb} for ${hit}.`);
+    if(shieldChance(p,options.ranged)>0&&this.rng.next()<shieldChance(p,options.ranged)){combatFeedback(s,p,'BLOCK','block',e);s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand?.name??'ward'} stops ${e.name}'s attack.`);return;}
+    const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);combatFeedback(s,p,'−'+hit,'hurt',e);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${p.companion?verb.replace('you',p.name):verb} for ${hit}.`);
     if(p.companion){if(p.hp===0){p.mode='downed';this.message('Aldren is wounded and cannot follow. Bring him a healing tonic; he remains here.');}return hit;}
     if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');const index=p.inventory.indexOf(p.amulet);if(index>=0)p.inventory.splice(index,1);p.amulet=null;p.hp=1;recalculateGear(p);}
     if(p.hp===0){s.deathCause=`${e.name} ${verb} for ${hit} damage`;s.status='dead';this.message('Your light fades in the vault.');}return hit;

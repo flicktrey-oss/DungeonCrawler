@@ -13,12 +13,12 @@ export const threshold = p => p.level*(p.slowProgression?20:12);
 export function travelGear(kind,tier=1) {
   const weapon=kind==='weapon', names=weapon?['Worn shortsword','Iron-tipped spear','Forged falchion','Ember greatsword']:['Patched vest','Reinforced leather','Ridge mail','Ashguard plate'];
   const level=Math.max(1,Math.min(4,tier));
-  return {kind,name:names[level-1],bonus:level,...(weapon&&level===2?{reach:2,weaponType:'spear'}:weapon?{weaponType:'sword'}:{}),size:weapon?[7,2]:[4,4],sellValue:level*4,description:`${weapon&&level===2?'+1 Reach (clear cardinal line, 2 tiles). ':''}+${level} ${weapon?'attack':'defense'} while equipped. Takes ${weapon?'7×2':'4×4'} satchel cells.`};
+  return {kind,name:names[level-1],bonus:level,...(weapon&&level===2?{reach:2,weaponType:'spear'}:weapon?{weaponType:'sword'}:{}),size:weapon?[7,2]:[4,4],sellValue:level*4,description:`${weapon?(level===2?'+1 Reach (clear cardinal line, 2 tiles). ':'Countercut: +1 melee damage against winding-up enemies. '):''}+${level} ${weapon?'attack':'defense'} while equipped. Takes ${weapon?'7×2':'4×4'} satchel cells.`};
 }
 export const reedAmulet=()=>({kind:'amulet',name:'Reedheart amulet',bonus:1,size:[2,2],sellValue:12,description:'+1 defense while equipped. A villager’s gratitude, bound in silver reeds.'});
 export const trophy=(kind)=>({kind:'trophy',name:kind==='frog'?'Frog pearl':kind==='rat'?'Chipped fang':'Weathered claw',sellValue:kind==='frog'?3:2,size:[1,1],description:'A small hunting trophy. Sell it to Mara at camp.'});
 
-export const shortSword=()=>({...travelGear('weapon',1),name:'Worn shortsword',weaponType:'sword',description:'+1 attack. Reliable adjacent strikes. Main hand; 7×2 cells.'});
+export const shortSword=()=>({...travelGear('weapon',1),name:'Worn shortsword',weaponType:'sword',description:'+1 attack. Countercut: +1 melee damage against an enemy winding up a special attack. Main hand; 7×2 cells.'});
 export const trailSpear=()=>({kind:'weapon',name:'Trail spear',weaponType:'spear',bonus:0,reach:2,size:[7,2],sellValue:6,description:'+1 Reach: strike 1–2 tiles in a cardinal direction through a clear line. No attack bonus. Main hand; 7×2 cells.'});
 export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,blockChance:.35,size:[3,3],sellValue:5,description:'Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells.'});
 export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 2 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
@@ -45,7 +45,7 @@ export const isProjectile=item=>['stone','knife','thunder'].includes(item?.kind)
 export const projectileStack=(p,index)=>index===undefined?p.inventory.find(isProjectile):Number.isInteger(index)&&isProjectile(p.inventory[index])?p.inventory[index]:null;
 export const projectileCount=p=>p.inventory.filter(isProjectile).reduce((n,i)=>n+i.quantity,0);
 const gear=(id,kind,name,description,properties={})=>({id,kind,name,description,bonus:0,size:[2,2],sellValue:6,...properties});
-export const hatchet=()=>gear('hatchet','weapon','Woodcutter’s Hatchet','Ignores 1 point of enemy defense on melee strikes.',{weaponType:'axe',armorPierce:1,size:[4,3]});
+export const hatchet=()=>gear('hatchet','weapon','Woodcutter’s Hatchet','Ignores 1 defense on melee strikes, or 2 against enemies with 3+ defense.',{weaponType:'axe',armorPierce:1,size:[4,3]});
 export const gambeson=()=>gear('gambeson','armor','Quilted Gambeson','+2 defense. Bulky quilted protection.',{bonus:2,size:[4,4]});
 export const reedShield=()=>gear('reedShield','offhand','Reed Shield','55% block against ranged attacks, 15% against melee. No action needed.',{blockChance:.15,rangedBlock:.55,size:[3,3],appearance:0x769665});
 export const trailBoots=()=>gear('trailBoots','boots','Trail Boots','Enemy detection range is reduced by 1 tile. Sturdy brown leather boots; no armor bonus.',{stealthBonus:1,size:[2,2],appearance:0x8a6847});

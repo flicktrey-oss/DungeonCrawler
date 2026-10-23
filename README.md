@@ -322,3 +322,15 @@ The action dock now has only the three configurable item slots. Slot 1 initially
 **Orren the Grave Keeper** stands southwest of the tent at (16, 18), next to bones and a gravestone. Walk beside him and use **E / Trade bones**, or click him on desktop. Skeletons drop one **Old bones** stack item with a 50% chance; otherwise their ordinary loot roll applies. Bones stack to nine per cell.
 
 Trade **five bones for one skeleton key**, costing one turn. The trade is repeatable and checks output space before consuming anything. Keys stack to nine. A new **Locked reliquary** on each crypt depth two contains a valuable equipment reward. Collect/open it using a key; one key and one turn are consumed only after the treasure fits. Locked coffers remain in place on insufficient keys or inventory space, and their reward does not reroll after a failed attempt.
+
+## v0.19.0 — Read the battle
+
+This release focuses on combat readability and weapon choices:
+
+- Visible special attacks show a text warning under your stats, including whether you are in the marked path. Colors and shapes identify tongue lines, sap crosses, charge lanes, and violet warden sweeps. Warnings remain frozen until your next valid action.
+- Boars and Bristlebacks now prepare straight charges. Crypt/Ash Wardens prepare a sweep of their four adjacent tiles. Charges and sweeps leave one enemy action of recovery afterward, shown by a teal ring with pause marks. Step out of the warning, then use the opening.
+- Swords gain **Countercut: +1 melee damage against an enemy preparing a special attack**. This does not cancel its attack: decide whether the hit is worth the risk.
+- Hatchets ignore one defense normally, or two against enemies with at least three defense. Spears retain clear cardinal reach of two tiles; thrown supplies remain expendable ranged options. Equipment descriptions include the rules, including modified loot.
+- Brief floating damage, countercut labels, hit marks, block shields, and miss feedback make outcomes visible on the map. Effects never spend turns, gate input, or change combat rules. Reduced-motion settings suppress floating movement. No downloaded art or sound assets.
+
+Balance remains a playtesting task: these mechanics provide readable opportunities, rather than a guarantee that every loadout can beat every region. This is the first combat-focused batch of the improvement roadmap; additional quests, townspeople, exploration content, and audio are future work.

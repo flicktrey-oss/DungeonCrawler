@@ -1,3 +1,4 @@
+import {CombatFeedback} from './combat-feedback.js';
 import {drawPerson} from './people.js';
 import { drawDangerPockets } from './danger-pockets.js';
 import { drawAdventurer } from './adventurer.js';
@@ -8,7 +9,7 @@ import {key} from '../game/dungeon.js';
 const T=24;
 export class DungeonScene extends Phaser.Scene {
   constructor(){super('dungeon');}
-  create(){this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();const canvas=this.sys.game.canvas;let down=null,pending=null;
+  create(){this.combatFeedback=new CombatFeedback(this);this.paint=this.add.graphics();this.cameras.main.setBackgroundColor('#090c12');this.cameras.main.setBounds(0,0,40*T,30*T);this.ready=true;this.scale.on('resize',this.draw,this);this.draw();const canvas=this.sys.game.canvas;let down=null,pending=null;
     canvas.addEventListener('pointerdown',event=>{pending=null;down=event.isPrimary&&event.button===0?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;});
     canvas.addEventListener('pointercancel',()=>{down=null;pending=null;});
     canvas.addEventListener('pointerup',event=>{
@@ -53,12 +54,9 @@ export class DungeonScene extends Phaser.Scene {
     this.actor(s.player,'player');
     // Draw bars last so neighboring actors and scenery cannot cover them.
     for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);
-    for(const effect of s.enemyEffects??[])if(s.visible.has(key(effect.from.x,effect.from.y))&&s.visible.has(key(effect.to.x,effect.to.y))){
-      g.lineStyle(effect.kind==='tongue'?3:2,effect.kind==='tongue'?0xef9ab8:effect.kind==='spit'?0xe7c66e:0xeeb079,.9);g.lineBetween(effect.from.x*T+12,effect.from.y*T+14,effect.to.x*T+12,effect.to.y*T+14);
-      if(effect.kind==='spit'){g.fillStyle(0xf1d67b);g.fillCircle(effect.to.x*T+12,effect.to.y*T+14,3);}
-    }
     for(const e of this.targetHighlights??[]){g.lineStyle(2,0xf4d385,1);g.strokeRect(e.x*T+1,e.y*T+1,T-2,T-2);}
     this.cameras.main.centerOn(s.player.x*T+12,s.player.y*T+12);
+    this.combatFeedback.show(s);
   }
   cityTile(t,x,y,a,tx,ty){
     const g=this.paint;g.fillStyle(0x65717b,a);g.fillRect(x,y,24,24);g.lineStyle(1,0x4c5964,a);g.strokeRect(x+1,y+1,22,22);g.lineBetween(x+((ty%2)*10+3),y,x+((ty%2)*10+3),y+24);
@@ -70,8 +68,9 @@ export class DungeonScene extends Phaser.Scene {
   }
   drawEnemyWarnings(s){
     const g=this.paint;
+    for(const e of s.enemies)if(e.hp>0&&e.recovering&&s.visible.has(key(e.x,e.y))){g.lineStyle(2,0x9ccecb);g.strokeCircle(e.x*T+12,e.y*T+12,11);g.fillStyle(0x9ccecb);g.fillRect(e.x*T+8,e.y*T-12,3,5);g.fillRect(e.x*T+14,e.y*T-12,3,5);}
     for(const e of s.enemies)if(e.hp>0&&e.intent&&s.visible.has(key(e.x,e.y))){
-      const color=e.intent.kind==='tongue'?0xef9ab8:e.intent.kind==='spit'?0xe7c66e:0xee9b60;
+      const color=e.intent.kind==='tongue'?0xef9ab8:e.intent.kind==='spit'?0xe7c66e:e.intent.kind==='cleave'?0xc6a0ef:0xee9b60;
       for(const tile of e.intent.tiles)if(s.visible.has(key(tile.x,tile.y))){
         const x=tile.x*T,y=tile.y*T;g.fillStyle(color,.23);g.fillRect(x+1,y+1,22,22);g.lineStyle(1,color,.95);g.strokeRect(x+2,y+2,20,20);
         if(e.intent.kind==='spit'){g.lineBetween(x+7,y+7,x+17,y+17);g.lineBetween(x+17,y+7,x+7,y+17);}else{g.lineBetween(x+7,y+15,x+12,y+9);g.lineBetween(x+12,y+9,x+17,y+15);}

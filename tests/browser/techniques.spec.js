@@ -6,6 +6,8 @@ for(const touch of [false,true])test.describe(touch?'phone techniques':'desktop 
  if(touch)test.use({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  test('equipment slots, merchant descriptions, free targeting and a real stone attack',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));const d=await expeditionDriver(page,5,touch);
+  // Keep the chosen run seed, then let Phaser's Date-based tween clock advance.
+  await page.clock.setSystemTime(new Date(5));
   const click=async locator=>touch?locator.tap():locator.click();
   await click(page.getByRole('button',{name:'Character / equipment',exact:true}));
   await expect(page.getByRole('button',{name:'Off hand slot: Empty',exact:true})).toBeVisible();
@@ -32,6 +34,6 @@ for(const touch of [false,true])test.describe(touch?'phone techniques':'desktop 
   if(touch){const p=d.game.state.player;await canvas.tap({position:{x:box.width/2+(target.x-p.x)*24*1.5,y:box.height/2+(target.y-p.y)*24*1.5}});}else await click(first);
   d.game.action({type:'throw',x:target.x,y:target.y});
   await expect(page.locator('.floor')).toContainText(`TURN ${turn+1}`);await expect(page.locator('#targeting-bar')).toBeHidden();expect(stoneCount(d.game.state.player)).toBe(ammo-1);
-  await expect(page.locator('#custom-slot-0 .action-count')).toHaveText(String(ammo-1));await expect(page.getByRole('button',{name:'Quick slot 1: Throwing stones',exact:true})).toBeEnabled();expect(errors).toEqual([]);
+  await expect(page.locator('#custom-slot-0 .action-count')).toHaveText(String(ammo-1));await expect(page.getByRole('button',{name:'Quick slot 1: Throwing stones',exact:true})).toBeEnabled();const impact=await canvas.screenshot();await page.waitForTimeout(850);await expect(page.locator('.floor')).toContainText(`TURN ${turn+1}`);const settled=await canvas.screenshot();expect(impact.equals(settled)).toBe(false);expect(errors).toEqual([]);
  });
 });
