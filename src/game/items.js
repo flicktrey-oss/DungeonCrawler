@@ -21,7 +21,7 @@ export const trophy=(kind)=>({kind:'trophy',name:kind==='frog'?'Frog pearl':kind
 export const shortSword=()=>({...travelGear('weapon',1),name:'Worn shortsword',weaponType:'sword',description:'+1 attack. Countercut: +1 melee damage against an enemy winding up a special attack. Main hand; 7×2 cells.'});
 export const trailSpear=()=>({kind:'weapon',name:'Trail spear',weaponType:'spear',bonus:0,reach:2,size:[7,2],sellValue:6,description:'+1 Reach: strike 1–2 tiles in a cardinal direction through a clear line. No attack bonus. Main hand; 7×2 cells.'});
 export const buckler=()=>({kind:'offhand',name:'Weathered buckler',bonus:0,blockChance:.35,size:[3,3],sellValue:5,description:'Off hand. 35% chance to completely block each incoming attack while equipped. Passive: no action or Mana cost. 3×3 cells.'});
-export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 2 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
+export const throwingStones=(quantity=1)=>({kind:'stone',name:'Throwing stones',quantity,size:[1,1],description:'Throw up to 4 tiles for 1–3 damage before defense (minimum 1). One stone and one turn; 50% recovery chance. Stacks of 9 occupy 1×1.'});
 export const stoneCount=p=>p.inventory.filter(i=>i.kind==='stone').reduce((n,i)=>n+i.quantity,0);
 export const salePrice=item=>['stone','knife','thunder','rawMeat','cookedMeat','rawRatMeat','ratMeat','bones','skeletonKey'].includes(item.kind)?item.quantity*(item.kind==='knife'?3:item.kind==='thunder'?5:item.sellValue??1):item.sellValue??(item.kind==='potion'?3:1);
 
@@ -63,6 +63,6 @@ export const rations=()=>({id:'rations',kind:'ration',name:'Honeyed Rations',siz
 export const clearwater=()=>({id:'clearwater',kind:'cleanse',name:'Clearwater Draught',sellValue:3,description:'Removes sap corrosion. Using it takes one turn.'});
 export const moonwell=()=>({id:'moonwell',kind:'mana',name:'Moonwell Sip',sellValue:4,description:'Restores 35 Mana. Using it takes one turn.'});
 export const smokeFlask=()=>({id:'smoke',kind:'smoke',name:'Smoke Flask',sellValue:4,description:'For 3 enemy phases, enemies beyond adjacent range cannot pursue or fire at you. Adjacent enemies still attack.'});
-export const throwingKnives=(quantity=2)=>({id:'knives',kind:'knife',name:'Balanced Throwing Knives',quantity,size:[1,1],projectileDamage:4,sellValue:6,description:'Throw within 4 tiles for 4 damage before defense. 50% recovery chance. Stacks of 9.'});
+export const throwingKnives=(quantity=2)=>({id:'knives',kind:'knife',name:'Balanced Throwing Knives',quantity,size:[1,1],projectileDamage:4,sellValue:6,description:'Throw within 4 tiles for 3–5 damage before defense. 50% recovery chance. Stacks of 9.'});
 export const thunderstone=(quantity=1)=>({id:'thunder',kind:'thunder',name:'Thunderstone',quantity,size:[1,1],projectileDamage:0,description:'Throw within 4 tiles to interrupt an enemy and make it lose its next action. No damage; consumed on impact.'});
 export const consumableKinds=['potion','ration','cleanse','mana','smoke','cookedMeat','ratMeat'];

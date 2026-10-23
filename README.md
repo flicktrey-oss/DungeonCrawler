@@ -372,3 +372,18 @@ When several interactions are available at your tile, the action dock shows **Ne
 - **Your journey acknowledged:** the welcome reflects how you resolved Willow Crossing, your landmark choices, and tonic aid given to Aldren. Blue-and-gold keep banners and Elara’s dialogue remain after arrival. You can continue exploring.
 
 These additions preserve the existing open world, optional escort, alternative routes, permadeath, and strictly turn-based actions. A new run resets the road choices and rewards.
+
+## v0.24.0 — Roll the damage
+
+Combat now rolls bounded damage for each successful hit, using a dedicated random stream seeded from the run. All values below are before enemy defense and conditional bonuses:
+
+- **Swords:** current attack −1 to +1. A starting Worn shortsword gives **3–5** damage.
+- **Spears:** current attack −1 to current attack. A starting Trail spear gives **2–3**, with its existing two-tile reach.
+- **Axes:** current attack −2 to +2. A starting Woodcutter’s Hatchet gives **1–5**, plus its existing armor piercing. Higher strength and weapon modifiers shift the entire range.
+- **Unarmed:** fixed damage from your attack stat.
+- **Projectiles:** stones deal **1–3**, knives **3–5**, before defense. Thunderstones still interrupt without dealing damage.
+- **Enemies:** attacks of strength 3 or less roll from one below strength up to strength; stronger enemies roll strength ±1. Telegraphed attacks use the same narrow band, with special protection applied normally. No critical hits or random misses were added.
+
+The HUD shows your damage band. Merchant offers, satchel descriptions, equipment comparisons and the equipment panel show current prospective weapon ranges. Inspecting an enemy shows damage against your current defense and special protection; blocks apply separately. Aldren uses his own sword range. Floating numbers and the Chronicle report actual damage rolled.
+
+Armor and piercing apply after the roll, damage has a minimum of one, countercuts/isolated bonuses still apply, and bleeding remains fixed at one damage per phase. A blocked attack does not roll damage. Inspecting, comparing gear, waiting without a target, and invalid actions never roll damage. Every valid player action still advances exactly one turn; enemies never act while you think.

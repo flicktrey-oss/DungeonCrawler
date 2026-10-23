@@ -4,7 +4,7 @@ import {Random} from '../src/game/random.js';
 import * as I from '../src/game/items.js';
 import {ITEM_CATALOG,modifyItem,itemReward,ordinaryDrop} from '../src/game/loot.js';
 import {adventurerPixels,adventurerSvg} from '../src/render/adventurer.js';
-const game=()=>{const g=new Expedition(17);g.state.enemies=[];return g;};
+const game=()=>{const g=new Expedition(17);g.combatRng.next=()=>.5;g.state.enemies=[];return g;};
 const equip=(g,item,slot)=>{g.state.player.inventory.push(item);return g.action({type:'equip',index:g.state.player.inventory.length-1,slot});};
 describe('seven equipment slots',()=>{
  it('wears two separate rings, selects replacements, and rejects mismatched slots without a turn',()=>{

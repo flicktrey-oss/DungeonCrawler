@@ -1,3 +1,4 @@
+import {rollOffense,rollEnemyOffense,weaponProfile} from './damage-rolls.js';
 import {combatFeedback,weaponTechnique} from './combat-feedback.js';
 import { Random } from './random.js';
 import { generateDungeon, walkable, key } from './dungeon.js';
@@ -8,7 +9,7 @@ import { damage, enemyTypes } from './combat.js';
 import { TurnManager } from './turn-manager.js';
 export class Game {
   constructor(seed=Date.now()) {
-    this.rng=new Random(seed); this.state={seed,floor:1,turn:0,status:'playing',log:[],player:{x:0,y:0,hp:32,maxHp:32,mana:100,maxMana:100,attack:5,defense:1,level:1,xp:0,gold:0,inventory:[potion(),potion()],weapon:null,armor:null}};
+    this.rng=new Random(seed);this.combatRng=new Random((Number(seed)>>>0)^0xD06A6E); this.state={seed,floor:1,turn:0,status:'playing',log:[],player:{x:0,y:0,hp:32,maxHp:32,mana:100,maxMana:100,attack:5,defense:1,level:1,xp:0,gold:0,inventory:[potion(),potion()],weapon:null,armor:null}};
     this.turns=new TurnManager(this); this.loadFloor(); this.message('You enter the Ember Vault. Find the Ash Warden below.');
   }
   message(text){this.state.timeline??=[];this.state.timeline.push({turn:this.state.turn,text});if(this.state.timeline.length>100)this.state.timeline.shift();this.state.log.push(text);if(this.state.log.length>80)this.state.log.shift();}
@@ -72,10 +73,11 @@ export class Game {
     while(p.xp>=threshold(p)){p.xp-=threshold(p);p.level++;p.maxHp+=6;p.hp=Math.min(p.maxHp,p.hp+10);p.attack++;if(p.level%2===0)p.defense++;this.message(`Level ${p.level}! Your strength grows.`);}
     if(enemy.kind==='boss'){s.status='victory';this.message('The Ash Warden crumbles. Dawn returns to the vault.');}
   }
-  strikeEnemy(enemy,power,label='You strike',melee=true){
-    const p=this.state.player,isolated=!this.state.enemies.some(o=>o!==enemy&&o.hp>0&&Math.abs(o.x-enemy.x)+Math.abs(o.y-enemy.y)<=2);
+  strikeEnemy(enemy,power,label='You strike',melee=true,options={}){
+    const p=options.attacker??this.state.player,isolated=!this.state.enemies.some(o=>o!==enemy&&o.hp>0&&Math.abs(o.x-enemy.x)+Math.abs(o.y-enemy.y)<=2);
     const technique=weaponTechnique(p,enemy,melee);
-    const hit=damage(power+technique.bonus+(melee&&isolated?gearBonus(p,'isolatedBonus'):0),Math.max(0,enemy.defense-technique.pierce));
+    const rolled=rollOffense(this.combatRng,power,options.profile??(melee?weaponProfile(p.weapon):'projectile'));
+    const hit=damage(rolled+technique.bonus+(melee&&isolated?gearBonus(p,'isolatedBonus'):0),Math.max(0,enemy.defense-technique.pierce));
     enemy.hp-=hit;if(melee&&p.weapon?.bleedBonus)enemy.bleeding=2;
     combatFeedback(this.state,enemy,`${technique.label?technique.label+' ':''}−${hit}`,'strike',p);
     this.message(`${label} ${enemy.name} for ${hit}.${technique.label?' '+technique.label+'!':''}`);if(enemy.hp<=0)this.kill(enemy);
@@ -83,7 +85,7 @@ export class Game {
   receiveEnemyAttack(e,verb='hits you',options={}){
     const s=this.state,p=options.target??s.player;
     if(shieldChance(p,options.ranged)>0&&this.rng.next()<shieldChance(p,options.ranged)){combatFeedback(s,p,'BLOCK','block',e);s.blockedAttacks=(s.blockedAttacks??0)+1;this.message(`Blocked! Your ${p.offhand?.name??'ward'} stops ${e.name}'s attack.`);return;}
-    const hit=damage(e.attack,defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);combatFeedback(s,p,'−'+hit,'hurt',e);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${p.companion?verb.replace('you',p.name):verb} for ${hit}.`);
+    const hit=damage(rollEnemyOffense(this.combatRng,e),defense(p)+(options.special?gearBonus(p,'wardedBonus'):0));p.hp=Math.max(0,p.hp-hit);combatFeedback(s,p,'−'+hit,'hurt',e);s.damageTaken=(s.damageTaken??0)+hit;p.rationTurns=0;this.message(`${e.name} ${p.companion?verb.replace('you',p.name):verb} for ${hit}.`);
     if(p.companion){if(p.hp===0){p.mode='downed';this.message('Aldren is wounded and cannot follow. Bring him a healing tonic; he remains here.');}return hit;}
     if(p.hp===0&&p.amulet?.lastLight){this.message('Your Last-Light Medallion shatters, leaving you at 1 HP!');const index=p.inventory.indexOf(p.amulet);if(index>=0)p.inventory.splice(index,1);p.amulet=null;p.hp=1;recalculateGear(p);}
     if(p.hp===0){s.deathCause=`${e.name} ${verb} for ${hit} damage`;s.status='dead';this.message('Your light fades in the vault.');}return hit;

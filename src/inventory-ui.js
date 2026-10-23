@@ -1,3 +1,4 @@
+import {itemDamageDescription} from './game/damage-rolls.js';
 import {assignQuick,quickMatches,compareEquipment} from './game/quality.js';
 import { equippedSlot, consumableKinds, isEquipment } from './game/items.js';
 import { itemEmoji } from './item-icons.js';
@@ -15,7 +16,7 @@ export function mountInventory(container, game, perform) {
       const icon=document.createElement('span');icon.className='bag-item-icon';icon.setAttribute('aria-hidden','true');icon.textContent=itemEmoji(item);b.append(icon);
       if(item.quantity){const count=document.createElement('span');count.className='bag-item-count';count.setAttribute('aria-hidden','true');count.textContent=item.quantity;b.append(count);}
       b.setAttribute('aria-label',`Select ${item.name}, ${p.w} by ${p.h}`);b.title=`${equippedSlot(player,item)?'Equipped · ':''}${item.name}${item.quantity?` ×${item.quantity}`:''} (${p.w}×${p.h})`;
-      b.onclick=()=>{selected=p.index;rotated=Boolean(item.rotated);notice=`${item.name}${item.quantity?` ×${item.quantity}`:''}: ${item.description}`;draw();};grid.append(b);
+      b.onclick=()=>{selected=p.index;rotated=Boolean(item.rotated);notice=`${item.name}${item.quantity?` ×${item.quantity}`:''}: ${item.description} ${itemDamageDescription(player,item)}`;draw();};grid.append(b);
     }
     container.append(grid);
     const status=document.createElement('p');status.className='hint';status.setAttribute('role','status');status.textContent=notice;container.append(status);

@@ -8,7 +8,7 @@ import {potion} from '../src/game/items.js';
 import {worldMapCells} from '../src/minimap.js';
 import {characterAt,characterDetails} from '../src/character-inspection.js';
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
-function fixture(){const g=new Expedition(5),p=g.state.player;Object.assign(p,{x:23,y:17});g.refresh();return g;}
+function fixture(){const g=new Expedition(5),p=g.state.player;g.combatRng.next=()=>.5;Object.assign(p,{x:23,y:17});g.refresh();return g;}
 function accept(g){expect(g.action({type:'acceptEscort'})).toBe(true);return g.story.prince;}
 function arena(){const g=fixture(),c=accept(g);g.state.map=Array.from({length:30},()=>Array(40).fill('.'));g.state.baseMap=null;g.state.enemies=[];Object.assign(g.state.player,{x:10,y:10});Object.assign(c,{x:9,y:10});g.state.transition=false;g.refresh();return g;}
 function step(g,target){const p=g.state.player,q=[{x:p.x,y:p.y,first:null}],seen=new Set([key(p.x,p.y)]);for(let i=0;i<q.length;i++)for(const[dx,dy]of directions){const x=q[i].x+dx,y=q[i].y+dy,k=key(x,y);if(!walkable(g.state.map,x,y)||seen.has(k))continue;const first=q[i].first??{type:'move',dx,dy};if(x===target.x&&y===target.y)return first;seen.add(k);q.push({x,y,first});}throw Error('No route');}

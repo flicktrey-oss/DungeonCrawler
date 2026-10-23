@@ -1,3 +1,4 @@
+import {playerOffenseRange,offenseRange,incomingRange,rangeLabel} from './game/damage-rolls.js';
 import {attackWarning} from './game/combat-feedback.js';
 import {describeCreature} from './game/enemy-actions.js';
 import {key} from './game/dungeon.js';
@@ -15,5 +16,6 @@ export function characterAt(game,x,y){
 }
 export function characterDetails(game,target){
  const player=target===game.state.player,noncombatant=target.friendly&&!target.companion;
- return {ability:target.companion?'Escort · sword and mail. Follows or waits on your turns. A tonic treats wounds.':describeCreature(target),warning:attackWarning(target,game.state.player),name:player?'Your adventurer':target.name,kind:player?'player':target.bridgeBandit?'bandit':target.kind,race:player||target.friendly||target.bridgeBandit?'Human':races[target.kind]??'Creature',strength:noncombatant?null:player?attack(target):target.attack,defense:noncombatant?null:player?defense(target):target.defense,hp:noncombatant?null:target.hp,maxHp:noncombatant?null:target.maxHp,friendly:target.friendly};
+ const damageText=noncombatant?null:player?`Damage ${rangeLabel(playerOffenseRange(target))} before enemy defense and situational bonuses.`:target.companion?`Damage ${rangeLabel(offenseRange(target.attack,'sword'))} before enemy defense.`:`Damage against you: ${rangeLabel(incomingRange(target,game.state.player))}${rangeLabel(incomingRange(target,game.state.player,true))!==rangeLabel(incomingRange(target,game.state.player))?' · special '+rangeLabel(incomingRange(target,game.state.player,true)):''}. Blocks apply separately.`;
+ return {damageText,ability:target.companion?'Escort · sword and mail. Follows or waits on your turns. A tonic treats wounds.':describeCreature(target),warning:attackWarning(target,game.state.player),name:player?'Your adventurer':target.name,kind:player?'player':target.bridgeBandit?'bandit':target.kind,race:player||target.friendly||target.bridgeBandit?'Human':races[target.kind]??'Creature',strength:noncombatant?null:player?attack(target):target.attack,defense:noncombatant?null:player?defense(target):target.defense,hp:noncombatant?null:target.hp,maxHp:noncombatant?null:target.maxHp,friendly:target.friendly};
 }

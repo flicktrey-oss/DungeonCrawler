@@ -3,7 +3,7 @@ import {Expedition} from '../src/game/expedition.js';
 import {trailSpear,shortSword,buckler,throwingStones,potion,stoneCount,attack,salePrice} from '../src/game/items.js';
 import {addItem,settleInventory} from '../src/game/inventory.js';
 import {techniqueTargets} from '../src/game/techniques.js';
-function arena(){const g=new Expedition(3);g.state.map=Array.from({length:12},()=>Array(12).fill('.'));Object.assign(g.state.player,{x:5,y:5});g.state.enemies=[];g.state.items=[];g.state.transition=false;g.refresh();return g;}
+function arena(){const g=new Expedition(3);g.combatRng.next=()=>.5;g.state.map=Array.from({length:12},()=>Array(12).fill('.'));Object.assign(g.state.player,{x:5,y:5});g.state.enemies=[];g.state.items=[];g.state.transition=false;g.refresh();return g;}
 function enemy(g,x,y){const e={...g.makeEnemy('rat',{x,y},1,g.state.enemies.length),hp:30,maxHp:30,attack:5,range:10};g.state.enemies.push(e);g.refresh();return e;}
 describe('equipment techniques and central turns',()=>{
  it('trades shortsword damage for spear reach and acts enemies exactly once',()=>{const g=arena(),p=g.state.player;p.weapon=shortSword();expect(attack(p)).toBe(4);p.weapon=trailSpear();expect(attack(p)).toBe(3);const e=enemy(g,5,3),before={x:p.x,y:p.y};expect(g.action({type:'reach',x:5,y:3})).toBe(true);expect(e.hp).toBe(27);expect(e.actions).toBe(1);expect(g.state.turn).toBe(1);expect({x:p.x,y:p.y}).toEqual(before);});

@@ -4,7 +4,7 @@ import {shortSword,hatchet,trailSpear,reedShield} from '../src/game/items.js';
 import {attackWarning,combatFeedback} from '../src/game/combat-feedback.js';
 import {characterDetails} from '../src/character-inspection.js';
 function arena(kind='guardian',x=6,y=5){
- const g=new Expedition(5),s=g.state;
+ const g=new Expedition(5),s=g.state;g.combatRng.next=()=>.5;
  s.map=Array.from({length:12},()=>Array(12).fill('.'));
  Object.assign(s.player,{x:5,y:5,hp:200,maxHp:200});
  s.enemies=[g.makeEnemy(kind,{x,y},1,0)];s.enemies[0].hp=s.enemies[0].maxHp=100;

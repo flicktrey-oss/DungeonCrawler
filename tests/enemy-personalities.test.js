@@ -3,7 +3,7 @@ import {Expedition} from '../src/game/expedition.js';
 import {enemyTypes} from '../src/game/combat.js';
 import {trailSpear,buckler} from '../src/game/items.js';
 import {drawCreature} from '../src/render/creature-sprites.js';
-function arena(kind,x=5,y=3){const g=new Expedition(5);g.state.map=Array.from({length:12},()=>Array(12).fill('.'));Object.assign(g.state.player,{x:5,y:5});g.state.items=[];g.state.enemies=[g.makeEnemy(kind,{x,y},1,0)];g.state.transition=false;g.refresh();return g;}
+function arena(kind,x=5,y=3){const g=new Expedition(5);g.combatRng.next=()=>.5;g.state.map=Array.from({length:12},()=>Array(12).fill('.'));Object.assign(g.state.player,{x:5,y:5});g.state.items=[];g.state.enemies=[g.makeEnemy(kind,{x,y},1,0)];g.state.transition=false;g.refresh();return g;}
 describe('readable, strictly turn-based enemy attacks',()=>{
  it('winds up a two-tile tongue attack then hits once on the next enemy phase',()=>{const g=arena('frog'),e=g.state.enemies[0];g.action({type:'wait'});expect(e.intent).toMatchObject({kind:'tongue',tiles:[{x:5,y:4},{x:5,y:5}]});expect(g.state.player.hp).toBe(32);g.refresh();g.refresh();expect(e.actions).toBe(1);g.action({type:'wait'});expect(g.state.player.hp).toBe(25);expect(e.intent).toBe(null);expect(e.actions).toBe(2);expect(g.state.enemyEffects[0].kind).toBe('tongue');});
  it('lets the player sidestep a frog tongue instead of tracking their new position',()=>{const g=arena('frog');g.action({type:'wait'});g.action({type:'move',dx:1,dy:0});expect(g.state.player.hp).toBe(32);expect(g.state.log.at(-1)).toContain('misses');});

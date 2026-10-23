@@ -7,7 +7,7 @@ describe('protection and risk rewards',()=>{
  it('keeps a plain full kit useful without turning every slot into ordinary armor',()=>{
  const g=new Expedition(5),p=g.state.player;Object.assign(p,{armor:I.travelGear('armor'),amulet:I.reedAmulet(),boots:I.trailBoots(),ring1:I.ironRing(),ring2:I.ironRing(),offhand:I.buckler()});
  expect(I.defense(p)).toBe(2);expect(I.gearBonus(p,'wardedBonus')).toBe(2);expect(I.gearBonus(p,'stealthBonus')).toBe(1);expect(I.shieldChance(p)).toBe(.35);
- g.rng.next=()=>1;g.receiveEnemyAttack({name:'Beast',attack:8});expect(p.hp).toBe(26);g.receiveEnemyAttack({name:'Beast',attack:8},'lashes',{special:true});expect(p.hp).toBe(22);
+ g.combatRng.next=()=>.5;g.rng.next=()=>1;g.receiveEnemyAttack({name:'Beast',attack:8});expect(p.hp).toBe(26);g.receiveEnemyAttack({name:'Beast',attack:8},'lashes',{special:true});expect(p.hp).toBe(22);
  });
  it('softens high armor monotonically, retaining meaningful bonuses and corrosion',()=>{
  const p={inventory:[],defense:0};const values=[];
