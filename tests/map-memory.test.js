@@ -43,3 +43,13 @@ describe('persistent landscapes and visit layers',()=>{
   g.visitCrypt(1,0,2);g.visitCrypt(1,0,1,'stairs');expect(g.state.map).toEqual(map);expect(g.state.stairs).toEqual(stairs);expect(g.state.explored.has('39,29')).toBe(true);expect(g.state.enemies.every(e=>e.hp>0)).toBe(true);expect(g.state.player.inventory).toEqual(p.inventory);expect(g.state.player.hp).toBe(p.hp);
  });
 });
+
+describe('known haven maps',()=>{
+ it('reveals every camp and Northwatch map cell without changing exploration, visibility or turns',()=>{
+  const g=new Expedition(5);
+  for(const city of [false,true]){if(city)g.visitWorld(0,-6);const before=structuredClone(g.state);const cells=minimapCells(g.state);expect(cells).toHaveLength(1200);expect(cells.every(c=>c.visible)).toBe(true);expect(cells.find(c=>c.x===0&&c.y===0).tile).toBe(g.state.map[0][0]);expect(g.state).toEqual(before);}
+ });
+ it('keeps wilderness fogged even though the safe destinations are known',()=>{
+  const g=new Expedition(5);g.visitWorld(1,0);expect(minimapCells(g.state).length).toBeLessThan(1200);expect(minimapCells(g.state).length).toBe(g.state.explored.size);
+ });
+});

@@ -397,3 +397,7 @@ Armor and piercing apply after the roll, damage has a minimum of one, countercut
 - Four equipment tiers: **Worn / Field / Forged / Runic**. Twelve additional items provide swords, reach spears, body armor and armored boots for marsh, highland and ashland expeditions. Equipment summaries show tier, enhancement and actual effects instead of repeated flavor/mechanics paragraphs. Rarity modifiers remain separate from tier.
 - Eligible reward pools favor the current region's tier without awarding future-tier equipment. Non-food creatures have an 8% / 14% / 20% / 26% ordinary item-roll chance across those regions; tougher-region rolls favor regional equipment. These are item-roll chances, not guarantees of a particular item. Marsh and highland den owners carry stronger themed gear. Rats and rabbits remain meat-only at 50%; frogs/toads remain meat-only at 35%. Skeletons retain their 50% bones roll.
 - Gear tiers and enhancement prices are an initial balance pass. Better gear helps prepare for the next biome but is not a promise of safe passage; enemy tactics, food and retreat still matter. No save/resume or XP-spending system was added.
+
+### v0.25.1 · Known havens
+
+Lantern Camp and Northwatch are always colored and marked on the world map. Their local settlement maps show all terrain and fixed sites immediately, without walking through them first. This is map information only: it does not visit Northwatch, reveal creatures outside your sight, advance time or remove wilderness fog. Exploration in other regions still persists normally for the run.

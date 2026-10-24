@@ -15,12 +15,13 @@ test('complete a frog quest, sell its reward and buy supplies using earned gold'
  await page.getByRole('button',{name:'Return',exact:true}).click();await expect(page.locator('.floor')).toContainText(`TURN ${d.game.state.turn}`);
 });
 
-test('minimap stays fogged, follows the player, switches regions and can be collapsed for free', async ({ page }) => {
+test('camp map is revealed, follows the player, switches regions and can be collapsed for free', async ({ page }) => {
   await page.goto('/'); await page.getByRole('button', { name: 'New Game', exact: true }).click();
   const map = page.locator('#minimap');
   await expect(map).toHaveAttribute('aria-label', /tile 20, 15/);
   const hiddenColor = await map.evaluate(c => Array.from(c.getContext('2d').getImageData(1, 1, 1, 1).data));
-  expect(hiddenColor).toEqual([8, 12, 18, 255]);
+  expect(hiddenColor).not.toEqual([8, 12, 18, 255]);
+  await expect(map).toHaveAttribute('aria-label', /Safe settlement map is fully revealed/);
   await page.getByLabel('Toggle minimap', { exact: true }).click(); await expect(map).not.toBeVisible();
   await page.getByLabel('Toggle minimap', { exact: true }).click(); await expect(map).toBeVisible(); await expect(page.locator('.floor')).toContainText('TURN 0');
   await page.getByLabel('Toggle minimap', { exact: true }).focus(); await page.keyboard.press('Enter'); await expect(map).not.toBeVisible(); await page.keyboard.press('Enter'); await expect(map).toBeVisible(); await expect(page.locator('.floor')).toContainText('TURN 0');
