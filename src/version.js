@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.26.0 · Lantern Camp comes alive';
+export const RELEASE = 'v0.26.1 · A quieter map';

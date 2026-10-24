@@ -18,5 +18,6 @@ export function mapInspectionText(game,selection){
  const info=local?{...BIOMES[game.state.biome],recommended:game.state.recommended??BIOMES[game.state.biome].recommended}:regionInfo(game.state.seed,selection.rx,selection.ry);
  const safe=selection.rx===0&&selection.ry===0&&(!local||game.location.kind==='world')||info.name==='Northwatch';
  const name=safe&&info.name!=='Northwatch'?'Lantern Camp':info.name;
- return `${name} · Region (${selection.rx}, ${selection.ry})${local?` · Tile (${selection.x}, ${selection.y})${game.location.kind==='crypt'?` · Crypt depth ${game.location.depth}`:''}`:''}. Recommended level ${info.recommended} · Your level ${game.state.player.level} · ${safe?'Safe settlement':threatLabel(info.recommended,game.state.player.level)}. Special encounters may be harder.`;
+ const difficulty=safe?'Safe':`Lv ${info.recommended} · ${({OVERWHELMING:'Overwhelming',DANGEROUS:'Dangerous','Prepare carefully':'Stay alert'})[threatLabel(info.recommended,game.state.player.level)]}`;
+ return `${name} (${selection.rx}, ${selection.ry})${local?`\nTile (${selection.x}, ${selection.y})${game.location.kind==='crypt'?` · Depth ${game.location.depth}`:''}`:''}\n${difficulty}`;
 }

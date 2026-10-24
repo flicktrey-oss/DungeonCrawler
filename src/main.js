@@ -241,11 +241,12 @@ function interact(intent=null){
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
-  $('map-inspection').textContent=mapInspectionText(model,mapSelection)||'Click or tap a map square for coordinates and recommended level.';
+  $('map-inspection').textContent=mapInspectionText(model,mapSelection)||'Tap a square for details.';
   if (mapView === 'world') drawWorldMinimap($('minimap'), model);
   else {const q=bridgeQuest(model),objective=q?.accepted&&!q.claimed?(q.medicine?q.layout.guard:q.medicineSite):null;drawMinimap($('minimap'), model.state, loc,objective?[objective]:[]);}
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
   $('camp-bearing').textContent = campBearing(loc);
+  $('camp-bearing').hidden=mapView==='world'||model.state.home;
   $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · K: Northwatch · ?: discovered quest · Purple: discovered entrance · B Bridge lead · ◇ Road landmark · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · I Inn · B Bounties · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · T Watchtower · H Shelter · Pink: detected creatures · M Merchant · ? People / blacksmith · > Crypt · ! Den · S Shrine · K Cache';
   const detect=$('detect-creatures'),p=model.state.player;detect.disabled=paused||p.level<3||p.mana<25||model.state.status!=='playing'||Boolean(targetMode);detect.textContent=p.level<3?'Detect Creatures · Lv 3':'Detect Creatures · 25 MP [G]';detect.classList.toggle('hidden',mapView!=='local');
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
