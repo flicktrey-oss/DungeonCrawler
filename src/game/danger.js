@@ -21,7 +21,7 @@ export function visibleDangerPockets(state){
 export function territoryObstacles(state,enemy,bounded=false){
  const bounds=mapBounds(state.map),occupied=new Set(state.enemies.filter(e=>e!==enemy&&e.hp>0).map(e=>key(e.x,e.y)));
  if(state.companion)occupied.add(key(state.companion.x,state.companion.y));
- if(bounded){const t=territoryOf(enemy);if(t)for(let y=bounds.minY;y<bounds.maxY;y++)for(let x=bounds.minX;x<bounds.maxX;x++)if(!insideTerritory(t,{x,y}))occupied.add(key(x,y));}
+ if(bounded){const t=territoryOf(enemy);if(t)for(let y=Math.max(bounds.minY,enemy.y-20);y<Math.min(bounds.maxY,enemy.y+21);y++)for(let x=Math.max(bounds.minX,enemy.x-20);x<Math.min(bounds.maxX,enemy.x+21);x++)if(!insideTerritory(t,{x,y}))occupied.add(key(x,y));}
  return occupied;
 }
 // Returning is the creature's entire action. It neither attacks nor resolves an

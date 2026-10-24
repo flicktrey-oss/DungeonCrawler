@@ -1,3 +1,4 @@
+import {buildSurfaceRiver} from './surface-river.js';
 import {buildCamp} from './camp-layout.js';
 import {landmarkPlan,buildJourneyLandmark} from './journey-layout.js';
 import {buildBridge} from './bridge-layout.js';
@@ -43,9 +44,9 @@ export function biomeAt(rx,ry,seed=0){
 }
 export function regionInfo(seed,rx,ry){const biome=biomeAt(rx,ry,seed);return {rx,ry,biome,...BIOMES[biome]};}
 export function threatLabel(recommended,level){return recommended>=level+4?'OVERWHELMING':recommended>level?'DANGEROUS':'Prepare carefully';}
-export function generateWorldRegion(seed,rx,ry,visit=0){
+export function generateWorldRegion(seed,rx,ry,visit=0,continuous=false){
   if(isKingdom(rx,ry))return generateCity();
-  if(visit>0&&!(rx===0&&ry===0))return populateVisit(generateWorldRegion(seed,rx,ry,0),new Random(regionSeed(seed,rx,ry,`inhabitants:${visit}`)),visit);
+  if(visit>0&&!(rx===0&&ry===0))return populateVisit(generateWorldRegion(seed,rx,ry,0,continuous),new Random(regionSeed(seed,rx,ry,`inhabitants:${visit}`)),visit);
   const rng=new Random(regionSeed(seed,rx,ry,'world:0')),home=rx===0&&ry===0,biome=biomeAt(rx,ry,seed),danger=BIOMES[biome].danger;
   const map=Array.from({length:HEIGHT},()=>Array(WIDTH).fill(','));
   const blocker=biome==='forest'?'T':biome==='marsh'?'~':biome==='ashlands'?'Y':'^';
@@ -81,8 +82,9 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   const campScenery=home?buildCamp(map):[];
   // Restore service tiles after laying out the settlement common.
   if(home){map[15][20]='C';map[16][20]='F';map[MERCHANT.y][MERCHANT.x]='M';}
+  const riverForward=continuous?buildSurfaceRiver(map,rx,ry,startingForest(seed)):null;
   const bridgeLayout=buildBridge(map,rx,ry,startingForest(seed));
-  const routeLandmark=journeyLandmarks(seed).find(l=>l.rx===rx&&l.ry===ry)??null;buildJourneyLandmark(map,routeLandmark);
+  const routeLandmark=journeyLandmarks(seed).find(l=>l.rx===rx&&l.ry===ry)??null;buildJourneyLandmark(map,routeLandmark,continuous);
   const seen=new Set([key(CAMP.x,CAMP.y)]),queue=[CAMP];
   for(let i=0;i<queue.length;i++)for(const[dx,dy]of directions){const x=queue[i].x+dx,y=queue[i].y+dy,k=key(x,y);if(walkable(map,x,y)&&!seen.has(k)){seen.add(k);queue.push({x,y});}}
   for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++)if(walkable(map,x,y)&&!seen.has(key(x,y)))map[y][x]=blocker;
@@ -100,7 +102,7 @@ export function generateWorldRegion(seed,rx,ry,visit=0){
   if(home)scenery.push(...campScenery);
   if(!home){const landmark=encounters.find(e=>e.type==='den')??spawns.find(e=>e.kind==='rabbit'||e.kind==='rat');if(landmark)for(let n=1;n<=4;n++){const x=landmark.x+(landmark.x<20?n:-n),y=landmark.y;if(walkable(map,x,y)&&!scenery.some(d=>d.x===x&&d.y===y))scenery.push({x,y,type:'tracks'});}}
   const baseMap=map.map(row=>row.map(t=>['B','V','W','S','K'].includes(t)?',':t));
-  return {map,baseMap,bridgeLayout,routeLandmark,biome,danger,recommended:BIOMES[biome].recommended,encounters,scenery,entrance:encounters.find(e=>e.type==='crypt')??null,landmark:null,spawns,lootSpots:[],home,rx,ry,visit};
+  return {map,baseMap,riverForward,bridgeLayout,routeLandmark,biome,danger,recommended:BIOMES[biome].recommended,encounters,scenery,entrance:encounters.find(e=>e.type==='crypt')??null,landmark:null,spawns,lootSpots:[],home,rx,ry,visit};
 }
 
 // Terrain and crypt entrances belong to the region. People, beasts and rewards

@@ -64,7 +64,7 @@ export class Expedition extends Game {
     const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home||isKingdom(rx,ry)?this.regions.get(id):null;
     if(!data){
       const previous=this.regions.get(id);
-      const generated=generateWorldRegion(this.state.seed,rx,ry,this.nextVisit(id));
+      const generated=generateWorldRegion(this.state.seed,rx,ry,this.nextVisit(id),Boolean(this.surfaceGeneration));
       data={...generated,depth:0,start:CAMP,stairs:null,upstairs:null,cleared:false,explored:new Set(previous?.explored??[]),encounterSeen:new Set(),enemies:generated.spawns.map((e,i)=>this.makeEnemy(e.kind,e,e.danger??generated.danger,i,generated.biome)),items:[],quest:null};
       for(const event of data.encounters){
         if(event.type==='den'){const owner=data.enemies.find(e=>e.eventId===event.id);if(owner){event.name=owner.name+'’s den';event.description=owner.description;}}

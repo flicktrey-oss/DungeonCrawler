@@ -1,0 +1,15 @@
+import {test,expect} from '@playwright/test';
+import {expeditionDriver} from './expedition-driver.js';
+import {minimapFrame} from '../../src/minimap.js';
+for(const touch of [false,true])test.describe(touch?'phone streaming world':'desktop streaming world',()=>{
+ if(touch)test.use({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ for(const [seed,name,dx,dy]of [[1,'east',1,0],[1,'west',-1,0],[3,'north',0,-1],[9,'south',0,1]])test(`travels ${name} beyond the original preview and inspects the continuous overview`,async({page})=>{
+  test.setTimeout(60000);const errors=[];page.on('pageerror',e=>errors.push(e.message));const d=await expeditionDriver(page,seed,touch,true),g=d.game,click=async l=>touch?l.tap():l.click();
+  const edge={x:dx>0?79:dx<0?-40:20,y:dy>0?59:dy<0?-30:15};await d.walk(edge);await d.care();const before=g.state.turn,map=g.state.map;await d.send({type:'move',dx,dy});expect(g.state.map===map).toBe(true);expect(g.location.rx).toBe(dx*2);expect(g.location.ry).toBe(dy*2);expect(g.visitedSurface.size).toBeGreaterThanOrEqual(3);await expect(page.locator('#stats h2')).toContainText(`${g.state.player.x}, ${g.state.player.y}`);await page.waitForTimeout(200);await expect(page.locator('.floor')).toContainText('TURN '+(before+1));
+  if(!await page.locator('#minimap').isVisible())await click(page.getByLabel('Toggle minimap',{exact:true}));await expect(page.getByRole('tab',{name:'Nearby',exact:true})).toBeVisible();await click(page.getByRole('tab',{name:'Explored',exact:true}));await expect(page.locator('#minimap')).toHaveAttribute('aria-label',/Explored world/);await expect(page.locator('#minimap')).toHaveAttribute('aria-label',/Northwatch are always marked/);
+  const frame=minimapFrame(g.state,'world'),box=await page.locator('#minimap').boundingBox(),position={x:(20.5-frame.minX)/(frame.maxX-frame.minX)*box.width,y:(-172.5-frame.minY)/(frame.maxY-frame.minY)*box.height};if(touch)await page.locator('#minimap').tap({position});else await page.locator('#minimap').click({position});await expect(page.locator('#map-inspection')).toContainText('Northwatch');await expect(page.locator('#map-inspection')).toContainText('Safe');await page.screenshot({path:`test-results/streaming-${name}-${touch?'phone':'desktop'}.png`});await expect(page.locator('.floor')).toContainText('TURN '+g.state.turn);expect(errors).toEqual([]);
+ });
+});
+test('held movement continues over a same-biome seam and releasing still freezes the world',async({page})=>{
+ await page.clock.install();const d=await expeditionDriver(page,1,false,true);await page.clock.pauseAt(await page.evaluate(()=>Date.now()+1000));await d.walk({x:38,y:15});const before=d.game.state.turn;await page.keyboard.down('d');await page.clock.runFor(600);await page.keyboard.up('d');await expect(page.locator('.floor')).toContainText('TURN '+(before+4));await expect(page.locator('#stats h2')).toContainText('42, 15');await page.clock.runFor(1500);await expect(page.locator('.floor')).toContainText('TURN '+(before+4));
+});

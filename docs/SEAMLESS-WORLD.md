@@ -1,26 +1,34 @@
-# Seamless world: first playable stage
+# Seamless surface
 
-Stable rollback: tag `v0.28.1`, branch `backup/v0.28.1`, commit `88aad71`.
+Stable rollback: tag `v0.28.1`, branch `backup/v0.28.1`, commit `88aad71`. The first joined-pair preview is also preserved in commit `d186c02`.
 
-Choose **Seamless preview** on the title screen. **New Game** still starts the full existing expedition. The preview connects Lantern Camp and the guaranteed neighboring forest in any cardinal direction. It is intentionally bounded: other biomes, Northwatch and crypt interiors remain in standard runs. Camp services, inventory, combat, local quests, the bridge/ford and Aldren's Follow/Stay commands work inside the joined surface. Preview stock excludes the full-world survey chart, since the full world is not loaded there.
+Choose **Seamless preview** on the title screen. **New Game** still starts the standard expedition, including crypts. The seamless surface now generates terrain in every direction as the player approaches it. It includes all surface biomes, local quests, camp services, the northern landmarks, Northwatch, city services and Aldren's escort completion. Crypt interiors are not connected to this mode yet.
 
-## Working rules
+## Coordinates and ownership
 
-- A tile uses global coordinates: `region × region size + local tile`. Negative coordinates use floor division, including tiles immediately north/west of camp.
-- `surface-map.js` presents one persistent map object over the two regions. Tile writes go directly to the owning region. Terrain at their old borders blends into open woodland instead of retaining artificial tree walls.
-- Movement across the seam is ordinary one-tile movement. It never calls `activate`, teleports actors, grants arrival grace, clears intents, resets ability durations or regenerates creatures.
-- The existing TurnManager remains authoritative. Every valid player action grants one action to each living enemy. Combat, pathfinding, sight and Aldren operate in the same global coordinate space.
-- Region ownership is still metadata for biome/quest/loot purposes. Preparing adjacent terrain does not count as visiting it or reveal its occupants.
-- Map bounds are explicit, including negative coordinates. Rendering, visibility and bounded AI use these bounds; camera coordinates stay continuous when the current area's label changes.
-- Exploration and encounter knowledge are persistent global sets. The minimap fits known terrain, including the always-known camp, rather than preloaded geometry. The preview has no quadrant overview.
-- Preview entities live in the shared state arrays for the life of the run. They do not respawn on a return. Boundary-keyed regeneration is deliberately not used in this mode.
+- Tiles use global coordinates: `region × region size + local tile`. Floor division handles negatives correctly. Region coordinates remain generation/ownership metadata, not a transition in gameplay.
+- `surface-map.js` presents one persistent map object over retained chunks. Bounds expand without replacing the map. Tile writes go directly to their owning chunk; undefined gaps remain solid and undisclosed.
+- A surrounding 3×3 ring is prepared when the current generation area changes. Preparation is deterministic and does not visit or reveal it. Four shared edges are reconciled before they enter sight.
+- Entities live in shared global arrays. Enemy IDs are namespaced by their source region; loot uses that source's danger, even if a creature is lured elsewhere. Dropped items, damage, completed encounters and exploration persist. Chunks are generated once per run.
 
-## Next stages
+## Turns and performance
 
-1. Extend the fixed joined pair into a growing chunk cache. Keep map identity stable as bounds expand, and establish explicit ownership for moving entities, dynamic drops and dormant simulation.
-2. Reconcile rivers, paths and biome borders between arbitrary neighboring chunks using shared edge seeds; only the first camp/forest border is blended now.
-3. Replace remaining region-oriented service placement and quest navigation with named locations and global positions. Preserve visited local knowledge separately from broad survey charts.
-4. Attach crypt instances to global entrances and support the entire escort route and Northwatch on the streamed surface.
-5. Define turn-based repopulation using distance and turns away, avoiding instant reward rerolls or enemies spawning inside sight. Add an active simulation radius before loading large numbers of chunks.
+- Crossing an old boundary is ordinary one-tile movement. It never calls `activate`, teleports actors, grants arrival grace, clears attacks, resets ability durations or regenerates enemies.
+- TurnManager remains authoritative. Every living enemy receives one action per completed player turn. Enemies beyond 24 tiles wait cheaply instead of pathfinding. Outstanding attacks and bleeding finish on their normal enemy phases; nothing runs on autonomous AI timers, and no catch-up turns occur on return.
+- Aldren follows across boundaries. If separated by more than 32 walking tiles, he waits for the player to return instead of searching the entire world or teleporting. His position is marked on the overview when waiting, downed or separated.
+- Rendering clips terrain to the camera viewport. Visibility and nearby map drawing use local windows. The overview reads known cells, not the rectangle between distant cache entries. Pathfinding searches a bounded corridor around its endpoints.
+- Terrain and visited history are retained in memory. There is no save/resume or regeneration timer; memory use grows with the places a run visits.
 
-Do not switch the standard expedition to this mode until these stages and their regression tests are complete.
+## Geography and map
+
+- The first woodland's river uses a shared global plan and continues through neighboring regions, independently of generation order. The Willow Crossing retains its quest solutions and shallow ford. Other river stretches have ordinary trail bridges.
+- Nearby shows the surrounding terrain; Explored shows the continuous known world, without quadrant borders. Camp and Northwatch are permanent waypoints. Accepted quests are marked; completed objectives point back to their giver.
+- Survey maps chart the 5×5 areas around camp, showing broad biome information without generating inhabitants, visiting areas or revealing local encounters. Their muted background appears on the Explored map.
+- Town services and the royal keep use global positions. Rescued citizens can be added after Northwatch was prepared, without duplication.
+
+## Remaining stages
+
+1. Attach crypt instances to global entrances and support surface return/companion behavior.
+2. Tune border scenery and biome blending, trail variety and the density of discoveries on longer journeys.
+3. Decide turn/distance rules for repopulation, preserving quest rewards and preventing enemies from appearing in sight.
+4. Add long-run cache budgets and persistence before making seamless mode the default expedition.

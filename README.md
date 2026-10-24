@@ -437,3 +437,13 @@ After `npm run build`, run `npm run test:production` to exercise the actual publ
 Choose **Seamless preview** on the title screen to try camp and the neighboring forest as one continuous map. Walk in the direction shown in the opening Chronicle message. You can see across their old boundary; the camera follows without jumping, enemies can pursue across it, and Aldren follows without teleporting. The minimap grows with explored terrain and retains the camp. Trading, gear, local quests, the bridge and ford work in shared coordinates. Creatures, drops, exploration and quest progress do not reset when returning.
 
 This is the first bounded playtest, **not yet an endless world**. Other regions, Northwatch and crypt interiors remain under **New Game**, which still starts the full expedition. The preview does not sell the full-world survey chart. See [seamless world notes](docs/SEAMLESS-WORLD.md) for the tested architecture and next stages.
+
+### v0.30.0 · Beyond the woodland
+
+**Seamless preview now opens in every direction.** Nearby terrain is generated as you approach, without resetting the camera, exploration or creatures at old boundaries. The four biomes and northern road continue across the surface, with persistent loot and encounters. Stronger biomes can still border camp; the opening message points toward a guaranteed starting forest, and the HUD warns about different terrain ahead.
+
+The river continues through adjacent terrain; ordinary crossings supplement the original quest bridge and ford. Northwatch, its inn and bounties, rescued citizens and Aldren's escort reward now work at their global positions. Aldren follows continuously; if he falls too far behind, his waiting position is marked rather than teleporting him.
+
+The minimap has **Nearby** and **Explored** views of the continuous landscape. Camp, Northwatch and accepted quests are marked. Mara's 15-gold survey map is available again and charts broad surrounding biomes without revealing creatures or discoveries.
+
+The engine prepares a nearby ring, renders only the viewport and makes distant enemies wait without catch-up turns. Areas are retained in memory for the run; there is no automatic repopulation or save/resume yet. **Crypt interiors remain in standard New Game**, which is still available. The stable `v0.28.1` tag and `backup/v0.28.1` branch remain untouched. See [seamless surface notes](docs/SEAMLESS-WORLD.md).

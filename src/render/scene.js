@@ -33,10 +33,12 @@ export class DungeonScene extends Phaser.Scene {
     // Padding keeps the adventurer centered near region edges, clear of the HUD.
     const bounds=mapBounds(s.map);
     camera.setBounds(bounds.minX*T-width/(2*zoom),bounds.minY*T-height/(2*zoom),(bounds.maxX-bounds.minX)*T+width/zoom,(bounds.maxY-bounds.minY)*T+height/zoom);
-    for(let y=bounds.minY;y<bounds.maxY;y++)for(let x=bounds.minX;x<bounds.maxX;x++){
+    const p=s.player,view={minX:Math.max(bounds.minX,Math.floor(p.x-width/(2*zoom*T))-2),maxX:Math.min(bounds.maxX,Math.ceil(p.x+width/(2*zoom*T))+3),minY:Math.max(bounds.minY,Math.floor(p.y-height/(2*zoom*T))-2),maxY:Math.min(bounds.maxY,Math.ceil(p.y+height/(2*zoom*T))+3)};
+    for(let y=view.minY;y<view.maxY;y++)for(let x=view.minX;x<view.maxX;x++){
       const k=key(x,y);if(!s.explored.has(k))continue;const visible=s.visible.has(k),a=visible?1:0.32,t=rememberedTile(s,x,y),xx=x*T,yy=y*T;
-      if(s.location?.kind==='world'&&s.city){this.cityTile(t,xx,yy,a,x,y);continue;}
-      if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,s.biome,x,y);continue;}
+      const area=this.gameModel.areaAt?.(x,y)??s;
+      if(s.location?.kind==='world'&&area.city){this.cityTile(t,xx,yy,a,x,y);continue;}
+      if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,this.gameModel.renderBiome?.(x,y)??area.biome,x,y);continue;}
       g.fillStyle(t==='#'?0x3d4351:0x20272e,a);g.fillRect(xx,yy,T-1,T-1);
       if(t==='#'){g.fillStyle(0x59616b,a);g.fillRect(xx+1,yy+1,22,3);g.lineStyle(1,0x252b37,a);g.lineBetween(xx+12,yy+4,xx+12,yy+12);g.lineBetween(xx,yy+12,xx+24,yy+12);if((x*7+y*13)%37===0){g.fillStyle(0xa96632,a);g.fillRect(xx+10,yy+9,4,9);g.fillStyle(0xffd479,a);g.fillTriangle(xx+9,yy+10,xx+15,yy+10,xx+12,yy+3);}}
       else{if(t==='A'){g.fillStyle(0x9e7890,a);g.fillRect(xx+5,yy+5,14,14);g.fillStyle(0xe8ca7b,a);g.fillRect(xx+10,yy+8,4,8);}g.fillStyle(0x303942,a);g.fillRect(xx+3,yy+5,7,2);if(t==='>'||t==='<'){ g.fillStyle(0xb9c2c8,a);for(let i=0;i<4;i++)g.fillRect(xx+4+i*2,yy+5+i*4,16-i*4,2);}if(t==='+'){g.fillStyle(0x74563a,a);g.fillRect(xx+5,yy+2,14,20);g.fillStyle(0xb79c66,a);g.fillRect(xx+7,yy+5,2,14);g.fillRect(xx+15,yy+5,2,14);}}
@@ -44,7 +46,7 @@ export class DungeonScene extends Phaser.Scene {
     if(s.location?.kind==='crypt'){const u=s.upstairs; if(s.explored.has(key(u.x,u.y))){g.lineStyle(2,0x86d6c0,s.visible.has(key(u.x,u.y))?1:.3);g.strokeTriangle(u.x*T+6,u.y*T+17,u.x*T+18,u.y*T+17,u.x*T+12,u.y*T+5);}}
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
     for(const e of s.encounters??[])if(e.type==='villager'&&e.quest&&s.visible.has(key(e.x,e.y))){g.fillStyle(e.quest.camp?0xc8ab63:({hunt:0x8b9d6b,recovery:0xba8ca6,ward:0x8e9cd0})[e.quest.kind]??0x8fa682);g.fillRect(e.x*T+8,e.y*T+12,9,8);}
-    for(let y=bounds.minY;y<bounds.maxY;y++)for(let x=bounds.minX;x<bounds.maxX;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
+    for(let y=view.minY;y<view.maxY;y++)for(let x=view.minX;x<view.maxX;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
     drawDangerPockets(g,s,T);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);
@@ -61,7 +63,7 @@ export class DungeonScene extends Phaser.Scene {
     this.combatFeedback.show(s);
   }
   cityTile(t,x,y,a,tx,ty){
-    const g=this.paint;g.fillStyle(0x65717b,a);g.fillRect(x,y,24,24);g.lineStyle(1,0x4c5964,a);g.strokeRect(x+1,y+1,22,22);g.lineBetween(x+((ty%2)*10+3),y,x+((ty%2)*10+3),y+24);
+    const g=this.paint;g.fillStyle(0x65717b,a);g.fillRect(x,y,24,24);g.lineStyle(1,0x4c5964,a);g.strokeRect(x+1,y+1,22,22);g.lineBetween(x+(((ty%2+2)%2)*10+3),y,x+(((ty%2+2)%2)*10+3),y+24);
     if(t==='#'){g.fillStyle(0x3b4a5e,a);g.fillRect(x,y,24,24);g.fillStyle(0x91a0af,a);g.fillRect(x+1,y+1,22,5);g.fillStyle(0x566b81,a);g.fillRect(x+2,y+9,20,11);if((tx+ty)%4===0){g.fillStyle(0xc4a76b,a);g.fillRect(x+9,y+9,6,8);}}
     if(t==='O'){g.fillStyle(0x654a39,a);g.fillRect(x+3,y+1,18,22);g.fillStyle(0xd2ac69,a);g.fillRect(x+5,y+3,3,18);g.fillRect(x+16,y+3,3,18);}
     if(t==='J'){g.fillStyle(0x9e4c68,a);g.fillRect(x+3,y+1,18,22);g.fillStyle(0xe7c576,a);g.fillRect(x+6,y+2,12,6);g.fillRect(x+5,y+11,14,9);}
@@ -97,7 +99,7 @@ export class DungeonScene extends Phaser.Scene {
     if(t==='Y'){g.fillStyle(0x27252a,a);g.fillRect(x+10,y+2,4,21);g.fillRect(x+4,y+7,8,3);g.fillRect(x+13,y+11,7,3);}
     if(['B','V','W','S','K'].includes(t)){g.fillStyle(t==='S'?0x9386b4:t==='V'?0x9fb8a5:0x9c8060,a);if(t==='V'){g.fillRect(x+7,y+8,11,13);g.fillStyle(0xe4c28d,a);g.fillRect(x+9,y+3,7,7);}else if(t==='S'){g.fillRect(x+5,y+17,14,5);g.fillRect(x+9,y+5,6,13);g.fillStyle(0xb5efeb,a);g.fillRect(x+10,y+2,4,5);}else if(t==='W'){g.fillRect(x+2,y+8,20,11);g.fillStyle(0x282c31,a);g.fillRect(x+4,y+18,4,5);g.fillRect(x+16,y+18,4,5);}else{g.fillRect(x+4,y+15,16,6);g.fillRect(x+9,y+9,6,7);}}
     if(t==='='||t==='X'){
-      const vertical=Boolean((this.gameModel?.areaAt?.(tx,ty)?.bridgeLayout??this.gameModel?.state.bridgeLayout)?.forward.ry);
+      const vertical=Boolean((this.gameModel?.areaAt?.(tx,ty)?.bridgeLayout?.forward??this.gameModel?.areaAt?.(tx,ty)?.riverForward??this.gameModel?.state.bridgeLayout?.forward)?.ry);
       g.fillStyle(0x79563b,a);g.fillRect(x,y,24,24);g.fillStyle(0xb18a57,a);
       for(let i=0;i<4;i++)if(vertical)g.fillRect(x+3,y+i*6,18,4);else g.fillRect(x+i*6,y+3,4,18);
       g.fillStyle(0xd7bb86,a);if(vertical){g.fillRect(x+2,y,2,24);g.fillRect(x+21,y,2,24);}else{g.fillRect(x,y+2,24,2);g.fillRect(x,y+21,24,2);}

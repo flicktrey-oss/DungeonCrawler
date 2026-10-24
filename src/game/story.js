@@ -1,3 +1,4 @@
+import {locationPoint} from './coordinates.js';
 import {awardKeepsake,arrivalSummary} from './journey.js';
 import {key,walkable} from './dungeon.js';
 import {pathStep} from './ai.js';
@@ -40,7 +41,7 @@ export function princeEnemyTarget(g,e){
 export function finishStory(g){
  const q=g.story,c=princeHere(g),p=g.state.player;
  if(!q?.accepted||q.complete||!c||c.hp<=0||!isKingdom(g.location.rx,g.location.ry)||g.location.kind!=='world')return;
- if(distance(p,KINGDOM.keep)>0||distance(c,p)>2)return;
+ if(distance(p,locationPoint(g,KINGDOM.keep,KINGDOM))>0||distance(c,p)>2)return;
  q.complete=true;q.claimed=true;c.mode='arrived';p.gold+=30;p.hp=p.maxHp;p.mana=p.maxMana;c.hp=c.maxHp;
  q.homecoming=arrivalSummary(g);awardKeepsake(g);
  g.message('Chapter one complete: Aldren reaches Northwatch. The court grants 30 gold and sanctuary. Your expedition continues.');
@@ -48,5 +49,5 @@ export function finishStory(g){
 export function princeProgress(g){
  const q=g.story,c=q.prince;if(q.complete)return 'Chapter one complete · Aldren is safe in Northwatch.';
  if(!q.accepted)return 'Prince Aldren waits southeast of the tent. Speak when you are ready.';
- return `${c.mode==='downed'?'Wounded · bring a healing tonic':c.mode==='stay'?'Waiting for you':princeHere(g)?'Following':'Separated · return to collect him'} · ${c.hp}/${c.maxHp} HP · region (${c.rx}, ${c.ry})${c.depth?' · crypt depth '+c.depth:''}. Destination: Northwatch (0, -6), northern keep.`;
+ return `${c.mode==='downed'?'Wounded · bring a healing tonic':c.mode==='stay'?'Waiting for you':princeHere(g)&&(!g.state.seamless||distance(c,g.state.player)<=32)?'Following':'Separated · return to collect him'} · ${c.hp}/${c.maxHp} HP · region (${c.rx}, ${c.ry})${c.depth?' · crypt depth '+c.depth:''}. Destination: Northwatch (0, -6), northern keep.`;
 }

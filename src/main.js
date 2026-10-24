@@ -79,7 +79,7 @@ function help() {
 }
 function menu() {
   paused = true;
-  modal('The Wildlands', '<p>A campfire at your back. A stranded prince. A kingdom beyond the northern marshes.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p><p class="hint">Seamless preview: try camp and the woods as one continuous map. The full expedition remains under New Game.</p>', [['New Game', start], ['Seamless preview',()=>start(undefined,true)], ['Instructions', help]]);
+  modal('The Wildlands', '<p>A campfire at your back. A stranded prince. A kingdom beyond the northern marshes.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p><p class="hint">Seamless preview: explore in every direction on one growing map. Crypt interiors remain in the standard expedition.</p>', [['New Game', start], ['Seamless preview',()=>start(undefined,true)], ['Instructions', help]]);
 }
 function campfire(){
  if(!model?.atCampfire())return;paused=true;panel='campfire';
@@ -209,7 +209,7 @@ function princeDialog(){
  if(q.accepted&&!q.complete&&c.hp<c.maxHp){buttons.push(['Give tonic · heal 16 HP',()=>perform('healPrince')]);}
  buttons.push(['Return',closePanel]);
  const introduction=q.complete?'Aldren has rejoined his court. The road remains open to you.':q.accepted?'“Lead on. I will stay close and defend myself.”':'“My convoy was ambushed. I found shelter here, but my home is beyond the marshes. Will you guide me to Northwatch?”';
- modal('Prince Aldren',`<p>${introduction}</p><p id="prince-status">${escape(princeProgress(model))}</p><p>${model.state.seamless?'Companion preview: test Aldren following and waiting throughout the joined camp and forest. Northwatch is available in standard runs.':'Northwatch (0, -6): six regions north. Reach the northern keep together. Prepare locally as long as you wish; there is no timer.'}</p><p class="hint">Sword: 5 ATK · Mail: 2 DEF. Commands and aid take one turn. Stay leaves Aldren here until you return. Crossings require him within two tiles. A downed prince needs a tonic; he does not die.</p><p id="prince-result" role="status"></p>`,buttons);
+ modal('Prince Aldren',`<p>${introduction}</p><p id="prince-status">${escape(princeProgress(model))}</p><p>${model.state.seamless?'Escort Aldren north to Northwatch on the continuous surface. He follows on your turns and can wait wherever you ask.':'Northwatch (0, -6): six regions north. Reach the northern keep together. Prepare locally as long as you wish; there is no timer.'}</p><p class="hint">Sword: 5 ATK · Mail: 2 DEF. Commands and aid take one turn. Stay leaves Aldren here until you return. Crossings require him within two tiles. A downed prince needs a tonic; he does not die.</p><p id="prince-result" role="status"></p>`,buttons);
 }
 function townDialog(){if(!model||!model.state.city)return;paused=true;panel='town';const s=model.state,p=s.player,inn=atInn(model),citizen=model.activeEncounter();
  if(citizen?.type==='citizen'){modal(citizen.name,`<p>${escape(citizen.description)}</p>`,[['Return',closePanel]]);return;}
@@ -235,14 +235,14 @@ function renderMinimap() {
   const loc = model.location;
   $('map-inspection').textContent=mapInspectionText(model,mapSelection)||'Tap a square for details.';
   if (mapView === 'world'&&!model.state.seamless) drawWorldMinimap($('minimap'), model);
-  else {const q=bridgeQuest(model),objective=q?.accepted&&!q.claimed?(q.medicine?q.layout.guard:q.medicineSite):null;drawMinimap($('minimap'), model.state, loc,objective?[objective]:[]);}
-  $('map-tabs').classList.toggle('hidden',Boolean(model.state.seamless));
-  $('map-local-tab').textContent=model.state.seamless?'Terrain':'Local';$('map-world-tab').textContent=model.state.seamless?'Explored':'World';
+  else {const q=bridgeQuest(model),objective=q?.accepted&&!q.claimed?(q.medicine?q.layout.guard:q.medicineSite):null;drawMinimap($('minimap'), model.state, loc,objective?[objective]:[],model.state.seamless?mapView:'world');}
+  $('map-tabs').classList.remove('hidden');
+  $('map-local-tab').textContent=model.state.seamless?'Nearby':'Local';$('map-world-tab').textContent=model.state.seamless?'Explored':'World';
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
   if(model.state.seamless)$('minimap-location').textContent=`${model.state.player.x},${model.state.player.y}`;
   $('camp-bearing').textContent = campBearing(loc);
   $('camp-bearing').hidden=mapView==='world'||model.state.home||model.state.seamless;
-  $('map-legend').textContent = model.state.seamless?'Continuous terrain · C Camp · F Fire · M Merchant · ? People · > Crypt · ! Den · S Shrine · K Cache':mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · K: Northwatch · ?: discovered quest · Purple: discovered entrance · B Bridge lead · ◇ Road landmark · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · I Inn · B Bounties · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · T Watchtower · H Shelter · Pink: detected creatures · M Merchant · ? People / blacksmith · > Crypt · ! Den · S Shrine · K Cache';
+  $('map-legend').textContent = model.state.seamless?'Continuous terrain · C Camp · K Northwatch · A Aldren · Gold: quest · Muted terrain: chart · F Fire · M Merchant · ? People · > Crypt · ! Den · S Shrine · K Cache':mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · K: Northwatch · ?: discovered quest · Purple: discovered entrance · B Bridge lead · ◇ Road landmark · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · I Inn · B Bounties · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · T Watchtower · H Shelter · Pink: detected creatures · M Merchant · ? People / blacksmith · > Crypt · ! Den · S Shrine · K Cache';
   const detect=$('detect-creatures'),p=model.state.player;detect.disabled=paused||p.level<3||p.mana<25||model.state.status!=='playing'||Boolean(targetMode);detect.textContent=p.level<3?'Detect Creatures · Lv 3':'Detect Creatures · 25 MP [G]';detect.classList.toggle('hidden',mapView!=='local');
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
   for (const tab of document.querySelectorAll('[data-map-view]')) {
@@ -256,7 +256,7 @@ function render() {
   renderMinimap();
   const s = model.state, p = s.player, loc = model.location;
   const place = s.seamless?`${s.home?'Lantern Camp':BIOMES[s.biome].name} · ${p.x}, ${p.y}`:loc.kind === 'world' ? `${s.home?'Lantern Camp':BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
-  $('stats').innerHTML = `<div class="floor">${s.seamless?'SEAMLESS PREVIEW':s.home?'SAFE CAMP':s.city?'SAFE CITY':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
+  $('stats').innerHTML = `<div class="floor">${s.seamless?`SEAMLESS PREVIEW · LV ${s.recommended}`:s.home?'SAFE CAMP':s.city?'SAFE CITY':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
     <div class="bar"><div style="width:${p.hp/p.maxHp*100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
     <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${Number(p.mana.toFixed(1))} / ${p.maxMana}</span></div>
     <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
@@ -267,7 +267,7 @@ function render() {
   const threats=s.enemies.filter(e=>e.hp>0&&e.intent&&s.visible.has(`${e.x},${e.y}`));
   if(threats.length){const warning=document.createElement('p');warning.id='combat-warning';warning.className='vision-status danger-status';warning.setAttribute('role','status');const urgent=threats.find(e=>e.intent.tiles.some(t=>t.x===p.x&&t.y===p.y))??threats[0];warning.textContent=`${urgent.name}: ${attackWarning(urgent,p)}${threats.length>1?' ('+threats.length+' attacks preparing)':''}`;$('stats').append(warning);}
   $('portrait-level').textContent=p.level;
-  const companion=model.princeHere();if(model.story.accepted&&!model.story.complete){const status=document.createElement('p');status.className='vision-status';status.id='escort-status';status.textContent=companion?`Aldren · ${companion.hp}/${companion.maxHp} HP · ${companion.mode}`:`Aldren waits in (${model.story.prince.rx}, ${model.story.prince.ry})`; $('stats').append(status);}
+  const companion=model.princeHere();if(model.story.accepted&&!model.story.complete){const status=document.createElement('p');status.className='vision-status';status.id='escort-status';status.textContent=s.seamless&&companion&&Math.abs(companion.x-p.x)+Math.abs(companion.y-p.y)>32?`Aldren ${companion.mode==='stay'?'waits':'is separated'} · ${companion.x}, ${companion.y}`:companion?`Aldren · ${companion.hp}/${companion.maxHp} HP · ${companion.mode}`:`Aldren waits in (${model.story.prince.rx}, ${model.story.prince.ry})`; $('stats').append(status);}
   const conditions=[p.corrosion>0?'Corroded −1 DEF · '+p.corrosion+' turns':null,p.smokeTurns>0?'Smoke · '+p.smokeTurns+' turns':null,p.rationTurns>0?'Rations · '+p.rationTurns+' turns':null].filter(Boolean);
   if(conditions.length){const status=document.createElement('p');status.className='vision-status';status.textContent=conditions.join(' / ');$('stats').append(status);}
 
@@ -361,7 +361,7 @@ function act(action,automatic=false) {
  const location=model.location.id,before=model.borderPreview(),oldPocket=dangerAt(model.state);
  const completed=model.action(action);
  const ahead=model.borderPreview(),pocket=dangerAt(model.state);
- if(model.location.id!==location||ahead&&ahead.recommended>model.state.player.level&&(!before||before.rx!==ahead.rx||before.ry!==ahead.ry)||pocket&&!oldPocket)stopMovement();
+ if(!model.state.seamless&&model.location.id!==location||ahead&&ahead.recommended>model.state.player.level&&(!before||before.rx!==ahead.rx||before.ry!==ahead.ry)||pocket&&!oldPocket)stopMovement();
  render();return completed;
 }
 function syncTouchControls() {
