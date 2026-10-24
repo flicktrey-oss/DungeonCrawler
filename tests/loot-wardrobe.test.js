@@ -29,8 +29,8 @@ describe('seven equipment slots',()=>{
  it('keeps both carried rings through a full-bag swap and unequip',()=>{const g=game(),p=g.state.player;p.inventory=[I.moonRing(),I.ironRing(),...Array.from({length:98},I.potion)];p.ring1=p.inventory[1];expect(g.action({type:'equip',index:0,slot:'ring1'})).toBe(true);expect(p.ring1).toBe(p.inventory[0]);expect(p.inventory).toHaveLength(100);expect(g.action({type:'unequip',slot:'ring1'})).toBe(true);expect(p.ring1).toBeNull();expect(p.inventory).toHaveLength(100);});
 });
 describe('reward pacing and source identity',()=>{
- it('has 27 distinct items and a reproducible weighted table',()=>{
- expect(ITEM_CATALOG).toHaveLength(27);expect(new Set(ITEM_CATALOG.map(e=>e.id)).size).toBe(27);
+ it('has 39 distinct items and a reproducible weighted table',()=>{
+ expect(ITEM_CATALOG).toHaveLength(39);expect(new Set(ITEM_CATALOG.map(e=>e.id)).size).toBe(39);
  const a=new Random(9),b=new Random(9);expect(Array.from({length:20},()=>itemReward(a,3,'crypt'))).toEqual(Array.from({length:20},()=>itemReward(b,3,'crypt')));
  });
  it('keeps empty ordinary drops and makes difficult equipment rewards much more likely to be modified',()=>{

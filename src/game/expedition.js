@@ -1,3 +1,4 @@
+import {BLACKSMITH,enhanceEquipment} from './blacksmith.js';
 import {createJourney,attachJourney,journeyAction} from './journey.js';
 import {attachBridge,bridgeAction,collectMedicine,finishBridgeFight} from './bridge.js';
 import {denEnemy,minibossReward} from './minibosses.js';
@@ -31,6 +32,7 @@ export class Expedition extends Game {
     this.message('Lantern Camp is safe. Start by hunting brush rats and beetles in the neighboring woods.');
     this.message('Three throwing stones are in your satchel. Use quick slot 1 to throw, or reassign it from your satchel. Mara sells field equipment.');
     this.message('Mara buys hunting trophies. Terrain and explored maps persist. Ordinary enemies return. Accepted quests and their progress stay with you for this run.');
+    this.message('Bram the Blacksmith waits southwest of the tent (18, 17). Spend gold to enhance weapons, armor and boots.');
     this.message('Scout Fen waits northeast of the tent (25, 12). Ask him to mark Willow Crossing and explain the northern road.');
   }
   refresh(){super.refresh();this.state.companion=princeHere(this);recordDiscovery(this);}
@@ -73,7 +75,7 @@ export class Expedition extends Game {
       addWoodland(this,data,rx,ry);
       attachBridge(this,data,rx,ry);
       attachJourney(this,data,rx,ry);
-      if(home){data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
+      if(home){data.map[BLACKSMITH.y][BLACKSMITH.x]='V';data.encounters.push({...BLACKSMITH,id:'blacksmith',type:'blacksmith'});data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
       if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
     placeCitizens(this,data);
@@ -99,7 +101,7 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['bridge','villager','citizen','innkeeper','gravekeeper','guide','steward'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
+  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['bridge','villager','citizen','innkeeper','gravekeeper','guide','steward','blacksmith'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
   activeEncounter(){const events=this.nearbyEncounters();return events.includes(this.interactionTarget)?this.interactionTarget:events[0];}
 
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
@@ -107,6 +109,7 @@ export class Expedition extends Game {
   arrange(index,x,y,rotate){return this.state.status==='playing'&&moveItem(this.state.player.inventory,index,x,y,rotate);}
   resolvePlayer(a){
     const s=this.state,p=s.player,loc=this.location;
+    if(a.type==='enhance')return enhanceEquipment(this,a.index);
     if(a.type==='journey')return journeyAction(this,a);
     if(a.type==='bridge')return bridgeAction(this,a);
     if(a.type==='tradeBones')return tradeBones(this);

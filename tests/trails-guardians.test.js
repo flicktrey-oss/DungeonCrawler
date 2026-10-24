@@ -57,7 +57,7 @@ describe('three den owners and their decisions',()=>{
  it('guarantees modified, themed rewards with useful upgrades more common than exceptional ones',()=>{
   const counts={};for(const id of Object.keys(MINIBOSSES))for(let seed=1;seed<=200;seed++){
    const reward=minibossReward(new Random(seed),id);expect(reward.rarity).not.toBe('ordinary');counts[reward.rarity]=(counts[reward.rarity]??0)+1;
-   expect(({bristleback:['weapon','boots'],reedmaw:['weapon','offhand'],cairn:['armor','ring','weapon']})[id]).toContain(reward.kind);
+   expect(({bristleback:['weapon','boots'],reedmaw:['weapon','offhand','armor'],cairn:['armor','weapon','boots']})[id]).toContain(reward.kind);
   }expect(counts.useful).toBeGreaterThan(counts.powerful);expect(counts.powerful).toBeGreaterThan(counts.exceptional);
  });
  it('spawns one hoard on the den owner’s defeat, with a locked reward on bag failures',()=>{

@@ -12,6 +12,7 @@ export function availableInteractions(g){
  for(const e of events){
   if(['guide','steward','journey'].includes(e.type))add(e.id,'journey',e.type==='journey'?'Interact':'Speak',e.name,e);
   else if(['villager','shrine','woodland'].includes(e.type))add(e.id,'encounter','Interact',e.quest?.giver??e.name??'Wayfarer shrine',e);
+  else if(e.type==='blacksmith')add(e.id,'blacksmith','Forge',e.name,e);
   else if(e.type==='gravekeeper')add(e.id,'grave','Trade bones',e.name,e);
   else if(e.type==='citizen')add(e.id,'town','Visit',e.name,e);
  }

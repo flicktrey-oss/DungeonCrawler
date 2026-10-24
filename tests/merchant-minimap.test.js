@@ -66,22 +66,22 @@ describe('minimap information', () => {
 import { worldMapCells, worldMapLayout } from '../src/minimap.js';
 describe('world overview', () => {
   it('adds exactly one square per visited region, including the active region, without duplicates', () => {
-    const g = new Expedition(7); expect(worldMapCells(g)).toHaveLength(1);
-    g.visitWorld(1, 0, { x: 0, y: 15 }); expect(worldMapCells(g)).toHaveLength(2);
-    g.visitWorld(0, 0, CAMP); expect(worldMapCells(g)).toHaveLength(2);
+    const g = new Expedition(7); expect(worldMapCells(g)).toHaveLength(2);
+    g.visitWorld(1, 0, { x: 0, y: 15 }); expect(worldMapCells(g)).toHaveLength(3);
+    g.visitWorld(0, 0, CAMP); expect(worldMapCells(g)).toHaveLength(3);
     expect(worldMapCells(g).filter(c => c.current)).toEqual([expect.objectContaining({ rx: 0, ry: 0, home: true })]);
     expect(new Expedition(7).regions.size).toBe(0);
   });
   it('marks only discovered entrances and does not mutate exploration or generate neighboring regions', () => {
-    const g = new Expedition(8); expect(worldMapCells(g)[0].entranceKnown).toBe(false);
+    const g = new Expedition(8); expect(worldMapCells(g).find(c=>c.home).entranceKnown).toBe(false);
     const size = g.regions.size, before = structuredClone(g.state);
     worldMapCells(g); expect(g.state).toEqual(before); expect(g.regions.size).toBe(size);
-    g.state.entrance={x:28,y:15};g.state.explored.add('28,15'); expect(worldMapCells(g)[0].entranceKnown).toBe(true);
+    g.state.entrance={x:28,y:15};g.state.explored.add('28,15'); expect(worldMapCells(g).find(c=>c.home).entranceKnown).toBe(true);
   });
   it('uses the entrance region when underground, without adding a square for each dungeon depth', () => {
     const g = new Expedition(9); g.visitWorld(-1, 0, { x: 39, y: 15 });
     g.visitCrypt(-1, 0, 1); g.visitCrypt(-1, 0, 2);
-    const cells = worldMapCells(g); expect(cells).toHaveLength(2);
+    const cells = worldMapCells(g); expect(cells).toHaveLength(3);
     expect(cells.find(c => c.current)).toMatchObject({ rx: -1, ry: 0, biome: biomeAt(-1,0,9) });
   });
   it('places east right and north above, fitting negative and distant visited coordinates into the same canvas', () => {

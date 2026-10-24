@@ -18,7 +18,7 @@ export const rangeLabel=range=>range[0]===range[1]?String(range[0]):`${range[0]}
 export const damageAfterDefense=(range,protection)=>range.map(value=>Math.max(1,value-protection));
 export function incomingRange(enemy,player,special=false){return damageAfterDefense(enemyOffenseRange(enemy),defense(player)+(special?gearBonus(player,'wardedBonus'):0));}
 export function itemDamageDescription(player,item){
- if(item?.kind==='weapon')return `Damage ${rangeLabel(playerOffenseRange({...player,weapon:item}))} before enemy defense and situational bonuses. ${weaponProfile(item)==='axe'?'Wide, even damage rolls.':weaponProfile(item)==='spear'?'Narrow damage rolls; trades power for reach.':'Steady damage rolls.'}`;
+ if(item?.kind==='weapon')return `Damage ${rangeLabel(playerOffenseRange({...player,weapon:item}))} before enemy defense.`;
  if(['stone','knife'].includes(item?.kind))return `Damage ${rangeLabel(offenseRange(item.projectileDamage??2,'projectile'))} before enemy defense.`;
  return '';
 }

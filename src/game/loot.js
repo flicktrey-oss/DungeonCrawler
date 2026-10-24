@@ -1,16 +1,18 @@
+import {regionalGear,dangerTier,gearTier} from './gear-progression.js';
 import * as I from './items.js';
-// Weight out of 115; a locked ordinary roll becomes coins, not another rare roll.
+// Eligible weighted tables favor the current region tier; future tiers never roll.
 export const ITEM_CATALOG=[
  ['stones',()=>I.throwingStones(3),18,1],['tonic',I.potion,16,1],['rations',I.rations,8,1],['clearwater',I.clearwater,6,3],['moonwell',I.moonwell,4,3],
  ['sword',I.shortSword,7,1],['spear',I.trailSpear,6,1],['hatchet',I.hatchet,4,3],['vest',()=>I.travelGear('armor',1),6,1],['gambeson',I.gambeson,4,3],
  ['buckler',I.buckler,6,1],['reedShield',I.reedShield,3,3],['reedheart',I.reedAmulet,3,3],['amber',I.amberMoth,2,6],['wolf',I.wolfCharm,2,6],['bellflower',I.bellflower,1,6],
  ['knives',I.throwingKnives,1,3],['smoke',I.smokeFlask,1,3],['thunder',I.thunderstone,1,6],['lastLight',I.lastLight,1,9],
- ['trailBoots',I.trailBoots,4,1],['softstep',I.softstepBoots,2,3],['ironRing',I.ironRing,3,1],['hunterRing',I.huntersRing,2,3],['moonRing',I.moonRing,2,3],['lantern',I.lanternRelic,1,2],['waystone',I.waystoneFocus,1,3]
+ ['trailBoots',I.trailBoots,4,1],['softstep',I.softstepBoots,2,3],['ironRing',I.ironRing,3,1],['hunterRing',I.huntersRing,2,3],['moonRing',I.moonRing,2,3],['lantern',I.lanternRelic,1,2],['waystone',I.waystoneFocus,1,3],
+ ...[2,3,4].flatMap(tier=>['weapon','spear','armor','boots'].map(kind=>[`regional-${kind}-${tier}`,()=>regionalGear(kind,tier),6,[0,1,3,6,9][tier]]))
 ].map(([id,create,weight,minDanger])=>({id,create,weight,minDanger}));
 export const MODIFIER_ODDS={miniboss:[0,.60,.95],champion:[0,.85,.99],ordinary:[.70,.95,.995],cache:[.50,.85,.99],caravan:[.50,.85,.99],crypt:[.30,.75,.97],den:[.15,.80,.99],quest:[.30,.75,.97],boss:[0,.50,.90]};
 function weighted(rng,entries,weight=e=>e.weight){let roll=rng.next()*entries.reduce((n,e)=>n+weight(e),0);for(const e of entries){roll-=weight(e);if(roll<0)return e;}return entries.at(-1);}
 export function modifyItem(item,rng,source='ordinary'){
- const result={...item,size:item.size?[...item.size]:undefined,rarity:'ordinary'};
+ const result={...item,size:item.size?[...item.size]:undefined,rarity:'ordinary',tier:gearTier(item)};
  if(!I.isEquipment(item))return result;
  const [plain,useful,strong]=MODIFIER_ODDS[source]??MODIFIER_ODDS.ordinary,roll=rng.next();if(roll<plain)return result;
  let label,effect;
@@ -35,9 +37,9 @@ export function modifyItem(item,rng,source='ordinary'){
 }
 export function itemReward(rng,danger,source='ordinary'){
  const themed=['den','crypt','boss'].includes(source),equipment=themed||source==='quest';
- const pool=equipment?ITEM_CATALOG.filter(e=>e.minDanger<=danger&&I.isEquipment(e.create())):ITEM_CATALOG;
- const entry=weighted(rng,pool,e=>e.weight*(source==='den'&&['weapon','boots'].includes(e.create().kind)?3:['crypt','boss'].includes(source)&&['armor','ring','offhand','amulet'].includes(e.create().kind)?3:1));
- if(entry.minDanger>danger)return {kind:'gold',name:'Small purse',amount:rng.int(2,4)};
+ const tier=dangerTier(danger),eligible=ITEM_CATALOG.filter(e=>e.minDanger<=danger);
+ const pool=equipment?eligible.filter(e=>I.isEquipment(e.create())):eligible;
+ const entry=weighted(rng,pool,e=>e.weight*(I.isEquipment(e.create())&&gearTier(e.create())===tier?4:1)*(source==='den'&&['weapon','boots'].includes(e.create().kind)?3:['crypt','boss'].includes(source)&&['armor','ring','offhand','amulet'].includes(e.create().kind)?3:1));
  return modifyItem({...entry.create(),id:entry.id},rng,source);
 }
 export function ordinaryDrop(rng,danger,kind,elite=false){
@@ -45,10 +47,14 @@ export function ordinaryDrop(rng,danger,kind,elite=false){
  if(kind==='rat')return rng.next()<.5?I.rawRatMeat():null;
  if(kind==='rabbit')return rng.next()<.5?I.rawMeat():null;
  if(['frog','pondFrog','toad'].includes(kind))return rng.next()<.35?I.rawMeat():null;
- const roll=rng.next(),itemChance=elite ? .24 : .08;
+ const roll=rng.next(),itemChance=elite ? .28 : [.08,.14,.20,.26][dangerTier(danger)-1];
  if(roll<.25)return {kind:'gold',name:'Dropped coins',amount:rng.int(2,4)};
  if(roll<.42)return I.trophy(kind==='pondFrog'?'frog':kind);
- if(roll<.42+itemChance)return itemReward(rng,danger,elite?'den':'ordinary');
+ if(roll<.42+itemChance){
+  // Strong creatures favor useful gear; animals above retain meat-only drops.
+  if(dangerTier(danger)>1&&rng.next()<.65){const tier=dangerTier(danger),kind=rng.pick(['weapon','spear','armor','boots']);return modifyItem(regionalGear(kind,tier),rng,elite?'den':'ordinary');}
+  return itemReward(rng,danger,elite?'den':'ordinary');
+ }
  return null;
 }
 

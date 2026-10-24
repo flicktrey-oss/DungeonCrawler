@@ -1,3 +1,4 @@
+import {equipmentSummary} from './game/gear-progression.js';
 import {itemDamageDescription,playerOffenseRange,rangeLabel} from './game/damage-rolls.js';
 import {compareEquipment} from './game/quality.js';
 import { adventurerSvg } from './render/adventurer.js';
@@ -8,7 +9,7 @@ export function mountEquipment(container,game,perform,initialSlot='weapon') {
   function draw(){
     const p=game.state.player;container.replaceChildren();
     const stats=document.createElement('p');stats.className='equipment-stats';stats.textContent=`Level ${p.level} · ${attack(p)} attack · ${defense(p)} defense · ${rangeLabel(playerOffenseRange(p))} damage`;container.append(stats);
-    const protection=document.createElement('p');protection.className='hint';protection.textContent='Ordinary DEF '+defense(p)+' from '+rawDefense(p)+' raw protection. Above 3, each 2 raw points adds 1 DEF. Special-attack protection: +'+gearBonus(p,'wardedBonus')+'. Boots help avoid detection.';container.append(protection);
+    const protection=document.createElement('p');protection.className='hint';protection.textContent='Ordinary DEF '+defense(p)+' from '+rawDefense(p)+' raw protection. Above 3, each 2 raw points adds 1 DEF. Special-attack protection: +'+gearBonus(p,'wardedBonus')+'.';container.append(protection);
     if(p.offhand?.blockChance){const note=document.createElement('p');note.className='hint';note.textContent='Shield: '+Math.round(shieldChance(p)*100)+'% melee / '+Math.round(shieldChance(p,true)*100)+'% ranged block';container.append(note);}
     const portrait=document.createElement('div');portrait.className='equipment-portrait';
     portrait.innerHTML=adventurerSvg(p);
@@ -20,7 +21,7 @@ export function mountEquipment(container,game,perform,initialSlot='weapon') {
     }
     container.append(portrait);
     const detail=document.createElement('section'),h=document.createElement('h3'),description=document.createElement('p'),item=p[selected];
-    h.textContent=`${slots[selected].label}: ${item?.name??'Empty'}`;description.textContent=item?item.description+' '+itemDamageDescription(p,item):'Select carried equipment below to fill this slot.';
+    h.textContent=`${slots[selected].label}: ${item?.name??'Empty'}`;description.textContent=item?equipmentSummary(item)+' '+itemDamageDescription(p,item):'Select carried equipment below to fill this slot.';
     detail.append(h,description);
     const unequip=document.createElement('button');unequip.textContent=`Unequip ${item?.name??slots[selected].label}`;unequip.disabled=!item;unequip.onclick=()=>perform({type:'unequip',slot:selected});detail.append(unequip);container.append(detail);
     const heading=document.createElement('h3');heading.textContent='Equip from satchel';container.append(heading);let count=0;

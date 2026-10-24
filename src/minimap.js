@@ -1,3 +1,4 @@
+import {KINGDOM} from './game/city.js';
 import {journeyHints} from './game/journey.js';
 import { rememberedTile } from './game/map-memory.js';
 import { key } from './game/dungeon.js';
@@ -49,8 +50,15 @@ export function worldMapCells(game) {
     rx:region.rx,ry:region.ry,biome:region.biome,home:region.home,visited:true,
     current:region.rx===game.location.rx&&region.ry===game.location.ry,
     entranceKnown:Boolean(region.entrance&&region.explored.has(key(region.entrance.x,region.entrance.y))),
-    questCount:0,returnCount:0,tracked:false
+    questCount:0,returnCount:0,tracked:false,
+    availableCount:(region.encounters??[]).filter(e=>e.type==='villager'&&e.quest&&!e.quest.accepted&&!e.quest.claimed&&region.encounterSeen?.has(key(e.x,e.y))).length
   }));
+  // Known destinations are cartographic landmarks, not visited or explored maps.
+  for(const place of [{rx:0,ry:0,home:true,label:'Lantern Camp'},{rx:KINGDOM.rx,ry:KINGDOM.ry,kingdom:true,label:KINGDOM.name}]){
+    let cell=cells.find(c=>c.rx===place.rx&&c.ry===place.ry);
+    if(!cell){cell={visited:false,current:false,entranceKnown:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}
+    Object.assign(cell,place);
+  }
   for(const q of game.quests?.values()??[]){
     if(!q.accepted||q.claimed)continue;
     const target=q.complete?q.giverRegion:q.region;
@@ -76,15 +84,16 @@ export function drawWorldMinimap(canvas, game) {
     const x = layout.x + cell.rx * size, y = layout.y + cell.ry * size;
     ctx.fillStyle = ({forest:'#547749',marsh:'#47717b',highlands:'#8a887b',ashlands:'#99594f',city:'#7a8ba7'})[cell.biome]??'#202c38'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
     if (cell.entranceKnown) { ctx.fillStyle = '#d4a5ff'; const mark = Math.max(1, size / 5); ctx.fillRect(x + size - mark - 2, y + 2, mark, mark); }
-    if (cell.home && size >= 10) { ctx.font = `bold ${Math.min(13, size * .6)}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe0a0'; ctx.fillText('C', x + size * ((cell.questCount||cell.returnCount)? .72 : .5), y + size * ((cell.questCount||cell.returnCount)? .72 : .5)); }
+    if ((cell.home||cell.kingdom) && size >= 10) { ctx.font = `bold ${Math.min(13, size * .6)}px monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffe0a0'; ctx.fillText(cell.kingdom?'K':'C', x + size * ((cell.questCount||cell.returnCount||cell.availableCount)? .72 : .5), y + size * ((cell.questCount||cell.returnCount||cell.availableCount)? .72 : .5)); }
     if(cell.questCount||cell.returnCount){
       // Distinct from the purple entrance dot and teal player border.
       const radius=Math.max(2,Math.min(6,size*.24)),cx=x+size*.32,cy=y+size*.33;
       ctx.fillStyle=cell.tracked?'#ffe6a0':'#edc76d';ctx.fillRect(cx-radius,cy-radius,radius*2,radius*2);
       if(size>=12){ctx.font=`bold ${Math.max(8,Math.min(12,size*.48))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#141a20';ctx.fillText(cell.returnCount?'✓':'!',cx,cy);}
     }
+    if(cell.availableCount&&!cell.questCount&&!cell.returnCount){ctx.fillStyle='#edc76d';ctx.font=`bold ${Math.max(8,Math.min(12,size*.5))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('?',x+size*.3,y+size*.3);}
     if(cell.leads?.length){ctx.fillStyle='#93c7eb';ctx.font=`bold ${Math.max(7,Math.min(11,size*.5))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(cell.leads[0].symbol,x+size*.74,y+size*.7);}
     if (cell.current) { ctx.strokeStyle = '#4cf3dc'; ctx.lineWidth = Math.min(2, size / 5); ctx.strokeRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2)); }
   }
-  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks camp; purple marks discovered entrances. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} ${journeyHints(game).map(h=>`${h.label} lead in region ${h.rx}, ${h.ry}.`).join(' ')} Unvisited quest and lead regions show no terrain.`);
+  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks Lantern Camp (0, 0); K marks Northwatch (0, -6). Both destinations are always known. Purple marks discovered entrances; ? marks discovered quests. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} ${cells.filter(c=>c.availableCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.availableCount} discovered quests available.`).join(' ')} ${journeyHints(game).map(h=>`${h.label} lead in region ${h.rx}, ${h.ry}.`).join(' ')} Unvisited quest and lead regions show no terrain.`);
 }

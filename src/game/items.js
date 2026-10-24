@@ -13,7 +13,7 @@ export const threshold = p => p.level*(p.slowProgression?20:12);
 export function travelGear(kind,tier=1) {
   const weapon=kind==='weapon', names=weapon?['Worn shortsword','Iron-tipped spear','Forged falchion','Ember greatsword']:['Patched vest','Reinforced leather','Ridge mail','Ashguard plate'];
   const level=Math.max(1,Math.min(4,tier));
-  return {kind,name:names[level-1],bonus:level,...(weapon&&level===2?{reach:2,weaponType:'spear'}:weapon?{weaponType:'sword'}:{}),size:weapon?[7,2]:[4,4],sellValue:level*4,description:`${weapon?(level===2?'+1 Reach (clear cardinal line, 2 tiles). ':'Countercut: +1 melee damage against winding-up enemies. '):''}+${level} ${weapon?'attack':'defense'} while equipped. Takes ${weapon?'7×2':'4×4'} satchel cells.`};
+  return {kind,tier:level,name:names[level-1],bonus:level,...(weapon&&level===2?{reach:2,weaponType:'spear'}:weapon?{weaponType:'sword'}:{}),size:weapon?[7,2]:[4,4],sellValue:level*4,description:`${weapon?(level===2?'+1 Reach (clear cardinal line, 2 tiles). ':'Countercut: +1 melee damage against winding-up enemies. '):''}+${level} ${weapon?'attack':'defense'} while equipped. Takes ${weapon?'7×2':'4×4'} satchel cells.`};
 }
 export const reedAmulet=()=>({kind:'amulet',name:'Reedheart amulet',bonus:1,size:[2,2],sellValue:12,description:'+1 defense while equipped. A villager’s gratitude, bound in silver reeds.'});
 export const trophy=(kind)=>({kind:'trophy',name:kind==='frog'?'Frog pearl':kind==='rat'?'Chipped fang':'Weathered claw',sellValue:kind==='frog'?3:2,size:[1,1],description:'A small hunting trophy. Sell it to Mara at camp.'});
