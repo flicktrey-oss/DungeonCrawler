@@ -72,6 +72,7 @@ test('phone can browse the merchant and toggle the minimap without extra turns',
   await begin(page); await move(page, 'east'); await move(page, 'east');
   await page.getByRole('button', { name: 'Trade', exact: true }).tap();
   await expect(page.getByRole('heading', { name: 'Mara the Wayfarer', exact: true })).toBeVisible();
+  await page.getByRole('button',{name:'Select Ember tonic offer',exact:true}).tap();
   await expect(page.getByRole('button', { name: 'Buy Ember tonic · 10 gold', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Return', exact: true }).tap();
   await expect(page.locator('#minimap')).not.toBeVisible();

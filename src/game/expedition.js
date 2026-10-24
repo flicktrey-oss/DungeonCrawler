@@ -1,3 +1,4 @@
+import {useSurveyMap} from './survey.js';
 import {BLACKSMITH,enhanceEquipment} from './blacksmith.js';
 import {createJourney,attachJourney,journeyAction} from './journey.js';
 import {attachBridge,bridgeAction,collectMedicine,finishBridgeFight} from './bridge.js';
@@ -24,7 +25,7 @@ import { ENCOUNTERS, treasure } from './encounters.js';
 const fields=['routeLandmark','bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
-    super(seed);this.journey=createJourney();this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
+    super(seed);this.journey=createJourney();this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.surveyedRegions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
     Object.assign(this.state.player,{attack:3,defense:0,slowProgression:true,amulet:null,offhand:null,boots:null,ring1:null,ring2:null,gold:8});addItem(this.state.player,throwingStones(3));settleInventory(this.state.player.inventory);assignQuick(this,0,this.state.player.inventory.findIndex(i=>i.kind==='stone'));
     Object.assign(this.state,{log:[],timeline:[],expedition:true,cryptsCleared:0,regionsDiscovered:0,transition:false});
     this.visitWorld(0,0,CAMP);this.state.transition=false;
@@ -173,6 +174,7 @@ export class Expedition extends Game {
     }
     if(a.type==='use'){
       const item=p.inventory[a.index];if(!Number.isInteger(a.index)||!item)return false;
+      if(item.kind==='surveyMap')return useSurveyMap(this,a.index);
       if(item.kind==='potion')return this.resolvePlayer({type:'potion',index:a.index});
       if(['cookedMeat','ratMeat'].includes(item.kind)&&p.hp<p.maxHp){const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+healAmount(p,item.kind==='ratMeat'?5:10));this.message(item.name+' restores '+(p.hp-before)+' health.');if(--item.quantity===0)p.inventory.splice(a.index,1);return true;}
       if(item.kind==='mana'&&p.mana<p.maxMana)p.mana=Math.min(p.maxMana,p.mana+35);

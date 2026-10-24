@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.27.0 · The winding river';
+export const RELEASE = 'v0.28.0 · Maps and markets';

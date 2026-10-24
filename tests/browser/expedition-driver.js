@@ -26,3 +26,6 @@ export async function expeditionDriver(page,seed=1,touch=false){
   async function hunt(enemy){for(let i=0;i<100&&enemy.hp>0;i++){await care();await send(firstStep(enemy));}if(enemy.hp>0)throw Error('Hunt did not finish');}
   return {game,send,walk,east,hunt,care,firstStep};
 }
+
+export async function selectOffer(page,name,touch=false){const tab=page.getByRole('tab',{name:'Merchant',exact:true});if(await tab.isVisible()){if(touch)await tab.tap();else await tab.click();}const b=page.getByRole('button',{name:`Select ${name} offer`,exact:true});if(touch)await b.tap();else await b.click();}
+export async function selectSale(page,name,touch=false){const tab=page.getByRole('tab',{name:'Your satchel',exact:true});if(await tab.isVisible()){if(touch)await tab.tap();else await tab.click();}const b=page.getByRole('button',{name:`Select ${name} to sell`,exact:true}).first();if(touch)await b.tap();else await b.click();}

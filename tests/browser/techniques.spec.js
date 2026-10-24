@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {expeditionDriver} from './expedition-driver.js';
+import {expeditionDriver,selectOffer} from './expedition-driver.js';
 import {techniqueTargets} from '../../src/game/techniques.js';
 import {stoneCount} from '../../src/game/items.js';
 for(const touch of [false,true])test.describe(touch?'phone techniques':'desktop techniques',()=>{
@@ -15,7 +15,7 @@ for(const touch of [false,true])test.describe(touch?'phone techniques':'desktop 
   await click(page.getByRole('button',{name:'Return',exact:true}));
   await d.send({type:'move',dx:1,dy:0});await d.send({type:'move',dx:1,dy:0});
   await click(page.getByRole('button',{name:'Trade',exact:true}));
-  await expect(page.getByRole('heading',{name:'Trail spear',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Weathered buckler',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'Worn shortsword (+1 ATK)',exact:true})).toBeVisible();
+  for(const name of ['Trail spear','Weathered buckler','Worn shortsword']){await selectOffer(page,name,touch);await expect(page.locator('#trade-detail h3')).toHaveText(name);}
   await click(page.getByRole('button',{name:'Return',exact:true}));
   await d.walk({x:20,y:15});await d.east();const villager=d.game.state.encounters.find(e=>e.type==='villager');await d.walk({x:villager.x,y:villager.y+1});
   // Landscape additions can change what is visible beside the quest giver.

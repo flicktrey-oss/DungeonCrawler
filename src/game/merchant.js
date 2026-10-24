@@ -1,5 +1,5 @@
 import { addItem } from './inventory.js';
-import { travelGear, potion, shortSword, trailSpear, buckler, throwingStones, trailBoots, ironRing } from './items.js';
+import { surveyMap, travelGear, potion, shortSword, trailSpear, buckler, throwingStones, trailBoots, ironRing } from './items.js';
 
 export const MERCHANT = { x: 22, y: 14 };
 export function createMerchantStock() {
@@ -12,6 +12,7 @@ export function createMerchantStock() {
     { id: 'boots', item: trailBoots(), price: 8, stock: 1 },
     { id: 'ring', item: ironRing(), price: 12, stock: 2 },
     { id: 'stones', item: throwingStones(3), price: 4, stock: 5 },
+    { id: 'survey', item: surveyMap(), price: 15, stock: 1 },
   ];
 }
 export function buyFromMerchant(game, id) {

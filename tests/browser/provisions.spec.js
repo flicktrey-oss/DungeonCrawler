@@ -1,6 +1,6 @@
 import {cookAll} from '../../src/game/quality.js';
 import {test,expect} from '@playwright/test';
-import {expeditionDriver} from './expedition-driver.js';
+import {expeditionDriver,selectOffer,selectSale} from './expedition-driver.js';
 for(const touch of [false,true])test.describe(touch?'phone provisions':'desktop provisions',()=>{
  if(touch)test.use({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  test('campfire cooking is discoverable and locked detection never spends a turn',async({page})=>{
@@ -27,7 +27,7 @@ for(const touch of [false,true])test.describe(touch?'phone provisions':'desktop 
  test('equipped gear keeps its emoji and satchel footprint, with an unequip control',async({page})=>{
   const d=await expeditionDriver(page,5,touch),click=async loc=>touch?loc.tap():loc.click();
   await d.send({type:'move',dx:1,dy:0});await d.send({type:'move',dx:1,dy:0});await click(page.getByRole('button',{name:'Trade',exact:true}));
-  await click(page.getByRole('button',{name:'Buy Trail Boots · 8 gold',exact:true}));d.game.action({type:'buy',id:'boots'});await click(page.getByRole('button',{name:'Return',exact:true}));
+  await selectOffer(page,'Trail Boots',touch);await click(page.getByRole('button',{name:'Buy Trail Boots · 8 gold',exact:true}));d.game.action({type:'buy',id:'boots'});await click(page.getByRole('button',{name:'Return',exact:true}));
   await click(page.getByRole('button',{name:'Open satchel [I]',exact:true}));await click(page.getByRole('button',{name:'Select Trail Boots, 2 by 2',exact:true}));const capacity=await page.locator('#bag-capacity').textContent();
   await click(page.getByRole('button',{name:'Use / equip',exact:true}));const index=d.game.state.player.inventory.findIndex(i=>i.kind==='boots');d.game.action({type:'equip',index});
   await expect(page.locator('.bag-item.equipped')).toHaveCount(1);await expect(page.locator('#bag-capacity')).toHaveText(capacity);

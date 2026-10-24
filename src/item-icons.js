@@ -1,6 +1,6 @@
 // Emoji artwork follows the item family, including modified loot and legacy gear.
 const icons={
- bones:'🦴',skeletonKey:'🗝️',rawMeat:'🥩',cookedMeat:'🍖',rawRatMeat:'🥩',ratMeat:'🍖',potion:'🧪',ration:'🍞',cleanse:'🧴',mana:'⚗️',smoke:'🫙',
+ surveyMap:'🗺️',bones:'🦴',skeletonKey:'🗝️',rawMeat:'🥩',cookedMeat:'🍖',rawRatMeat:'🥩',ratMeat:'🍖',potion:'🧪',ration:'🍞',cleanse:'🧴',mana:'⚗️',smoke:'🫙',
  stone:'🪨',knife:'🔪',thunder:'⚡',armor:'🦺',boots:'👢',
  ring:'💍',amulet:'📿',offhand:'🛡️',gold:'🪙',chest:'📦',questToken:'🧿'
 };

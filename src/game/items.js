@@ -65,4 +65,5 @@ export const moonwell=()=>({id:'moonwell',kind:'mana',name:'Moonwell Sip',sellVa
 export const smokeFlask=()=>({id:'smoke',kind:'smoke',name:'Smoke Flask',sellValue:4,description:'For 3 enemy phases, enemies beyond adjacent range cannot pursue or fire at you. Adjacent enemies still attack.'});
 export const throwingKnives=(quantity=2)=>({id:'knives',kind:'knife',name:'Balanced Throwing Knives',quantity,size:[1,1],projectileDamage:4,sellValue:6,description:'Throw within 4 tiles for 3–5 damage before defense. 50% recovery chance. Stacks of 9.'});
 export const thunderstone=(quantity=1)=>({id:'thunder',kind:'thunder',name:'Thunderstone',quantity,size:[1,1],projectileDamage:0,description:'Throw within 4 tiles to interrupt an enemy and make it lose its next action. No damage; consumed on impact.'});
-export const consumableKinds=['potion','ration','cleanse','mana','smoke','cookedMeat','ratMeat'];
+export const surveyMap=()=>({kind:'surveyMap',name:'Camp survey map',size:[3,3],sellValue:4,description:'Use once to chart the 5×5 world regions around camp. Does not reveal local terrain or encounters.'});
+export const consumableKinds=['surveyMap','potion','ration','cleanse','mana','smoke','cookedMeat','ratMeat'];

@@ -1,7 +1,8 @@
+import {mountTrading} from './trading-ui.js';
 import {inspectMapAt,mapInspectionText} from './map-inspection.js';
 import {equipmentSummary} from './game/gear-progression.js';
 import {atBlacksmith,canEnhance,enhancementCost,enhancementCap,enhancementPreview} from './game/blacksmith.js';
-import {playerOffenseRange,rangeLabel,itemDamageDescription} from './game/damage-rolls.js';
+import {playerOffenseRange,rangeLabel} from './game/damage-rolls.js';
 import {InteractionSelection} from './game/interactions.js';
 import {bridgeQuest,BRIDGE_TOLL} from './game/bridge.js';
 import {attackWarning} from './game/combat-feedback.js';
@@ -19,7 +20,7 @@ import Phaser from 'phaser';
 import { Expedition } from './game/expedition.js';
 import { dangerAt } from './game/danger.js';
 import { BIOMES, threatLabel } from './game/world.js';
-import { attack, defense, threshold, projectileCount as stoneCount, EQUIPMENT_SLOTS, equippedSlot, salePrice } from './game/items.js';
+import { attack, defense, threshold, projectileCount as stoneCount, EQUIPMENT_SLOTS, equippedSlot } from './game/items.js';
 import { DungeonScene } from './render/scene.js';
 import './style.css';
 import { drawMinimap, drawWorldMinimap, campBearing } from './minimap.js';
@@ -98,20 +99,10 @@ function storage() {
   }
 }
 function merchant() {
-  if (!model?.atMerchant()) return;
-  paused = true; panel = 'merchant';
-  modal('Mara the Wayfarer', '<p>Potions and equipment for the road. Browse freely; each purchase costs one turn. Limited stock. Sell carried trophies or spare gear below; each trade costs one turn.</p><p id="shop-gold"></p><div id="shop-offers"></div><h3>Sell from satchel</h3><div id="shop-sales"></div><p id="shop-result" role="status"></p>', [['Return', closePanel]]);
-  $('shop-gold').textContent = `Your gold: ${model.state.player.gold}`;
-  for (const offer of model.shop) {
-    const row = document.createElement('section'), name = document.createElement('h3'), description = document.createElement('p'), button = document.createElement('button');
-    name.textContent = `${offer.item.name}${offer.item.bonus ? ` (+${offer.item.bonus} ${offer.item.kind === 'weapon' ? 'ATK' : 'DEF'})` : ''}`;
-    description.textContent = `${equipmentSummary(offer.item)} ${itemDamageDescription(model.state.player,offer.item)} · ${offer.price} gold · ${offer.stock} left`;
-    button.textContent = offer.stock === 0 ? `Sold out: ${offer.item.name}` : `Buy ${offer.item.name} · ${offer.price} gold`;
-    button.disabled = offer.stock <= 0 || model.state.player.gold < offer.price;
-    button.onclick = () => { model.action({ type: 'buy', id: offer.id }); render(); merchant(); $('shop-result').textContent=model.state.log.at(-1); };
-    row.append(name, description, button); $('shop-offers').append(row);
-  }
-  model.state.player.inventory.forEach((item,index)=>{const b=document.createElement('button');b.className='item';b.textContent=`Sell ${item.name} · ${salePrice(item)} gold`;b.disabled=Boolean(equippedSlot(model.state.player,item));b.onclick=()=>{model.action({type:'sell',index});render();merchant();};$('shop-sales').append(b);});
+ if(!model?.atMerchant())return;paused=true;panel='merchant';
+ modal('Mara the Wayfarer','<div id="trading-ui"></div>',[['Return',closePanel]]);
+ $('overlay').querySelector('article').classList.add('trading-dialog');
+ mountTrading($('trading-ui'),model,action=>{const ok=model.action(action);render();return ok;});
 }
 function blacksmith(){
  if(!model||!atBlacksmith(model))return;paused=true;panel='blacksmith';
