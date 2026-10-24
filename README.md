@@ -401,3 +401,7 @@ Armor and piercing apply after the roll, damage has a minimum of one, countercut
 ### v0.25.1 · Known havens
 
 Lantern Camp and Northwatch are always colored and marked on the world map. Their local settlement maps show all terrain and fixed sites immediately, without walking through them first. This is map information only: it does not visit Northwatch, reveal creatures outside your sight, advance time or remove wilderness fog. Exploration in other regions still persists normally for the run.
+
+### v0.25.2 · Read the map
+
+Click or tap a displayed World map square to see its region coordinates, biome, recommended level and danger compared with your level. Camp and Northwatch are labeled safe. Known quest/road destinations can be inspected before visiting without revealing their terrain. Empty world space provides no information. On the Local map, click an explored square (or any settlement square) to see local tile coordinates and the current region/depth recommendation. Inspection is free and never moves your character or advances a turn. Recommendations describe ordinary inhabitants; special encounters may be harder.

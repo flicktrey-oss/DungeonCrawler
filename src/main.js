@@ -1,3 +1,4 @@
+import {inspectMapAt,mapInspectionText} from './map-inspection.js';
 import {equipmentSummary} from './game/gear-progression.js';
 import {atBlacksmith,canEnhance,enhancementCost,enhancementCap,enhancementPreview} from './game/blacksmith.js';
 import {playerOffenseRange,rangeLabel,itemDamageDescription} from './game/damage-rolls.js';
@@ -38,7 +39,7 @@ const phaser = new Phaser.Game({ type: Phaser.CANVAS, parent: 'game', width: 768
   backgroundColor: '#090c12', scene: [scene], scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   callbacks: { postBoot() { setTimeout(() => { if (model) scene.setGame(model); }, 0); } } });
 const interactionSelection=new InteractionSelection();
-let model = null, paused = true, panel = null, mapView = 'local', inspected = null, inspectedMap = null, targetMode = null, lastShownBlock = 0;
+let model = null, paused = true, panel = null, mapView = 'local', mapSelection = null, inspected = null, inspectedMap = null, targetMode = null, lastShownBlock = 0;
 new ResizeObserver(() => {
   const parent = document.getElementById('game');
   if (parent.clientWidth && parent.clientHeight) phaser.scale.resize(parent.clientWidth, parent.clientHeight);
@@ -65,7 +66,7 @@ function modal(title, body, buttons) {
   $('overlay').querySelector('article').focus({preventScroll:true});
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls();if(model)renderMinimap(); }
-function start(seed) {if(!Number.isInteger(seed))seed=Date.now(); travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; model = new Expedition(seed); closePanel(); render(); }
+function start(seed) {if(!Number.isInteger(seed))seed=Date.now(); travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; mapSelection=null; model = new Expedition(seed); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Biomes vary by run; mountains can border camp. At least one neighboring forest offers a starting foothold. Read trail warnings before crossing. Start with rats and beetles in those woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
@@ -240,6 +241,7 @@ function interact(intent=null){
 function renderMinimap() {
   if (!model) return;
   const loc = model.location;
+  $('map-inspection').textContent=mapInspectionText(model,mapSelection)||'Click or tap a map square for coordinates and recommended level.';
   if (mapView === 'world') drawWorldMinimap($('minimap'), model);
   else {const q=bridgeQuest(model),objective=q?.accepted&&!q.claimed?(q.medicine?q.layout.guard:q.medicineSite):null;drawMinimap($('minimap'), model.state, loc,objective?[objective]:[]);}
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
@@ -404,7 +406,13 @@ bindTouchControls($('touch-controls'), control => {
 const phoneLayout = matchMedia('(max-width: 700px), (pointer: coarse)');
 function setPanels() { $('chronicle-panel').open=false; $('quest-panel').open=false; $('minimap-widget').open=!phoneLayout.matches; }
 phoneLayout.addEventListener('change', setPanels); setPanels();
-for (const tab of document.querySelectorAll('[data-map-view]')) tab.addEventListener('click', event => { mapView = tab.dataset.mapView; renderMinimap(); if (event.detail > 0) tab.blur(); });
+$('minimap').addEventListener('click',event=>{
+ if(!model)return;travel.cancel();stopMovement();
+ const canvas=$('minimap'),box=canvas.getBoundingClientRect();
+ mapSelection=inspectMapAt(model,mapView,(event.clientX-box.left)*canvas.width/box.width,(event.clientY-box.top)*canvas.height/box.height,canvas.width,canvas.height);
+ renderMinimap();
+});
+for (const tab of document.querySelectorAll('[data-map-view]')) tab.addEventListener('click', event => { mapView = tab.dataset.mapView; mapSelection=null; renderMinimap(); if (event.detail > 0) tab.blur(); });
 $('map-tabs').addEventListener('keydown', event => {
   if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
   event.preventDefault(); event.stopPropagation();

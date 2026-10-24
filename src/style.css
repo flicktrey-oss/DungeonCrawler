@@ -76,3 +76,5 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 #quick-slots .custom-slot.equipped{border-color:#91dfb5;background:#285044}
 
 #interaction-detail{font:9px/1.1 system-ui;display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#efd39b}#interaction-detail:empty{display:none}#interaction-count{font:10px/1 system-ui;color:#efd39b}.context-action.has-choices svg{width:18px;height:18px}[data-control="cycle-interaction"]>span:first-child{font-size:22px;line-height:22px}
+
+#minimap{cursor:crosshair}#map-inspection{font-size:12px;line-height:1.5;color:#eee0bd}
