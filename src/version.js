@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.28.0 · Maps and markets';
+export const RELEASE = 'v0.28.1 · Reliable loading';

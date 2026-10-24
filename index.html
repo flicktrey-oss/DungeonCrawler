@@ -1,12 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="booting">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b1017">
   <title>The Wildlands — DungeonCrawler</title>
+  <style>
+    .booting #app,.booting #overlay{visibility:hidden}
+    #load-failure{display:none}.booting #load-failure{position:fixed;inset:0;z-index:100;display:grid;place-content:center;gap:16px;padding:24px;background:#080e13;color:#e1e3d7;font:16px/1.6 system-ui;text-align:center}
+    #reload-game{color:#eed7ac}
+  </style>
+  <script>
+    (()=>{
+      const failed=()=>{if(document.documentElement.classList.contains('booting')){const text=document.getElementById('load-status');if(text)text.textContent='The game could not finish loading. Please reload.';}};
+      const timer=setTimeout(failed,12000);
+      window.addEventListener('error',failed,true);
+      window.addEventListener('unhandledrejection',failed);
+      window.finishGameLoading=()=>{clearTimeout(timer);document.documentElement.classList.remove('booting');};
+      document.addEventListener('DOMContentLoaded',()=>{const url=new URL(location.href);if(url.pathname.endsWith('/DungeonCrawler'))url.pathname+='/';url.searchParams.set('reload',Date.now());document.getElementById('reload-game').href=url.href;});
+    })();
+  </script>
 </head>
 <body>
+<div id="load-failure" role="status"><span id="load-status">Loading The Wildlands…</span><a id="reload-game" href="./">Reload game</a></div>
 <div id="app">
   <main aria-label="The Wildlands game">
     <div id="game" aria-label="Dungeon map"></div>

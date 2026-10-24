@@ -460,3 +460,5 @@ window.addEventListener('keydown', event => {
   else if (k === 'enter' || k === '>') act({ type: 'descend' }); else if (k === 'q' || k === '<') act({ type: 'ascend' });
 });
 menu();
+
+window.finishGameLoading?.();
