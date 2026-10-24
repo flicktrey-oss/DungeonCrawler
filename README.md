@@ -405,3 +405,7 @@ Lantern Camp and Northwatch are always colored and marked on the world map. Thei
 ### v0.25.2 · Read the map
 
 Click or tap a displayed World map square to see its region coordinates, biome, recommended level and danger compared with your level. Camp and Northwatch are labeled safe. Known quest/road destinations can be inspected before visiting without revealing their terrain. Empty world space provides no information. On the Local map, click an explored square (or any settlement square) to see local tile coordinates and the current region/depth recommendation. Inspection is free and never moves your character or advances a turn. Recommendations describe ordinary inhabitants; special encounters may be harder.
+
+### v0.26.0 · Lantern Camp comes alive
+
+The starting region is now a small settlement common rather than scattered forest: a stone forge and anvil beside Bram, Mara’s covered trading cart, three original canvas teepees, a well, benches, lantern posts, barrels, stacked firewood, a washing line and trail signage. A broad meadow and packed-earth common open the center, with woods around the perimeter. The HUD names the settlement Lantern Camp. Service locations and functions remain the same. Forge/cart/teepee footprints are solid; the through-roads and approaches to people remain open. The camp stays safe and its layout persists during a run. These are original procedural graphics; scenery does not introduce gathering, building, extra actions or real-time effects.

@@ -1,3 +1,4 @@
+import {drawCampProp,drawCampGround} from './camp.js';
 import {CombatFeedback} from './combat-feedback.js';
 import {drawPerson} from './people.js';
 import { drawDangerPockets } from './danger-pockets.js';
@@ -88,7 +89,8 @@ export class DungeonScene extends Phaser.Scene {
   }
   outdoorTile(t,x,y,a,biome,tx,ty,g=this.paint){
     const marsh=biome==='marsh';const ground=({forest:0x344b35,marsh:0x344b40,highlands:0x55564d,ashlands:0x493536})[biome]??0x344b35;
-    g.fillStyle(t==='~'?0x264650:t==='.'?0x70614b:ground,a);g.fillRect(x,y,24,24);
+    g.fillStyle(t==='~'?0x264650:['.','P'].includes(t)?0x70614b:ground,a);g.fillRect(x,y,24,24);
+    if(this.gameModel?.state.home&&this.gameModel?.location.kind==='world')drawCampGround(g,t,x,y,a,tx,ty);
     if(t===','||t===';'||t==='T'){g.fillStyle(marsh?0x688361:0x577447,a);const n=(tx*7+ty*11)%15;g.fillRect(x+3+n,y+5,2,4);g.fillRect(x+5,y+17-n/2,3,2);}
     if(t==='T'){g.fillStyle(0x594937,a);g.fillRect(x+10,y+12,5,11);g.fillStyle(0x20392d,a);g.fillRect(x+2,y+3,20,13);g.fillStyle(0x45684a,a);g.fillRect(x+5,y+1,14,9);g.fillStyle(0x63835a,a);g.fillRect(x+7,y+2,7,3);}
     if(t==='Y'){g.fillStyle(0x27252a,a);g.fillRect(x+10,y+2,4,21);g.fillRect(x+4,y+7,8,3);g.fillRect(x+13,y+11,7,3);}
@@ -111,7 +113,7 @@ export class DungeonScene extends Phaser.Scene {
     if(t==='F'){g.fillStyle(0x756e60,a);g.fillEllipse(x+12,y+19,22,8);g.fillStyle(0x714b35,a);g.fillRect(x+5,y+16,14,4);g.fillStyle(0xe77c40,a);g.fillTriangle(x+5,y+18,x+12,y+3,x+19,y+18);g.fillStyle(0xffd88a,a);g.fillTriangle(x+9,y+18,x+13,y+10,x+16,y+18);}
     if(t==='C'){g.fillStyle(0xad8050,a);g.fillTriangle(x+1,y+22,x+11,y+2,x+21,y+22);g.fillStyle(0x3a3128,a);g.fillTriangle(x+7,y+22,x+11,y+9,x+16,y+22);g.fillStyle(0xffd180,a);g.fillRect(x+20,y+15,3,6);g.fillStyle(0xf18f53,a);g.fillRect(x+19,y+19,5,3);}
   }
-  scenery(d,a){const g=this.paint,x=d.x*T,y=d.y*T;if(d.type==='banner'){g.fillStyle(0xc7ae76,a);g.fillRect(x+5,y+1,2,23);g.fillStyle(0x5486af,a);g.fillRect(x+7,y+2,13,15);g.fillStyle(0xf1d493,a);g.fillRect(x+12,y+5,3,8);g.fillRect(x+9,y+8,9,2);return;}if(d.type==='bones'){g.fillStyle(0xd6d0b9,a);g.fillRect(x+4,y+13,16,3);g.fillRect(x+6,y+9,3,11);g.fillEllipse(x+16,y+7,7,6);return;}if(d.type==='tracks'){g.fillStyle(0xcab78b,a*.7);for(const[dx,dy]of [[6,6],[12,11],[7,17]]){g.fillEllipse(x+dx,y+dy,4,6);g.fillRect(x+dx-2,y+dy-5,1,2);g.fillRect(x+dx+1,y+dy-5,1,2);}return;}g.fillStyle(d.type==='flowers'?0xbea273:d.type==='reeds'?0x9ca569:d.type==='log'?0x796047:0xa3a699,a);if(d.type==='log'){g.fillRect(x+2,y+14,20,5);g.fillStyle(0xb89a69,a);g.fillRect(x+2,y+14,3,5);}else if(d.type==='grave'){g.fillRect(x+9,y+7,6,13);g.fillRect(x+5,y+11,14,3);}else{g.fillRect(x+5,y+11,3,3);g.fillRect(x+14,y+17,4,2);g.fillRect(x+11,y+5,2,4);}}
+  scenery(d,a){if(drawCampProp(this.paint,d,T,a))return;const g=this.paint,x=d.x*T,y=d.y*T;if(d.type==='banner'){g.fillStyle(0xc7ae76,a);g.fillRect(x+5,y+1,2,23);g.fillStyle(0x5486af,a);g.fillRect(x+7,y+2,13,15);g.fillStyle(0xf1d493,a);g.fillRect(x+12,y+5,3,8);g.fillRect(x+9,y+8,9,2);return;}if(d.type==='bones'){g.fillStyle(0xd6d0b9,a);g.fillRect(x+4,y+13,16,3);g.fillRect(x+6,y+9,3,11);g.fillEllipse(x+16,y+7,7,6);return;}if(d.type==='tracks'){g.fillStyle(0xcab78b,a*.7);for(const[dx,dy]of [[6,6],[12,11],[7,17]]){g.fillEllipse(x+dx,y+dy,4,6);g.fillRect(x+dx-2,y+dy-5,1,2);g.fillRect(x+dx+1,y+dy-5,1,2);}return;}g.fillStyle(d.type==='flowers'?0xbea273:d.type==='reeds'?0x9ca569:d.type==='log'?0x796047:0xa3a699,a);if(d.type==='log'){g.fillRect(x+2,y+14,20,5);g.fillStyle(0xb89a69,a);g.fillRect(x+2,y+14,3,5);}else if(d.type==='grave'){g.fillRect(x+9,y+7,6,13);g.fillRect(x+5,y+11,14,3);}else{g.fillRect(x+5,y+11,3,3);g.fillRect(x+14,y+17,4,2);g.fillRect(x+11,y+5,2,4);}}
   item(i){const g=this.paint,x=i.x*T,y=i.y*T;
     if(['rawMeat','rawRatMeat','cookedMeat','ratMeat'].includes(i.kind)){
       const raw=i.kind.startsWith('raw'),rat=['rawRatMeat','ratMeat'].includes(i.kind);

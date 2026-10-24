@@ -259,7 +259,7 @@ function render() {
   scene.setGame(model);
   renderMinimap();
   const s = model.state, p = s.player, loc = model.location;
-  const place = loc.kind === 'world' ? `${BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
+  const place = loc.kind === 'world' ? `${s.home?'Lantern Camp':BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
   $('stats').innerHTML = `<div class="floor">${s.home?'SAFE CAMP':s.city?'SAFE CITY':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
     <div class="bar"><div style="width:${p.hp/p.maxHp*100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
     <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${Number(p.mana.toFixed(1))} / ${p.maxMana}</span></div>
