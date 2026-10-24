@@ -20,8 +20,8 @@ function openBridge(g,q,mode){
  g.message('Willow Crossing is open for the rest of this run. The direct trail is available to you and Aldren.');
 }
 function medicineSite(g,q){
- const sites=[],s=g.state,used=new Set([...s.enemies.filter(e=>e.hp>0),...s.items,...s.encounters,...s.scenery,s.player,s.companion].filter(Boolean).map(p=>key(p.x,p.y)));
- for(let y=5;y<25;y++)for(let x=5;x<35;x++)if(Math.abs(x-q.layout.guard.x)+Math.abs(y-q.layout.guard.y)>=12&&!used.has(key(x,y))&&[[0,0],[1,0],[-1,0],[0,1],[0,-1]].every(([dx,dy])=>walkable(s.map,x+dx,y+dy)&&!used.has(key(x+dx,y+dy))))sites.push({x,y});
+ const sites=[],s=g.state,b=s.areaBounds??{minX:0,minY:0,maxX:40,maxY:30},used=new Set([...s.enemies.filter(e=>e.hp>0),...s.items,...s.encounters,...s.scenery,s.player,s.companion].filter(Boolean).map(p=>key(p.x,p.y)));
+ for(let y=b.minY+5;y<b.maxY-5;y++)for(let x=b.minX+5;x<b.maxX-5;x++)if(Math.abs(x-q.layout.guard.x)+Math.abs(y-q.layout.guard.y)>=12&&!used.has(key(x,y))&&[[0,0],[1,0],[-1,0],[0,1],[0,-1]].every(([dx,dy])=>walkable(s.map,x+dx,y+dy)&&!used.has(key(x+dx,y+dy))))sites.push({x,y});
  return sites.length?g.rng.pick(sites):null;
 }
 export function bridgeAction(g,a){

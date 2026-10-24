@@ -429,3 +429,11 @@ Willow Crossing’s river now runs continuously across the entire first-forest r
 Production builds now embed the bundled game code and styles in `dist/index.html`. A cached page can no longer request JavaScript/CSS filenames removed by a later deployment. No separate game assets are needed; development still uses Vite normally. If startup fails, the page shows a readable loading/reload screen instead of unstyled controls.
 
 After `npm run build`, run `npm run test:production` to exercise the actual published file at root and nested URLs on desktop and phone, with no external asset files available. Install the test browser with `npx playwright install chromium` if necessary, or set `CHROMIUM_PATH` to an installed Chromium executable. GitHub Pages now runs this production check before uploading the game.
+
+### v0.29.0 · A seamless foothold
+
+**v0.28.1 is backed up** as both Git tag `v0.28.1` and branch `backup/v0.28.1`.
+
+Choose **Seamless preview** on the title screen to try camp and the neighboring forest as one continuous map. Walk in the direction shown in the opening Chronicle message. You can see across their old boundary; the camera follows without jumping, enemies can pursue across it, and Aldren follows without teleporting. The minimap grows with explored terrain and retains the camp. Trading, gear, local quests, the bridge and ford work in shared coordinates. Creatures, drops, exploration and quest progress do not reset when returning.
+
+This is the first bounded playtest, **not yet an endless world**. Other regions, Northwatch and crypt interiors remain under **New Game**, which still starts the full expedition. The preview does not sell the full-world survey chart. See [seamless world notes](docs/SEAMLESS-WORLD.md) for the tested architecture and next stages.

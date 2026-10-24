@@ -91,8 +91,8 @@ export function questAction(g,a){
  if(!event?.quest||event.wardIndex===undefined||!q.accepted||q.claimed||event.used)return false;
  event.used=true;q.activated.push(event.id);g.message('A waystone answers your lantern. '+q.activated.length+'/3 lit.');
  if(q.activated.length===3){
- const occupied=new Set(s.enemies.filter(e=>e.hp>0).map(e=>key(e.x,e.y)));let spot;
- for(let r=2;r<15&&!spot;r++)for(let y=Math.max(1,p.y-r);y<=Math.min(28,p.y+r)&&!spot;y++)for(let x=Math.max(1,p.x-r);x<=Math.min(38,p.x+r);x++)if(Math.abs(x-p.x)+Math.abs(y-p.y)===r&&walkable(s.map,x,y)&&!occupied.has(key(x,y))&&![...s.encounters,...s.items].some(e=>e.x===x&&e.y===y)){spot={x,y};break;}
+ const occupied=new Set(s.enemies.filter(e=>e.hp>0).map(e=>key(e.x,e.y))),bounds=s.areaBounds??{minX:0,minY:0,maxX:40,maxY:30};let spot;
+ for(let r=2;r<15&&!spot;r++)for(let y=Math.max(bounds.minY+1,p.y-r);y<=Math.min(bounds.maxY-2,p.y+r)&&!spot;y++)for(let x=Math.max(bounds.minX+1,p.x-r);x<=Math.min(bounds.maxX-2,p.x+r);x++)if(Math.abs(x-p.x)+Math.abs(y-p.y)===r&&walkable(s.map,x,y)&&!occupied.has(key(x,y))&&![...s.encounters,...s.items].some(e=>e.x===x&&e.y===y)){spot={x,y};break;}
  if(spot){const e=g.makeEnemy('beetle',spot,s.danger,2000+s.enemies.length);s.enemies.push({...e,hp:e.hp+8,maxHp:e.maxHp+8,attack:e.attack+3,name:'Briar Sentinel',territory:{x:p.x,y:p.y,radius:5,name:'Awakened waystone'},questKey:q.id});g.message('The Briar Sentinel awakens!');}
  }
  return true;

@@ -6,7 +6,7 @@ import { drawAdventurer } from './adventurer.js';
 import Phaser from 'phaser';
 import {drawCreature,drawMiniboss} from './creature-sprites.js';
 import {rememberedTile} from '../game/map-memory.js';
-import {key} from '../game/dungeon.js';
+import {key,mapBounds} from '../game/dungeon.js';
 const T=24;
 export class DungeonScene extends Phaser.Scene {
   constructor(){super('dungeon');}
@@ -31,8 +31,9 @@ export class DungeonScene extends Phaser.Scene {
     const {width,height}=this.scale,zoom=height<500?1.25:width<900?1.5:2;
     const camera=this.cameras.main;camera.setZoom(zoom);
     // Padding keeps the adventurer centered near region edges, clear of the HUD.
-    camera.setBounds(-width/(2*zoom),-height/(2*zoom),s.map[0].length*T+width/zoom,s.map.length*T+height/zoom);
-    for(let y=0;y<s.map.length;y++)for(let x=0;x<s.map[y].length;x++){
+    const bounds=mapBounds(s.map);
+    camera.setBounds(bounds.minX*T-width/(2*zoom),bounds.minY*T-height/(2*zoom),(bounds.maxX-bounds.minX)*T+width/zoom,(bounds.maxY-bounds.minY)*T+height/zoom);
+    for(let y=bounds.minY;y<bounds.maxY;y++)for(let x=bounds.minX;x<bounds.maxX;x++){
       const k=key(x,y);if(!s.explored.has(k))continue;const visible=s.visible.has(k),a=visible?1:0.32,t=rememberedTile(s,x,y),xx=x*T,yy=y*T;
       if(s.location?.kind==='world'&&s.city){this.cityTile(t,xx,yy,a,x,y);continue;}
       if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,s.biome,x,y);continue;}
@@ -43,7 +44,7 @@ export class DungeonScene extends Phaser.Scene {
     if(s.location?.kind==='crypt'){const u=s.upstairs; if(s.explored.has(key(u.x,u.y))){g.lineStyle(2,0x86d6c0,s.visible.has(key(u.x,u.y))?1:.3);g.strokeTriangle(u.x*T+6,u.y*T+17,u.x*T+18,u.y*T+17,u.x*T+12,u.y*T+5);}}
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
     for(const e of s.encounters??[])if(e.type==='villager'&&e.quest&&s.visible.has(key(e.x,e.y))){g.fillStyle(e.quest.camp?0xc8ab63:({hunt:0x8b9d6b,recovery:0xba8ca6,ward:0x8e9cd0})[e.quest.kind]??0x8fa682);g.fillRect(e.x*T+8,e.y*T+12,9,8);}
-    for(let y=0;y<s.map.length;y++)for(let x=0;x<s.map[y].length;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
+    for(let y=bounds.minY;y<bounds.maxY;y++)for(let x=bounds.minX;x<bounds.maxX;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
     drawDangerPockets(g,s,T);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);
@@ -80,7 +81,7 @@ export class DungeonScene extends Phaser.Scene {
     }
   }
   healthBar(enemy){
-    const g=this.paint,x=enemy.x*T+2,y=Math.max(0,enemy.y*T-5);
+    const g=this.paint,x=enemy.x*T+2,y=Math.max(mapBounds(this.gameModel.state.map).minY*T,enemy.y*T-5);
     const ratio=Math.max(0,Math.min(1,enemy.hp/enemy.maxHp));
     g.fillStyle(0x080c12);g.fillRect(x,y,20,5);
     g.fillStyle(0x512b36);g.fillRect(x+1,y+1,18,3);
@@ -90,13 +91,13 @@ export class DungeonScene extends Phaser.Scene {
   outdoorTile(t,x,y,a,biome,tx,ty,g=this.paint){
     const marsh=biome==='marsh';const ground=({forest:0x344b35,marsh:0x344b40,highlands:0x55564d,ashlands:0x493536})[biome]??0x344b35;
     g.fillStyle(['~',':'].includes(t)?0x264650:['.','P'].includes(t)?0x70614b:ground,a);g.fillRect(x,y,24,24);
-    if(this.gameModel?.state.home&&this.gameModel?.location.kind==='world')drawCampGround(g,t,x,y,a,tx,ty);
+    if((this.gameModel?.areaAt?.(tx,ty)?.home??this.gameModel?.state.home)&&this.gameModel?.location.kind==='world')drawCampGround(g,t,x,y,a,tx,ty);
     if(t===','||t===';'||t==='T'){g.fillStyle(marsh?0x688361:0x577447,a);const n=(tx*7+ty*11)%15;g.fillRect(x+3+n,y+5,2,4);g.fillRect(x+5,y+17-n/2,3,2);}
     if(t==='T'){g.fillStyle(0x594937,a);g.fillRect(x+10,y+12,5,11);g.fillStyle(0x20392d,a);g.fillRect(x+2,y+3,20,13);g.fillStyle(0x45684a,a);g.fillRect(x+5,y+1,14,9);g.fillStyle(0x63835a,a);g.fillRect(x+7,y+2,7,3);}
     if(t==='Y'){g.fillStyle(0x27252a,a);g.fillRect(x+10,y+2,4,21);g.fillRect(x+4,y+7,8,3);g.fillRect(x+13,y+11,7,3);}
     if(['B','V','W','S','K'].includes(t)){g.fillStyle(t==='S'?0x9386b4:t==='V'?0x9fb8a5:0x9c8060,a);if(t==='V'){g.fillRect(x+7,y+8,11,13);g.fillStyle(0xe4c28d,a);g.fillRect(x+9,y+3,7,7);}else if(t==='S'){g.fillRect(x+5,y+17,14,5);g.fillRect(x+9,y+5,6,13);g.fillStyle(0xb5efeb,a);g.fillRect(x+10,y+2,4,5);}else if(t==='W'){g.fillRect(x+2,y+8,20,11);g.fillStyle(0x282c31,a);g.fillRect(x+4,y+18,4,5);g.fillRect(x+16,y+18,4,5);}else{g.fillRect(x+4,y+15,16,6);g.fillRect(x+9,y+9,6,7);}}
     if(t==='='||t==='X'){
-      const vertical=Boolean(this.gameModel?.state.bridgeLayout?.forward.ry);
+      const vertical=Boolean((this.gameModel?.areaAt?.(tx,ty)?.bridgeLayout??this.gameModel?.state.bridgeLayout)?.forward.ry);
       g.fillStyle(0x79563b,a);g.fillRect(x,y,24,24);g.fillStyle(0xb18a57,a);
       for(let i=0;i<4;i++)if(vertical)g.fillRect(x+3,y+i*6,18,4);else g.fillRect(x+i*6,y+3,4,18);
       g.fillStyle(0xd7bb86,a);if(vertical){g.fillRect(x+2,y,2,24);g.fillRect(x+21,y,2,24);}else{g.fillRect(x,y+2,24,2);g.fillRect(x,y+21,24,2);}

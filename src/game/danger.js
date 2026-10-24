@@ -1,4 +1,4 @@
-import {key,walkable} from './dungeon.js';
+import {key,walkable,mapBounds} from './dungeon.js';
 import {pathStep} from './ai.js';
 
 export function territoryOf(enemy){
@@ -19,17 +19,17 @@ export function visibleDangerPockets(state){
  return pockets;
 }
 export function territoryObstacles(state,enemy,bounded=false){
- const occupied=new Set(state.enemies.filter(e=>e!==enemy&&e.hp>0).map(e=>key(e.x,e.y)));
+ const bounds=mapBounds(state.map),occupied=new Set(state.enemies.filter(e=>e!==enemy&&e.hp>0).map(e=>key(e.x,e.y)));
  if(state.companion)occupied.add(key(state.companion.x,state.companion.y));
- if(bounded){const t=territoryOf(enemy);if(t)for(let y=0;y<state.map.length;y++)for(let x=0;x<state.map[y].length;x++)if(!insideTerritory(t,{x,y}))occupied.add(key(x,y));}
+ if(bounded){const t=territoryOf(enemy);if(t)for(let y=bounds.minY;y<bounds.maxY;y++)for(let x=bounds.minX;x<bounds.maxX;x++)if(!insideTerritory(t,{x,y}))occupied.add(key(x,y));}
  return occupied;
 }
 // Returning is the creature's entire action. It neither attacks nor resolves an
 // old telegraph against an adventurer who has stepped beyond the warning zone.
 export function returnToTerritory(state,enemy){
- const t=territoryOf(enemy);if(!t)return;const occupied=territoryObstacles(state,enemy);occupied.add(key(state.player.x,state.player.y));
+ const t=territoryOf(enemy);if(!t)return;const bounds=mapBounds(state.map),occupied=territoryObstacles(state,enemy);occupied.add(key(state.player.x,state.player.y));
  let target=null;
- for(let radius=0;radius<=t.radius&&!target;radius++)for(let y=Math.max(0,t.y-radius);y<=Math.min(state.map.length-1,t.y+radius)&&!target;y++)for(let x=Math.max(0,t.x-radius);x<=Math.min(state.map[y].length-1,t.x+radius);x++){
+ for(let radius=0;radius<=t.radius&&!target;radius++)for(let y=Math.max(bounds.minY,t.y-radius);y<=Math.min(bounds.maxY-1,t.y+radius)&&!target;y++)for(let x=Math.max(bounds.minX,t.x-radius);x<=Math.min(bounds.maxX-1,t.x+radius);x++){
   if(Math.abs(x-t.x)+Math.abs(y-t.y)!==radius||!walkable(state.map,x,y)||occupied.has(key(x,y)))continue;
   target={x,y};break;
  }

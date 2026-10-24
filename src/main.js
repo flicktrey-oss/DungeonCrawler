@@ -1,3 +1,4 @@
+import {SeamlessExpedition} from './game/seamless-expedition.js';
 import {mountTrading} from './trading-ui.js';
 import {inspectMapAt,mapInspectionText} from './map-inspection.js';
 import {equipmentSummary} from './game/gear-progression.js';
@@ -67,7 +68,7 @@ function modal(title, body, buttons) {
   $('overlay').querySelector('article').focus({preventScroll:true});
 }
 function closePanel() { paused = false; panel = null; document.activeElement?.blur(); $('overlay').classList.add('hidden'); syncTouchControls();if(model)renderMinimap(); }
-function start(seed) {if(!Number.isInteger(seed))seed=Date.now(); travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; mapSelection=null; model = new Expedition(seed); closePanel(); render(); }
+function start(seed,seamless=false) {if(!Number.isInteger(seed))seed=Date.now(); travel.cancel(); lastShownBlock=0; $('block-feedback').textContent='';$('block-feedback').classList.remove('shield-block');$('character-shortcut').classList.remove('shield-block'); inspected=null; cancelTargeting(); setPanels(); mapView = 'local'; mapSelection=null; model = seamless?new SeamlessExpedition(seed):new Expedition(seed); closePanel(); render(); }
 function help() {
   paused=true;panel='help';
   modal('Beyond the campfire', `<p>Biomes vary by run; mountains can border camp. At least one neighboring forest offers a starting foothold. Read trail warnings before crossing. Start with rats and beetles in those woods. First level: 20 XP, about ten ordinary kills. Marshes (recommended Lv4), highlands (Lv8), and ashlands (Lv12) can overwhelm a new adventurer. Trail exits warn you.</p>
@@ -78,7 +79,7 @@ function help() {
 }
 function menu() {
   paused = true;
-  modal('The Wildlands', '<p>A campfire at your back. A stranded prince. A kingdom beyond the northern marshes.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p>', [['New Game', start], ['Instructions', help]]);
+  modal('The Wildlands', '<p>A campfire at your back. A stranded prince. A kingdom beyond the northern marshes.</p><p>Discover the Whisperwood and Lantern Marsh, follow forgotten trails, and brave the crypts beneath them. Return with treasure—or leave your story in the dark.</p><p class="hint">Endless exploration · Turn-based combat · Permadeath</p><p class="hint">Seamless preview: try camp and the woods as one continuous map. The full expedition remains under New Game.</p>', [['New Game', start], ['Seamless preview',()=>start(undefined,true)], ['Instructions', help]]);
 }
 function campfire(){
  if(!model?.atCampfire())return;paused=true;panel='campfire';
@@ -208,7 +209,7 @@ function princeDialog(){
  if(q.accepted&&!q.complete&&c.hp<c.maxHp){buttons.push(['Give tonic · heal 16 HP',()=>perform('healPrince')]);}
  buttons.push(['Return',closePanel]);
  const introduction=q.complete?'Aldren has rejoined his court. The road remains open to you.':q.accepted?'“Lead on. I will stay close and defend myself.”':'“My convoy was ambushed. I found shelter here, but my home is beyond the marshes. Will you guide me to Northwatch?”';
- modal('Prince Aldren',`<p>${introduction}</p><p id="prince-status">${escape(princeProgress(model))}</p><p>Northwatch (0, -6): six regions north. Reach the northern keep together. Prepare locally as long as you wish; there is no timer.</p><p class="hint">Sword: 5 ATK · Mail: 2 DEF. Commands and aid take one turn. Stay leaves Aldren here until you return. Crossings require him within two tiles. A downed prince needs a tonic; he does not die.</p><p id="prince-result" role="status"></p>`,buttons);
+ modal('Prince Aldren',`<p>${introduction}</p><p id="prince-status">${escape(princeProgress(model))}</p><p>${model.state.seamless?'Companion preview: test Aldren following and waiting throughout the joined camp and forest. Northwatch is available in standard runs.':'Northwatch (0, -6): six regions north. Reach the northern keep together. Prepare locally as long as you wish; there is no timer.'}</p><p class="hint">Sword: 5 ATK · Mail: 2 DEF. Commands and aid take one turn. Stay leaves Aldren here until you return. Crossings require him within two tiles. A downed prince needs a tonic; he does not die.</p><p id="prince-result" role="status"></p>`,buttons);
 }
 function townDialog(){if(!model||!model.state.city)return;paused=true;panel='town';const s=model.state,p=s.player,inn=atInn(model),citizen=model.activeEncounter();
  if(citizen?.type==='citizen'){modal(citizen.name,`<p>${escape(citizen.description)}</p>`,[['Return',closePanel]]);return;}
@@ -233,12 +234,15 @@ function renderMinimap() {
   if (!model) return;
   const loc = model.location;
   $('map-inspection').textContent=mapInspectionText(model,mapSelection)||'Tap a square for details.';
-  if (mapView === 'world') drawWorldMinimap($('minimap'), model);
+  if (mapView === 'world'&&!model.state.seamless) drawWorldMinimap($('minimap'), model);
   else {const q=bridgeQuest(model),objective=q?.accepted&&!q.claimed?(q.medicine?q.layout.guard:q.medicineSite):null;drawMinimap($('minimap'), model.state, loc,objective?[objective]:[]);}
+  $('map-tabs').classList.toggle('hidden',Boolean(model.state.seamless));
+  $('map-local-tab').textContent=model.state.seamless?'Terrain':'Local';$('map-world-tab').textContent=model.state.seamless?'Explored':'World';
   $('minimap-location').textContent = mapView === 'local' && loc.kind === 'crypt' ? `Depth ${loc.depth}` : `${loc.rx},${loc.ry}`;
+  if(model.state.seamless)$('minimap-location').textContent=`${model.state.player.x},${model.state.player.y}`;
   $('camp-bearing').textContent = campBearing(loc);
-  $('camp-bearing').hidden=mapView==='world'||model.state.home;
-  $('map-legend').textContent = mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · K: Northwatch · ?: discovered quest · Purple: discovered entrance · B Bridge lead · ◇ Road landmark · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · I Inn · B Bounties · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · T Watchtower · H Shelter · Pink: detected creatures · M Merchant · ? People / blacksmith · > Crypt · ! Den · S Shrine · K Cache';
+  $('camp-bearing').hidden=mapView==='world'||model.state.home||model.state.seamless;
+  $('map-legend').textContent = model.state.seamless?'Continuous terrain · C Camp · F Fire · M Merchant · ? People · > Crypt · ! Den · S Shrine · K Cache':mapView === 'world' ? 'Green: forest · Blue: marsh · Gray: highlands · Red: ashlands · Slate: city · C: camp · K: Northwatch · ?: discovered quest · Purple: discovered entrance · B Bridge lead · ◇ Road landmark · ! Quest objective · ✓ Return for reward' : model.state.city?'● You · Gold: Aldren · K Keep · I Inn · B Bounties · Brown: gates · Blue: fountain':'● You · C Camp · F Fire · T Watchtower · H Shelter · Pink: detected creatures · M Merchant · ? People / blacksmith · > Crypt · ! Den · S Shrine · K Cache';
   const detect=$('detect-creatures'),p=model.state.player;detect.disabled=paused||p.level<3||p.mana<25||model.state.status!=='playing'||Boolean(targetMode);detect.textContent=p.level<3?'Detect Creatures · Lv 3':'Detect Creatures · 25 MP [G]';detect.classList.toggle('hidden',mapView!=='local');
   $('minimap-panel').setAttribute('aria-labelledby', `map-${mapView}-tab`);
   for (const tab of document.querySelectorAll('[data-map-view]')) {
@@ -251,8 +255,8 @@ function render() {
   scene.setGame(model);
   renderMinimap();
   const s = model.state, p = s.player, loc = model.location;
-  const place = loc.kind === 'world' ? `${s.home?'Lantern Camp':BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
-  $('stats').innerHTML = `<div class="floor">${s.home?'SAFE CAMP':s.city?'SAFE CITY':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
+  const place = s.seamless?`${s.home?'Lantern Camp':BIOMES[s.biome].name} · ${p.x}, ${p.y}`:loc.kind === 'world' ? `${s.home?'Lantern Camp':BIOMES[s.biome].name} (${loc.rx}, ${loc.ry})` : `${s.biome === 'marsh' ? 'Sunken' : 'Rootbound'} Crypt · ${loc.depth}/2`;
+  $('stats').innerHTML = `<div class="floor">${s.seamless?'SEAMLESS PREVIEW':s.home?'SAFE CAMP':s.city?'SAFE CITY':loc.kind==='world'?`AREA LV ${s.recommended}${p.level<s.recommended?' · DANGER':''}`:'UNDERGROUND'} <span>TURN ${s.turn}</span></div><h2 title="${escape(s.home?'Lantern Camp · Safe region':`Recommended level ${s.recommended}`)}">${escape(place)}</h2>
     <div class="bar"><div style="width:${p.hp/p.maxHp*100}%"></div><span>Health ${p.hp} / ${p.maxHp}</span></div>
     <div class="bar mana"><div style="width:${p.mana/p.maxMana*100}%"></div><span>Mana ${Number(p.mana.toFixed(1))} / ${p.maxMana}</span></div>
     <div class="bar xp"><div style="width:${p.xp/threshold(p)*100}%"></div><span>XP ${p.xp} / ${threshold(p)}</span></div>
@@ -290,7 +294,7 @@ function render() {
   if(s.status==='playing'&&model.story.complete&&!model.story.noticeShown){model.story.noticeShown=true;paused=true;panel='chapter';modal('Chapter one complete', `<h3>Aldren’s homecoming</h3><p>The keep’s banners rise as Aldren steps forward. Steward Elara welcomes the missing prince, and Aldren names you the traveler who brought him home.</p><p>${escape(model.story.homecoming??'')}</p><p>You receive 30 gold and a full recovery. ${model.story.keepsakeClaimed?'Aldren’s Wayfarer Brooch is in your satchel: +10 maximum Mana and +1 protection against special attacks.':'Elara holds your Wayfarer Brooch inside the keep. Make room and speak to her to collect it.'}</p><p>Aldren remains safely in Northwatch. Your expedition continues.</p>`, [['Continue exploring',closePanel]]);}
   if (s.status === 'dead') {
     paused = true; panel = 'dead';
-    modal('Your lantern goes dark.', `<p>Your expedition ends here. The camp and its supplies are lost.</p><p>Level ${p.level} · ${s.regionsDiscovered} regions · ${s.cryptsCleared} crypts cleared · ${p.gold} gold</p><p>Last hit: ${escape(s.deathCause??'Your expedition ended.')}</p><details><summary>Turn-by-turn recap</summary>${(s.timeline??[]).slice(-30).map(e=>`<p>Turn ${e.turn}: ${escape(e.text)}</p>`).join('')}</details><p class="hint">Seed: ${s.seed}</p>`, [['New Run', start],['Retry this seed',()=>start(s.seed)], ['Title', () => { model = null; menu(); }]]);
+    modal('Your lantern goes dark.', `<p>Your expedition ends here. The camp and its supplies are lost.</p><p>Level ${p.level} · ${s.regionsDiscovered} regions · ${s.cryptsCleared} crypts cleared · ${p.gold} gold</p><p>Last hit: ${escape(s.deathCause??'Your expedition ended.')}</p><details><summary>Turn-by-turn recap</summary>${(s.timeline??[]).slice(-30).map(e=>`<p>Turn ${e.turn}: ${escape(e.text)}</p>`).join('')}</details><p class="hint">Seed: ${s.seed}</p>`, [['New Run',()=>start(undefined,Boolean(s.seamless))],['Retry this seed',()=>start(s.seed,Boolean(s.seamless))], ['Title', () => { model = null; menu(); }]]);
   }
 }
 function renderInspection(){
@@ -373,7 +377,7 @@ function syncTouchControls() {
       if (control === 'vision') allowed = p.mana >= 25;
       if (control === 'potion') allowed = p.hp < p.maxHp && p.inventory.some(i => i.kind === 'potion');
       if (control === 'ascend') allowed = model.location.kind === 'crypt' && p.x === s.upstairs.x && p.y === s.upstairs.y;
-      if (control === 'descend') allowed = model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y;
+      if (control === 'descend') allowed = !s.seamless&&(model.location.kind === 'world' ? s.map[p.y][p.x] === 'D' : model.location.depth === 1 && p.x === s.stairs.x && p.y === s.stairs.y);
       if(control==='collect'){
         const {options,selected}=interactionSelection.resolve(model),label=selected?.label??'Collect';button.querySelector('.action-label').textContent=label;button.setAttribute('aria-label',label);button.setAttribute('aria-description',selected?.detail??'Nothing to interact with');button.title=selected?`${selected.detail} [E] · Action ${interactionSelection.index+1}/${options.length}`:'Interact / Collect [E]';button.classList.toggle('has-choices',options.length>1);$('interaction-detail').textContent=options.length>1?selected.detail:'';allowed=Boolean(selected);
       }
@@ -384,7 +388,7 @@ function syncTouchControls() {
     button.disabled = !allowed||Boolean(targetMode);
     if(control==='descend'||control==='ascend')button.classList.toggle('hidden',!allowed);
   }
-  document.querySelector('main').classList.toggle('has-stairs', Boolean(ready&&(model.location.kind==='world'?s.map[p.y][p.x]==='D':p.x===s.upstairs.x&&p.y===s.upstairs.y||model.location.depth===1&&p.x===s.stairs.x&&p.y===s.stairs.y)));
+  document.querySelector('main').classList.toggle('has-stairs', Boolean(ready&&!s.seamless&&(model.location.kind==='world'?s.map[p.y][p.x]==='D':p.x===s.upstairs.x&&p.y===s.upstairs.y||model.location.depth===1&&p.x===s.stairs.x&&p.y===s.stairs.y)));
 }
 bindTouchControls($('touch-controls'), control => {
   if (!model || paused || model.state.status !== 'playing') return;

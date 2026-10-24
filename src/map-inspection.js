@@ -1,8 +1,9 @@
-import {worldMapCells,worldMapLayout} from './minimap.js';
+import {worldMapCells,worldMapLayout,minimapFrame} from './minimap.js';
 import {regionInfo,BIOMES,threatLabel} from './game/world.js';
 // Canvas coordinates, independent of CSS scaling or touch/desktop input.
 export function inspectMapAt(game,view,x,y,width=160,height=120){
  if(!game||!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||x>=width||y>=height)return null;
+ if(game.state.seamless){const frame=minimapFrame(game.state),tx=Math.floor(frame.minX+x/width*(frame.maxX-frame.minX)),ty=Math.floor(frame.minY+y/height*(frame.maxY-frame.minY)),s=game.state;if(!s.explored.has(`${tx},${ty}`)&&!s.settlementBounds.some(b=>tx>=b.minX&&tx<b.maxX&&ty>=b.minY&&ty<b.maxY))return null;return {view:'surface',x:tx,y:ty};}
  if(view==='world'){
   const cells=worldMapCells(game),layout=worldMapLayout(cells,width,height),rx=Math.floor((x-layout.x)/layout.size),ry=Math.floor((y-layout.y)/layout.size);
   if(!cells.some(c=>c.rx===rx&&c.ry===ry))return null;
@@ -14,6 +15,7 @@ export function inspectMapAt(game,view,x,y,width=160,height=120){
 }
 export function mapInspectionText(game,selection){
  if(!selection)return '';
+ if(selection.view==='surface'){const a=game.areaAt(selection.x,selection.y);return a?`${a.home?'Lantern Camp':BIOMES[a.biome].name} (${selection.x}, ${selection.y})\n${a.home?'Safe':`Lv ${a.recommended} · Stay alert`}`:'';}
  const local=selection.view==='local';if(local&&selection.locationId!==game.location.id)return '';
  const info=local?{...BIOMES[game.state.biome],recommended:game.state.recommended??BIOMES[game.state.biome].recommended}:regionInfo(game.state.seed,selection.rx,selection.ry);
  const safe=selection.rx===0&&selection.ry===0&&(!local||game.location.kind==='world')||info.name==='Northwatch';

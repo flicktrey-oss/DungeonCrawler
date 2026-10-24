@@ -4,7 +4,7 @@ import {pathStep} from './ai.js';
 import {KINGDOM,isKingdom} from './city.js';
 const distance=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
 export function createStory(){return {id:'royal-escort',kind:'escort',title:'The Road to Northwatch',giver:'Prince Aldren',giverRegion:{rx:0,ry:0},region:{rx:KINGDOM.rx,ry:KINGDOM.ry},accepted:false,complete:false,claimed:false,noticeShown:false,prince:{name:'Prince Aldren',kind:'prince',friendly:true,companion:true,x:24,y:17,locationId:'world:0,0',rx:0,ry:0,depth:0,hp:36,maxHp:36,attack:5,defense:2,mode:'waiting',actions:0}};}
-export const princeHere=g=>g.story&&g.location?.id===g.story.prince.locationId?g.story.prince:null;
+export const princeHere=g=>g.story&&(g.location?.id===g.story.prince.locationId||g.surfaceContains?.(g.story.prince.locationId))?g.story.prince:null;
 export const nearPrince=g=>{const c=princeHere(g);return Boolean(c&&distance(c,g.state.player)<=1);};
 export function princeAction(g,a){
  const q=g.story,c=princeHere(g),p=g.state.player;if(!c||!nearPrince(g)||q.complete)return false;
@@ -48,5 +48,5 @@ export function finishStory(g){
 export function princeProgress(g){
  const q=g.story,c=q.prince;if(q.complete)return 'Chapter one complete · Aldren is safe in Northwatch.';
  if(!q.accepted)return 'Prince Aldren waits southeast of the tent. Speak when you are ready.';
- return `${c.mode==='downed'?'Wounded · bring a healing tonic':c.mode==='stay'?'Waiting for you':c.locationId===g.location.id?'Following':'Separated · return to collect him'} · ${c.hp}/${c.maxHp} HP · region (${c.rx}, ${c.ry})${c.depth?' · crypt depth '+c.depth:''}. Destination: Northwatch (0, -6), northern keep.`;
+ return `${c.mode==='downed'?'Wounded · bring a healing tonic':c.mode==='stay'?'Waiting for you':princeHere(g)?'Following':'Separated · return to collect him'} · ${c.hp}/${c.maxHp} HP · region (${c.rx}, ${c.ry})${c.depth?' · crypt depth '+c.depth:''}. Destination: Northwatch (0, -6), northern keep.`;
 }

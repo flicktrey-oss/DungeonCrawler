@@ -60,7 +60,7 @@ export class Expedition extends Game {
     if(!spawn)throw Error('No safe arrival tile');
     Object.assign(this.state.player,spawn);this.state.location={...location};this.state.mindVisionUntil=0;this.state.detectCreaturesUntil=0;this.state.transition=true;this.state.enemyEffects=[];carryPrince(this,oldLocation,oldPlayer);this.refresh();
   }
-  visitWorld(rx,ry,spawn=CAMP){
+  prepareWorld(rx,ry){
     const id=worldId(rx,ry),home=rx===0&&ry===0;let data=home||isKingdom(rx,ry)?this.regions.get(id):null;
     if(!data){
       const previous=this.regions.get(id);
@@ -77,9 +77,12 @@ export class Expedition extends Game {
       attachBridge(this,data,rx,ry);
       attachJourney(this,data,rx,ry);
       if(home){data.map[BLACKSMITH.y][BLACKSMITH.x]='V';data.encounters.push({...BLACKSMITH,id:'blacksmith',type:'blacksmith'});data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
-      if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     }
-    placeCitizens(this,data);
+    placeCitizens(this,data);return data;
+  }
+  visitWorld(rx,ry,spawn=CAMP){
+    const id=worldId(rx,ry),home=rx===0&&ry===0,data=this.prepareWorld(rx,ry);
+    if(!this.regions.has(id)&&this.location?.id!==id)this.state.regionsDiscovered++;
     this.activate({id,kind:'world',rx,ry,depth:0},data,spawn);
     const info=BIOMES[data.biome];if(data.biome==='marsh')this.message('Marsh trails shelter small pond frogs. Stronger creatures defend the marked pools off the main trails.');this.message(`${info.name} (${rx}, ${ry}) · ${home?'safe camp':`recommended level ${info.recommended}${this.state.player.level<info.recommended?' — DANGER: you are underleveled!':''}`}.`);
   }
