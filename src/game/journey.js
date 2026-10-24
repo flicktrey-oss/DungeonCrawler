@@ -34,7 +34,7 @@ export function awardKeepsake(g){
 export function journeyAction(g,a){
  const event=g.activeEncounter(),p=g.state.player;
  if(event?.type==='guide'&&a.choice==='bridgeLead'){
-  if(g.journey.bridgeLead)return false;g.journey.bridgeLead=true;const f=startingForest(g.state.seed);g.message(`Fen marks Willow Crossing in region (${f.rx}, ${f.ry}). Find Kestrel near the entry trail; a dry detour stays open. Fen also marks the Fallen Watchtower farther along the road. These leads reveal no terrain.`);return true;
+  if(g.journey.bridgeLead)return false;g.journey.bridgeLead=true;const f=startingForest(g.state.seed);g.message(`Fen marks Willow Crossing in region (${f.rx}, ${f.ry}). Find Kestrel near the entry trail; a distant shallow ford stays open. Fen also marks the Fallen Watchtower farther along the road. These leads reveal no terrain.`);return true;
  }
  if(event?.type==='steward'&&a.choice==='keepsake')return g.story.complete?awardKeepsake(g):false;
  if(event?.type!=='journey'||g.journey.records[event.kind])return false;

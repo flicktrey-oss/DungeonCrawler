@@ -5,7 +5,7 @@ for(const touch of [false,true])test.describe(touch?'phone provisions':'desktop 
  if(touch)test.use({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  test('campfire cooking is discoverable and locked detection never spends a turn',async({page})=>{
   const d=await expeditionDriver(page,5,touch),click=async loc=>touch?loc.tap():loc.click();
-  if(!await page.locator('#minimap-widget').evaluate(e=>e.open))await click(page.locator('#minimap-widget summary'));
+  if(!await page.locator('#minimap-widget').evaluate(e=>e.open))await click(page.locator('#minimap-widget > summary'));
   await expect(page.getByRole('button',{name:'Detect Creatures · Lv 3',exact:true})).toBeDisabled();
   if(!touch){await page.keyboard.press('g');await expect(page.locator('.floor')).toContainText('TURN 0');}
   await d.send({type:'move',dx:0,dy:1});await click(page.getByRole('button',{name:'Cook',exact:true}));
@@ -13,7 +13,7 @@ for(const touch of [false,true])test.describe(touch?'phone provisions':'desktop 
   await click(page.getByRole('button',{name:'Return',exact:true}));await expect(page.locator('.floor')).toContainText('TURN 1');
  });
  test('hunts frogs, collects raw meat, cooks at camp and eats from the satchel',async({page})=>{
-  const d=await expeditionDriver(page,5,touch),click=async loc=>touch?loc.tap():loc.click();
+  const d=await expeditionDriver(page,14,touch),click=async loc=>touch?loc.tap():loc.click();
   await d.east();const frogs=d.game.state.enemies.filter(e=>e.questId);for(const prey of [...frogs,...d.game.state.enemies.filter(e=>e.kind==='rabbit')]){await d.hunt(prey);if(d.game.state.items.some(i=>i.kind==='rawMeat'))break;}
   const meat=d.game.state.items.find(i=>i.kind==='rawMeat');expect(meat).toBeTruthy();await d.walk(meat);await d.send({type:'pickup'});
   await d.walk({x:0,y:15});await d.send({type:'move',dx:-1,dy:0});await d.walk({x:20,y:16});

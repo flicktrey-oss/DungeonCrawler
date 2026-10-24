@@ -89,7 +89,7 @@ export class DungeonScene extends Phaser.Scene {
   }
   outdoorTile(t,x,y,a,biome,tx,ty,g=this.paint){
     const marsh=biome==='marsh';const ground=({forest:0x344b35,marsh:0x344b40,highlands:0x55564d,ashlands:0x493536})[biome]??0x344b35;
-    g.fillStyle(t==='~'?0x264650:['.','P'].includes(t)?0x70614b:ground,a);g.fillRect(x,y,24,24);
+    g.fillStyle(['~',':'].includes(t)?0x264650:['.','P'].includes(t)?0x70614b:ground,a);g.fillRect(x,y,24,24);
     if(this.gameModel?.state.home&&this.gameModel?.location.kind==='world')drawCampGround(g,t,x,y,a,tx,ty);
     if(t===','||t===';'||t==='T'){g.fillStyle(marsh?0x688361:0x577447,a);const n=(tx*7+ty*11)%15;g.fillRect(x+3+n,y+5,2,4);g.fillRect(x+5,y+17-n/2,3,2);}
     if(t==='T'){g.fillStyle(0x594937,a);g.fillRect(x+10,y+12,5,11);g.fillStyle(0x20392d,a);g.fillRect(x+2,y+3,20,13);g.fillStyle(0x45684a,a);g.fillRect(x+5,y+1,14,9);g.fillStyle(0x63835a,a);g.fillRect(x+7,y+2,7,3);}
@@ -102,7 +102,8 @@ export class DungeonScene extends Phaser.Scene {
       g.fillStyle(0xd7bb86,a);if(vertical){g.fillRect(x+2,y,2,24);g.fillRect(x+21,y,2,24);}else{g.fillRect(x,y+2,24,2);g.fillRect(x,y+21,24,2);}
       if(t==='X'){g.fillStyle(0x9f4b48,a);if(vertical){g.fillRect(x+3,y+5,18,3);g.fillRect(x+3,y+16,18,3);}else{g.fillRect(x+5,y+3,3,18);g.fillRect(x+16,y+3,3,18);}g.fillStyle(0xe3c480,a);g.fillRect(x+10,y+8,4,8);}
     }
-    if(t==='~'){g.fillStyle(0x4f7e87,a);g.fillRect(x+3,y+7,10,2);g.fillRect(x+12,y+17,8,2);}
+    if(t==='~'||t===':'){g.fillStyle(0x4f7e87,a);g.fillRect(x+3,y+7,10,2);g.fillRect(x+12,y+17,8,2);}
+    if(t===':'){g.fillStyle(0xa3a18a,a);g.fillRect(x+3,y+6,6,4);g.fillRect(x+13,y+14,7,4);g.fillStyle(0xd0c9a8,a);g.fillRect(x+4,y+6,4,1);}
     if(t===';'){g.fillStyle(0x92a271,a);g.fillRect(x+5,y+5,2,14);g.fillRect(x+11,y+2,2,18);g.fillRect(x+16,y+8,2,12);}
     if(t==='^'){g.fillStyle(0x777d76,a);g.fillTriangle(x+2,y+21,x+12,y+3,x+23,y+21);g.fillStyle(0xa5a998,a);g.fillTriangle(x+8,y+10,x+12,y+3,x+15,y+10);}
     if(t==='D'){g.fillStyle(0x858675,a);g.fillRect(x+2,y+3,20,21);g.fillStyle(0x0e171c,a);g.fillRect(x+6,y+7,12,17);g.fillStyle(0xb88a69,a);g.fillRect(x+2,y+3,20,3);}

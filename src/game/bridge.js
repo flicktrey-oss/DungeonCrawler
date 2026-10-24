@@ -7,7 +7,7 @@ export function attachBridge(g,data,rx,ry){
  if(!q){q={id,kind:'bridge',title:'The Willow Crossing',giver:'Kestrel of the Willow Band',giverRegion:{rx,ry},region:{rx,ry},accepted:false,claimed:false,complete:false,mode:'offer',medicine:false,layout};g.quests.set(id,q);}
  data.map[layout.center.y][layout.center.x]=q.claimed?'=':'X';
  data.map[layout.guard.y][layout.guard.x]=q.mode==='fight'||q.mode==='fought'?',':'V';
- if(!data.encounters.some(e=>e.id===id))data.encounters.push({...layout.guard,id,type:'bridge',name:q.giver,quest:q,description:'A barred bridge. Pay 8 gold, recover medicine, or fight. A longer dry trail goes around the river.'});
+ if(!data.encounters.some(e=>e.id===id))data.encounters.push({...layout.guard,id,type:'bridge',name:q.giver,quest:q,description:'A barred bridge. Pay 8 gold, recover medicine, or fight. A longer bank trail leads to a shallow ford.'});
 }
 const near=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y)===1;
 function openBridge(g,q,mode){

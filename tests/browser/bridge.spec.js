@@ -18,3 +18,10 @@ for(const touch of [false,true])test.describe(touch?'phone bridge choices':'desk
   await d.walk({x:q.layout.guard.x-f.x,y:q.layout.guard.y-f.y});await click(page.getByRole('button',{name:'Interact',exact:true}));await click(page.getByRole('button',{name:'Hand over medicine',exact:true}));d.game.action({type:'bridge',choice:'deliver'});await expect(page.locator('#overlay')).toContainText('medicine returned');expect(q.claimed).toBe(true);expect(errors).toEqual([]);
  });
 });
+for(const touch of [false,true])test.describe(touch?'phone river ford':'desktop river ford',()=>{
+ if(touch)test.use({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ test('follows the riverbank and crosses the distant ford while the quest bridge stays barred',async({page})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));const d=await expeditionDriver(page,5,touch);await d.east();const q=bridgeQuest(d.game),f=q.layout.forward,ford=q.layout.ford;
+  await d.walk(ford);expect(d.game.state.map[ford.y][ford.x]).toBe(':');await page.screenshot({path:`test-results/river-ford-${touch?'phone':'desktop'}.png`});await d.walk({x:ford.x+f.x*3,y:ford.y+f.y*3});expect(q.claimed).toBe(false);expect(d.game.state.map[q.layout.center.y][q.layout.center.x]).toBe('X');await expect(page.locator('.floor')).toContainText('TURN '+d.game.state.turn);expect(errors).toEqual([]);
+ });
+});

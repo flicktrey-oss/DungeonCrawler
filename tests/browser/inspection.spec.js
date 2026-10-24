@@ -5,6 +5,7 @@ for(const touch of [false,true])test.describe(touch?'phone inspection':'desktop 
  test('inspect visible characters for free with an original portrait and live combat stats',async({page})=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const d=await expeditionDriver(page,5,touch);
+  if(await page.locator('#minimap-widget').evaluate(e=>e.open))await page.getByLabel('Toggle minimap',{exact:true}).click();
   async function inspect(target){
    const canvas=page.locator('#game > canvas'),b=await canvas.boundingBox(),p=d.game.state.player;
    const zoom=b.height<500?1.25:b.width<900?1.5:2,viewWidth=b.width/zoom,viewHeight=b.height/zoom;

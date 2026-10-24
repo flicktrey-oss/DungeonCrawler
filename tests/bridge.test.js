@@ -67,3 +67,25 @@ it('the opened bridge carries Aldren along the same direct trail without overlap
 it('the barred gate also blocks projectiles without consuming ammunition or turns',()=>{
  const {g,q,p}=setup(),c=q.layout.center,f=q.layout.forward;Object.assign(p,{x:c.x-f.x,y:c.y-f.y});const e=g.makeEnemy('rat',{x:c.x+f.x*2,y:c.y+f.y*2},1,22);g.state.enemies=[e];g.refresh();const before=structuredClone(p.inventory);expect(g.action({type:'throw',x:e.x,y:e.y})).toBe(false);expect(g.state.turn).toBe(0);expect(p.inventory).toEqual(before);expect(e.actions).toBe(0);
 });
+
+describe('edge-to-edge river geography',()=>{
+ it('connects a winding watercourse between opposite edges without touching any of the four area exits',()=>{
+  const seenOrientations=new Set();
+  for(let seed=0;seed<120;seed++){
+   const r=startingForest(seed),d=generateWorldRegion(seed,r.rx,r.ry),{center,forward:f,ford}=d.bridgeLayout;seenOrientations.add(key(f.x,f.y));
+   const wet=t=>['~',':','=','X'].includes(t),q=[center],seen=new Set([key(center.x,center.y)]);
+   for(let i=0;i<q.length;i++)for(const[dx,dy]of directions){const x=q[i].x+dx,y=q[i].y+dy,k=key(x,y);if(wet(d.map[y]?.[x])&&!seen.has(k)){seen.add(k);q.push({x,y});}}
+   expect(q.length).toBeGreaterThan(70);expect(seen.has(key(ford.x,ford.y))).toBe(true);
+   if(f.x){expect(q.some(p=>p.y===0)).toBe(true);expect(q.some(p=>p.y===29)).toBe(true);}else{expect(q.some(p=>p.x===0)).toBe(true);expect(q.some(p=>p.x===39)).toBe(true);}
+   for(const exit of [{x:0,y:15},{x:39,y:15},{x:20,y:0},{x:20,y:29}]){expect(walkable(d.map,exit.x,exit.y)).toBe(true);expect(wet(d.map[exit.y][exit.x])).toBe(false);expect(Number.isFinite(distance(d.map,{x:20,y:15},exit))).toBe(true);}
+   for(let y=0;y<30;y++)for(let x=0;x<40;x++)if(wet(d.map[y][x]))expect(seen.has(key(x,y))).toBe(true);
+   expect(d.map[ford.y][ford.x]).toBe(':');
+  }
+  expect(seenOrientations.size).toBe(4);
+ });
+ it('preserves the full channel and ford after returning, with no free walk around the river endpoints',()=>{
+  const {g,q,r}=setup(5),map=structuredClone(g.state.map),ford=q.layout.ford;g.visitWorld(0,0);g.visitWorld(r.rx,r.ry);expect(g.state.map).toEqual(map);expect(g.state.map[ford.y][ford.x]).toBe(':');
+  const blocked=map.map(row=>row.map(t=>t===':'?'~':t)),c=q.layout.center,f=q.layout.forward;
+  expect(distance(blocked,{x:c.x-f.x*4,y:c.y-f.y*4},{x:c.x+f.x*4,y:c.y+f.y*4})).toBe(Infinity);
+ });
+});

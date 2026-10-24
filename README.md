@@ -413,3 +413,7 @@ The starting region is now a small settlement common rather than scattered fores
 ### v0.26.1 · A quieter map
 
 Map inspection now shows just the location and coordinates, then “Safe” or a recommended level and short danger label. Local selections also show tile coordinates/depth. The legend is tucked into a collapsed Map key on desktop and phone. Redundant camp bearings are hidden on the World map and at camp. Inspection and opening the key remain free.
+
+### v0.27.0 · The winding river
+
+Willow Crossing’s river now runs continuously across the entire first-forest region, with a three-tile channel and diagonal bends that keep its endpoints away from all four area exits. Riverbank trails lead to a distant shallow ford (blue water with stepping stones), preserving a longer free route while the quest bridge remains the direct shortcut. Pay, medicine and combat solutions still work, including escort passage. The river, ford and exploration persist when you return. Water and scenery remain turn-frozen; no real-time effects were added.
