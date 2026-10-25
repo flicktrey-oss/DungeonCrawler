@@ -2,7 +2,7 @@
 
 Stable rollback: tag `v0.28.1`, branch `backup/v0.28.1`, commit `88aad71`. The first joined-pair preview is also preserved in commit `d186c02`.
 
-Choose **Seamless preview** on the title screen. **New Game** still starts the standard expedition, including crypts. The seamless surface now generates terrain in every direction as the player approaches it. It includes all surface biomes, local quests, camp services, the northern landmarks, Northwatch, city services and Aldren's escort completion. Crypt interiors are not connected to this mode yet.
+Choose **New Game** on the title screen for the expanding world. **Classic expedition** retains the region-based expedition, including crypts. The seamless surface now generates terrain in every direction as the player approaches it. It includes all surface biomes, local quests, camp services, the northern landmarks, Northwatch, city services and Aldren's escort completion. Crypt interiors are not connected to this mode yet.
 
 ## Coordinates and ownership
 
@@ -17,7 +17,7 @@ Choose **Seamless preview** on the title screen. **New Game** still starts the s
 - TurnManager remains authoritative. Every living enemy receives one action per completed player turn. Enemies beyond 24 tiles wait cheaply instead of pathfinding. Outstanding attacks and bleeding finish on their normal enemy phases; nothing runs on autonomous AI timers, and no catch-up turns occur on return.
 - Aldren follows across boundaries. If separated by more than 32 walking tiles, he waits for the player to return instead of searching the entire world or teleporting. His position is marked on the overview when waiting, downed or separated.
 - Rendering clips terrain to the camera viewport. Visibility and nearby map drawing use local windows. The overview reads known cells, not the rectangle between distant cache entries. Pathfinding searches a bounded corridor around its endpoints.
-- Terrain and visited history are retained in memory. There is no save/resume or regeneration timer; memory use grows with the places a run visits.
+- Terrain and visited history are retained in memory. There is no save/resume; habitat populations recover through completed turns. Memory use grows with the places a run visits.
 
 ## Geography and map
 
@@ -30,5 +30,15 @@ Choose **Seamless preview** on the title screen. **New Game** still starts the s
 
 1. Attach crypt instances to global entrances and support surface return/companion behavior.
 2. Tune border scenery and biome blending, trail variety and the density of discoveries on longer journeys.
-3. Decide turn/distance rules for repopulation, preserving quest rewards and preventing enemies from appearing in sight.
-4. Add long-run cache budgets and persistence before making seamless mode the default expedition.
+3. Extend the initial rabbit/rat habitats to other biomes if the population rules play well; keep quests and unique rewards persistent.
+4. Add long-run cache budgets and persistence.
+
+## Default world and habitats (v0.31.0)
+
+New Game uses `SeamlessExpedition`; Classic expedition explicitly retains the old `Expedition` mode. Death/retry preserves the chosen mode. Crypt instances remain available only in Classic expedition until the surface-return integration is complete.
+
+`habitats.js` prepares local habitat encounters and residents before global coordinate conversion, using an independent per-region RNG. The guaranteed starting forest has rabbit and rat homes; other forests use separate habitat probabilities. Residents retain globally unique habitat IDs and source-region enemy IDs. Quest/event-owned creatures are preserved when replacing ordinary prey.
+
+Population recovery runs in `finishTurn`, after the enemy snapshot has acted. Visibility is updated from the player's current position before selecting a spawn. A newborn takes its first enemy action on the following completed turn. Homes below capacity wait 30 turns between births, within 48 Manhattan tiles of the player. A blocked/visible habitat waits without building a backlog. Candidates exclude occupants, scenery, items and encounter sites; no map tiles are rewritten.
+
+A live rat burrow blocks player movement through a bump strike and is excluded from creature, companion and click-travel paths. Destroying its 12 HP permanently disables births for the run without killing its survivors. Rabbit homes are non-destructible. Inspection is free; strikes use one authoritative player turn. Rabbits flee on alternate turns, remain within six walking tiles of their warren and never attack; rats use ordinary combat near home and return when the player leaves.

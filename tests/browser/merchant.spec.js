@@ -16,7 +16,7 @@ test('complete a frog quest, sell its reward and buy supplies using earned gold'
 });
 
 test('camp map is revealed, follows the player, switches regions and can be collapsed for free', async ({ page }) => {
-  await page.goto('/'); await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.goto('/'); await page.getByRole('button', { name: 'Classic expedition', exact: true }).click();
   const map = page.locator('#minimap');
   await expect(map).toHaveAttribute('aria-label', /tile 20, 15/);
   const hiddenColor = await map.evaluate(c => Array.from(c.getContext('2d').getImageData(1, 1, 1, 1).data));
@@ -33,7 +33,7 @@ test('camp map is revealed, follows the player, switches regions and can be coll
 });
 
 test('one widget switches local/world in place, grows with travel and remembers its tab when minimized', async ({ page }) => {
-  await page.goto('/'); await page.getByRole('button', { name: 'New Game', exact: true }).click();
+  await page.goto('/'); await page.getByRole('button', { name: 'Classic expedition', exact: true }).click();
   const map = page.locator('#minimap'), world = page.getByRole('tab', { name: 'World', exact: true });
   await expect(page.locator('#minimap-widget')).toHaveCount(1); await expect(map).toHaveCount(1);
   const before = await map.boundingBox(); await world.click();

@@ -105,8 +105,8 @@ export class Expedition extends Game {
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['bridge','villager','citizen','innkeeper','gravekeeper','guide','steward','blacksmith'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
-  activeEncounter(){const events=this.nearbyEncounters();return events.includes(this.interactionTarget)?this.interactionTarget:events[0];}
+  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>['habitat','bridge','villager','citizen','innkeeper','gravekeeper','guide','steward','blacksmith'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
+  activeEncounter(){const events=this.nearbyEncounters();return events.includes(this.interactionTarget)?this.interactionTarget:events.find(e=>e.x===this.state.player.x&&e.y===this.state.player.y)??events[0];}
 
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
   questRemaining(){if(!this.state.quest)return 0;return this.state.enemies.filter(e=>e.hp>0&&e.questId===this.state.quest?.id).length;}

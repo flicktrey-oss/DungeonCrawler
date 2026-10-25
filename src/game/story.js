@@ -30,6 +30,7 @@ export function actPrince(g){
  if(foe){g.strikeEnemy(foe,c.attack,'Aldren strikes',false,{attacker:c,profile:'sword'});return;}
  if(c.mode!=='follow'||distance(c,p)<=1)return;
  const occupied=new Set(s.enemies.filter(e=>e.hp>0).map(e=>key(e.x,e.y)));
+ for(const h of s.encounters??[])if(h.type==='habitat'&&h.kind==='rat'&&!h.destroyed)occupied.add(key(h.x,h.y));
  const step=pathStep(s.map,c,p,occupied);if(step&&distance(step,p)>0)Object.assign(c,step);
 }
 export function princeEnemyTarget(g,e){

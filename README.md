@@ -447,3 +447,11 @@ The river continues through adjacent terrain; ordinary crossings supplement the 
 The minimap has **Nearby** and **Explored** views of the continuous landscape. Camp, Northwatch and accepted quests are marked. Mara's 15-gold survey map is available again and charts broad surrounding biomes without revealing creatures or discoveries.
 
 The engine prepares a nearby ring, renders only the viewport and makes distant enemies wait without catch-up turns. Areas are retained in memory for the run; there is no automatic repopulation or save/resume yet. **Crypt interiors remain in standard New Game**, which is still available. The stable `v0.28.1` tag and `backup/v0.28.1` branch remain untouched. See [seamless surface notes](docs/SEAMLESS-WORLD.md).
+
+### v0.31.0 · A living wilderness
+
+**New Game now starts the expanding world.** Travel in any direction without region transitions; Nearby and Explored maps remember your journey. The previous region-based game is available as **Classic expedition**, including its crypt interiors. Crypts are not yet connected to the expanding surface.
+
+The starting woodland contains a **rabbit warren** and a **rat burrow**; other forests may contain either habitat. Each supports 3–5 residents roaming near home. Warren rabbits flee on alternate turns when approached, so they can still be caught; warrens remain intact as hunting grounds. Rats defend their surroundings. Bump into a rat burrow or select **Strike** nearby to damage it. Each strike takes one turn and uses your attack stat. Its 12 HP bar shows progress. Clearing it prevents further spawning for the run; surviving rats remain, and the cleared ground becomes walkable.
+
+A depleted habitat recovers at most one animal after 30 completed turns, outside your current sight and more than eight walking tiles away. No real-time timers, visible pop-in or accumulated catch-up waves occur. Nearby habitats recover while you explore; faraway habitats wait. Habitat locations, population and cleared status persist for the run. Animals retain their existing meat-drop chances; burrows do not award free treasure for destruction.

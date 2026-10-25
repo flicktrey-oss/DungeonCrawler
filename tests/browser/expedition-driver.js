@@ -6,7 +6,7 @@ import { directions, walkable, key } from '../../src/game/dungeon.js';
 // injected into the browser: every movement, attack and potion is actual input.
 export async function expeditionDriver(page,seed=1,touch=false,preview=false){
   await page.clock.setFixedTime(new Date(seed));await page.goto('/');
-  const start=page.getByRole('button',{name:preview?'Seamless preview':'New Game',exact:true});if(touch)await start.tap();else await start.click();
+  const start=page.getByRole('button',{name:preview?'New Game':'Classic expedition',exact:true});if(touch)await start.tap();else await start.click();
   const game=preview?new SeamlessExpedition(seed):new Expedition(seed);
   const stepNames={'0,-1':'north','0,1':'south','1,0':'east','-1,0':'west'},keys={'0,-1':'w','0,1':'s','1,0':'d','-1,0':'a'};
   async function send(a){

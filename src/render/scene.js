@@ -47,6 +47,7 @@ export class DungeonScene extends Phaser.Scene {
     for(const decoration of s.scenery??[])if(s.explored.has(key(decoration.x,decoration.y)))this.scenery(decoration,s.visible.has(key(decoration.x,decoration.y))?1:.3);
     for(const e of s.encounters??[])if(e.type==='villager'&&e.quest&&s.visible.has(key(e.x,e.y))){g.fillStyle(e.quest.camp?0xc8ab63:({hunt:0x8b9d6b,recovery:0xba8ca6,ward:0x8e9cd0})[e.quest.kind]??0x8fa682);g.fillRect(e.x*T+8,e.y*T+12,9,8);}
     for(let y=view.minY;y<view.maxY;y++)for(let x=view.minX;x<view.maxX;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
+    for(const h of s.encounters??[])if(h.type==='habitat'&&s.explored.has(key(h.x,h.y)))this.habitat(h,s.visible.has(key(h.x,h.y))?1:.32);
     drawDangerPockets(g,s,T);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);
@@ -81,6 +82,15 @@ export class DungeonScene extends Phaser.Scene {
       }
       g.fillStyle(color);g.fillTriangle(e.x*T+8,e.y*T-7,e.x*T+16,e.y*T-7,e.x*T+12,e.y*T-14);g.fillStyle(0x17242d);g.fillRect(e.x*T+11,e.y*T-12,2,3);
     }
+  }
+  habitat(h,a){
+    const g=this.paint,x=h.x*T,y=h.y*T;
+    g.fillStyle(h.kind==='rabbit'?0x8c7451:0x66584d,a);g.fillEllipse(x+12,y+17,23,12);
+    g.fillStyle(0x17221c,a);g.fillEllipse(x+12,y+16,h.destroyed?5:12,h.destroyed?3:9);
+    g.fillStyle(0xb69a69,a);g.fillRect(x+3,y+19,5,2);g.fillRect(x+18,y+18,4,2);
+    if(h.kind==='rabbit'){g.fillStyle(0x87a265,a);g.fillRect(x+3,y+8,2,7);g.fillRect(x+5,y+10,2,5);g.fillRect(x+18,y+7,2,9);}
+    else if(h.destroyed){g.fillStyle(0x9c8a6c,a);g.fillRect(x+6,y+12,7,5);g.fillRect(x+12,y+16,8,5);}
+    else{g.fillStyle(0xd5be91,a);g.fillRect(x+4,y+8,9,2);g.fillRect(x+6,y+6,2,6);if(a===1)this.healthBar(h);}
   }
   healthBar(enemy){
     const g=this.paint,x=enemy.x*T+2,y=Math.max(mapBounds(this.gameModel.state.map).minY*T,enemy.y*T-5);

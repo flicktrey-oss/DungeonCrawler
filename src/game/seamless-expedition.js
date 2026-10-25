@@ -1,3 +1,4 @@
+import {addHabitats,habitatAt,strikeHabitat,replenishHabitats,actHabitatResident} from './habitats.js';
 import {Expedition} from './expedition.js';
 import {Game} from './game.js';
 import {startingForest,worldId,BIOMES,regionInfo} from './world.js';
@@ -19,7 +20,7 @@ export class SeamlessExpedition extends Expedition{
   for(const field of ['enemies','items','encounters','scenery'])s[field]=[...home[field]];
   s.explored=new Set(home.explored);s.encounterSeen=new Set(home.encounterSeen);s.settlementBounds=[{minX:0,minY:0,maxX:WIDTH,maxY:HEIGHT}];s.seamless=true;s.chartedRegions=this.surveyedRegions;
   this.visitedSurface=new Set([worldId(0,0)]);this.syncArea();s.transition=false;this.refresh();
-  this.message('Seamless world: follow the trails in any direction. Nearby terrain loads as you explore; danger varies by biome.');
+  this.message('Follow the trails in any direction. The wilderness stretches beyond camp; danger varies by biome.');
   this.message('Creatures, loot and exploration remain in place on return. Faraway creatures wait; they do not respawn or take catch-up turns.');
   this.message(`The starting woodland trail leads ${this.forest.rx>0?'east':this.forest.rx<0?'west':this.forest.ry>0?'south':'north'}. Other directions may be much more dangerous.`);
  }
@@ -50,7 +51,7 @@ export class SeamlessExpedition extends Expedition{
  }
  loadChunk(rx,ry){
   const id=worldId(rx,ry);if(this.surfaceChunks.has(id))return this.surfaceChunks.get(id);
-  const data=offsetRegion(this.prepareWorld(rx,ry));this.surfaceChunks.set(id,data);
+  const prepared=this.prepareWorld(rx,ry);addHabitats(this,prepared);const data=offsetRegion(prepared);this.surfaceChunks.set(id,data);
   for(const e of data.enemies)this.registerEnemy(e,id);
   for(const field of ['enemies','items','encounters','scenery'])this.state[field].push(...data[field]);
   if(data.city)this.state.settlementBounds.push({minX:rx*WIDTH,minY:ry*HEIGHT,maxX:(rx+1)*WIDTH,maxY:(ry+1)*HEIGHT});
@@ -83,7 +84,7 @@ export class SeamlessExpedition extends Expedition{
   if(!this.state.seamless)return super.actEnemy(enemy);
   this.registerEnemy(enemy,this.location.id);const p=this.state.player;
   if(Math.max(Math.abs(enemy.x-p.x),Math.abs(enemy.y-p.y))>24&&!enemy.intent&&!enemy.bleeding){enemy.actions++;return;}
-  super.actEnemy(enemy);
+  if(!actHabitatResident(this,enemy))super.actEnemy(enemy);
  }
  actCompanion(){
   const c=this.story.prince,p=this.state.player;
@@ -101,11 +102,13 @@ export class SeamlessExpedition extends Expedition{
  resolvePlayer(action){
   if(!this.state.seamless)return super.resolvePlayer(action);
   const s=this.state,p=s.player;
-  if(['descend','ascend'].includes(action.type)){this.message('Crypt interiors remain in standard runs while the seamless surface is being tested.');return false;}
+  if(action.type==='strikeHabitat')return strikeHabitat(this,action.id);
+  if(['descend','ascend'].includes(action.type)){this.message('Crypt interiors are available in Classic expedition; they are not connected to this world yet.');return false;}
   if(action.type==='move'){
    if(!Number.isInteger(action.dx)||!Number.isInteger(action.dy)||Math.abs(action.dx)+Math.abs(action.dy)!==1)return false;
    const x=p.x+action.dx,y=p.y+action.dy;
    if(s.map[y]?.[x]==='X'){this.message('The bridge is barred. Speak to Kestrel or follow the bank to the shallow ford.');return false;}
+   const habitat=habitatAt(this,x,y);if(habitat?.kind==='rat'&&!habitat.destroyed)return strikeHabitat(this,habitat.id);
    if(!walkable(s.map,x,y))return false;const c=princeHere(this);
    if(c&&c.x===x&&c.y===y)Object.assign(c,{x:p.x,y:p.y,swappedTurn:s.turn+1});
    const moved=Game.prototype.resolvePlayer.call(this,action);if(moved){this.syncArea();s.companion=princeHere(this);}return moved;
@@ -121,6 +124,7 @@ export class SeamlessExpedition extends Expedition{
  }
  finishTurn(){
   super.finishTurn();if(!this.state.seamless)return;
+  replenishHabitats(this);
   const c=this.story.prince,{rx,ry}=areaCoordinates(c.x,c.y);Object.assign(c,{rx,ry,locationId:worldId(rx,ry)});
  }
 }

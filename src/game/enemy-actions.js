@@ -6,7 +6,7 @@ import {walkable} from './dungeon.js';
 import {pathStep} from './ai.js';
 import {clearShot} from './techniques.js';
 
-export const describeCreature=e=>creatureAbility(e)??creatureTraits[e.kind]??'Adjacent melee attacks.';
+export const describeCreature=e=>e.habitatId&&e.kind==='rabbit'?'Warren rabbit · flees when approached and stays near home. May drop raw meat; no coins.':creatureAbility(e)??creatureTraits[e.kind]??'Adjacent melee attacks.';
 export const creatureTraits={
  guardian:'Warden sweep · winds up a cross of four adjacent tiles, then strikes. Retreat or use reach; it rests for one action afterward.',
  boss:'Warden sweep · winds up a cross of four adjacent tiles, then strikes. Retreat or use reach; it rests for one action afterward.',

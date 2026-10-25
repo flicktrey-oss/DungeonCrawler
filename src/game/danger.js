@@ -20,6 +20,7 @@ export function visibleDangerPockets(state){
 }
 export function territoryObstacles(state,enemy,bounded=false){
  const bounds=mapBounds(state.map),occupied=new Set(state.enemies.filter(e=>e!==enemy&&e.hp>0).map(e=>key(e.x,e.y)));
+ for(const h of state.encounters??[])if(h.type==='habitat'&&h.kind==='rat'&&!h.destroyed)occupied.add(key(h.x,h.y));
  if(state.companion)occupied.add(key(state.companion.x,state.companion.y));
  if(bounded){const t=territoryOf(enemy);if(t)for(let y=Math.max(bounds.minY,enemy.y-20);y<Math.min(bounds.maxY,enemy.y+21);y++)for(let x=Math.max(bounds.minX,enemy.x-20);x<Math.min(bounds.maxX,enemy.x+21);x++)if(!insideTerritory(t,{x,y}))occupied.add(key(x,y));}
  return occupied;
