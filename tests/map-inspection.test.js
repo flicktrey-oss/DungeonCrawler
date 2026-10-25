@@ -9,7 +9,7 @@ describe('map inspection',()=>{
   const g=new Expedition(5),before=structuredClone(g.state);expect(mapInspectionText(g,select(g,0,0))).toContain('Lantern Camp (0, 0)');expect(select(g,0,-6)).toBeNull();expect(g.regions.size).toBe(0);expect(g.state).toEqual(before);
  });
  it('reports real biome difficulty relative to the adventurer on a discovered region',()=>{
-  const g=new Expedition(5);let rx=1;while(biomeAt(rx,2,5)!=='highlands')rx++;g.visitWorld(rx,2);const sel=select(g,rx,2);expect(mapInspectionText(g,sel)).toContain('Lv 8 · Overwhelming');g.state.player.level=8;expect(mapInspectionText(g,sel)).toContain('Stay alert');
+  const g=new Expedition(5);let rx=1;while(biomeAt(rx,2,5)!=='highlands')rx++;g.visitWorld(rx,2);const sel=select(g,rx,2);expect(mapInspectionText(g,sel)).toContain('Lv 6 · Overwhelming');g.state.player.level=8;expect(mapInspectionText(g,sel)).toContain('Stay alert');
  });
  it('ignores empty world space, invalid input and unexplored local squares',()=>{
   const g=new Expedition(5);for(const p of [[-1,0],[160,120],[NaN,0],[0,0]])expect(inspectMapAt(g,'world',...p)).toBeNull();g.visitWorld(1,0);expect(inspectMapAt(g,'local',0,0)).toBeNull();

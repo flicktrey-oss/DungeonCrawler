@@ -1,3 +1,5 @@
+import {enemyStats} from './enemy-stats.js';
+import {applyWorldVariants} from './creature-variants.js';
 import {useSurveyMap} from './survey.js';
 import {BLACKSMITH,enhanceEquipment} from './blacksmith.js';
 import {createJourney,attachJourney,journeyAction} from './journey.js';
@@ -44,8 +46,8 @@ export class Expedition extends Game {
   actEnemy(enemy){actCreature(this,enemy);}
   makeEnemy(kind,p,danger,id,biome='forest'){
     if(kind==='elite'&&p.eventId)return denEnemy(biome,p,danger,id);
-    const base=enemyTypes[kind],extra=Math.max(0,danger-1);
-    return {...base,...p,kind,id,hp:base.hp+extra*2,maxHp:base.hp+extra*2,attack:base.attack+Math.floor(extra/2),xp:({skeleton:3,goblin:3,leech:3,wolf:5,boar:5,guardian:10})[kind]??base.xp,actions:0};
+    const base=enemyTypes[kind];
+    return {...base,...p,...enemyStats(kind,danger,Boolean(p.foothill)),kind,id,actions:0,combatBalance:1};
   }
   saveRegion(){if(!this.location)return;const data={};for(const field of fields)data[field]=this.state[field];this.regions.set(this.location.id,data);}
   nextVisit(id){const n=this.visits.get(id)??0;this.visits.set(id,n+1);return n;}
@@ -78,7 +80,7 @@ export class Expedition extends Game {
       attachJourney(this,data,rx,ry);
       if(home){data.map[BLACKSMITH.y][BLACKSMITH.x]='V';data.encounters.push({...BLACKSMITH,id:'blacksmith',type:'blacksmith'});data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
     }
-    placeCitizens(this,data);return data;
+    placeCitizens(this,data);if(!this.surfaceGeneration)applyWorldVariants(this,data);return data;
   }
   visitWorld(rx,ry,spawn=CAMP){
     const id=worldId(rx,ry),home=rx===0&&ry===0,data=this.prepareWorld(rx,ry);
@@ -241,7 +243,7 @@ export class Expedition extends Game {
   kill(enemy){
     this.killCounts[enemy.kind]=(this.killCounts[enemy.kind]??0)+1;const entry=this.creatureIndex.get(creatureIndexKey(enemy));if(entry)entry.kills++;
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
-    const loot=ordinaryDrop(this.rng,this.state.danger,enemy.kind,Boolean(enemy.eventId));if(loot){this.state.items.push({...loot,x:enemy.x,y:enemy.y});if(['rawMeat','rawRatMeat'].includes(loot.kind))this.message(`${loot.name} dropped. Collect it from the ground.`);}
+    const loot=ordinaryDrop(this.rng,enemy.lootDanger??this.state.danger,enemy.kind,Boolean(enemy.eventId||enemy.variant));if(loot){this.state.items.push({...loot,x:enemy.x,y:enemy.y});if(['rawMeat','rawRatMeat'].includes(loot.kind))this.message(`${loot.name} dropped. Collect it from the ground.`);}
     if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:enemy.miniboss?enemy.name+'’s hoard':'Beast hoard',reward:enemy.miniboss?minibossReward(this.rng,enemy.miniboss):treasure(this.rng,this.state.danger+2,'den'),x:enemy.x,y:enemy.y});}}
     if(enemy.questId&&this.state.quest){const q=this.state.quest;q.remaining=this.questRemaining();q.complete=q.remaining===0;if(q.complete&&q.accepted)this.message('The frogs are cleared. Return to the Mirekeeper whenever you are ready.');}
     if(enemy.questKey){const q=this.quests.get(enemy.questKey)??this.state.encounters.find(e=>e.quest?.id===enemy.questKey)?.quest;if(q&&q.kind!=='recovery'&&!this.state.enemies.some(e=>e.hp>0&&e.questKey===q.id)){q.complete=true;if(q.accepted)this.message(q.title+': objective complete. Return for your reward.');}}

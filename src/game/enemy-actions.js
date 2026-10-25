@@ -1,3 +1,4 @@
+import {VARIANTS} from './creature-variants.js';
 import {creatureAbility} from './minibosses.js';
 import {combatFeedback} from './combat-feedback.js';
 import {territoryOf,insideTerritory,territoryObstacles,returnToTerritory} from './danger.js';
@@ -6,7 +7,7 @@ import {walkable} from './dungeon.js';
 import {pathStep} from './ai.js';
 import {clearShot} from './techniques.js';
 
-export const describeCreature=e=>e.habitatId&&e.kind==='rabbit'?'Warren rabbit · flees when approached and stays near home. May drop raw meat; no coins.':creatureAbility(e)??creatureTraits[e.kind]??'Adjacent melee attacks.';
+export const describeCreature=e=>[VARIANTS[e.variant]?.description,e.habitatId&&e.kind==='rabbit'?'Warren rabbit · flees when approached and stays near home. May drop raw meat; no coins.':e.foothill?'Highland trail creature · lighter health, attack and armor than ridge guardians. '+(e.kind==='goat'?'Winds up a straight charge up to 3 tiles. Sidestep; it rests afterward.':'Adjacent melee attacks.'):creatureAbility(e)??creatureTraits[e.kind]??'Adjacent melee attacks.'].filter(Boolean).join(' ');
 export const creatureTraits={
  guardian:'Warden sweep · winds up a cross of four adjacent tiles, then strikes. Retreat or use reach; it rests for one action afterward.',
  boss:'Warden sweep · winds up a cross of four adjacent tiles, then strikes. Retreat or use reach; it rests for one action afterward.',
@@ -16,7 +17,7 @@ export const creatureTraits={
  pondFrog:'Tongue lash · range 2 in a cardinal line. Winds up for one turn; sidestep the pink tiles.',
  frog:'Tongue lash · range 2 in a cardinal line. Winds up for one turn; sidestep the pink tiles.',
  beetle:'Sap spit · range 3. Marks your tile, then fires next turn. Move off the amber cross. Bites when adjacent.',
- goat:'Armored ram · high defense. Winds up a straight charge up to 3 tiles; step off its lane. Headbutts when adjacent. Rests for one action after charging.'
+ goat:'Ridge charge · tougher armor than trail prey. Winds up a straight charge up to 3 tiles; step off its lane. Headbutts when adjacent. Rests for one action after charging.'
 };
 function line(state,e,dx,dy,length,ground=false){const tiles=[];for(let i=1;i<=length;i++){const tile={x:e.x+dx*i,y:e.y+dy*i};if(ground&&territoryOf(e)&&!insideTerritory(e.territory,tile)||!clearShot(state,e,tile)||ground&&(!walkable(state.map,tile.x,tile.y)||state.enemies.some(o=>o!==e&&o.hp>0&&o.x===tile.x&&o.y===tile.y)))break;tiles.push(tile);}return tiles;}
 function effect(state,e,kind,to){(state.enemyEffects??=[]).push({kind,from:{x:e.x,y:e.y},to:{...to}});}
@@ -60,6 +61,7 @@ export function actCreature(g,e){
  if(e.kind==='beetle'&&distance>1&&dx*dx+dy*dy<=9&&clearShot(s,e,p)){prepare(g,e,'spit',[{x:p.x,y:p.y}]);return;}
  if(e.miniboss==='cairn'&&Math.max(Math.abs(dx),Math.abs(dy))<=1){const tiles=[];for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++){const t={x:e.x+x,y:e.y+y};if((x||y)&&walkable(s.map,t.x,t.y)&&clearShot(s,e,t))tiles.push(t);}prepare(g,e,'stomp',tiles);return;}
  if(['guardian','boss'].includes(e.kind)&&distance===1){const tiles=[[1,0],[-1,0],[0,1],[0,-1]].map(([x,y])=>({x:e.x+x,y:e.y+y})).filter(t=>walkable(s.map,t.x,t.y)&&clearShot(s,e,t));prepare(g,e,'cleave',tiles);return;}
+ if(e.variant==='stalker'&&distance===2&&(!dx||!dy)&&clearShot(s,e,p)){const tiles=line(s,e,Math.sign(dx),Math.sign(dy),2,true);if(tiles.some(t=>t.x===p.x&&t.y===p.y)){prepare(g,e,'charge',tiles);return;}}
  if(e.miniboss!=='cairn'&&['goat','boar','elite'].includes(e.kind)&&distance>=2&&distance<=3&&(!dx||!dy)&&clearShot(s,e,p)){const tiles=line(s,e,Math.sign(dx),Math.sign(dy),3,true);if(tiles.some(t=>t.x===p.x&&t.y===p.y)){prepare(g,e,'charge',tiles);return;}}
  if(distance===1){g.receiveEnemyAttack(e,e.kind==='goat'?'headbutts you':e.kind==='beetle'?'bites you':'hits you',{target:p});return;}
  const occupied=territoryObstacles(s,e,Boolean(territory));if(p.companion)occupied.delete(`${p.x},${p.y}`);const step=pathStep(s.map,e,p,occupied);

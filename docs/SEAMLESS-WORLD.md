@@ -61,3 +61,12 @@ Map rendering and hit testing share zoom-adjusted frames. Each UI tab keeps its 
 `altars.js` uses an independent region seed. Camp and its first woodland receive an altar; other surface regions are eligible on a sparse lattice with a seeded probability. Sites use existing walkable terrain and avoid entities/scenery; no terrain is carved. Activation is stored on the encounter object. Save restoration retrofits missing sites to retained chunks and their shared surface array without resetting anything.
 
 Activation and travel resolve through TurnManager. An activated adjacent source and an activated known destination are required. Guards reject active escorts, nearby threats at either end, incoming telegraphs and obstructed arrivals before moving or spending a turn. Travel changes the player position and synchronizes metadata without calling region activation or granting transition grace; living enemies receive their usual one action. No additional healing, gold charge, ability reset, enemy regeneration or catch-up simulation occurs. Ordinary per-turn effects still apply.
+
+
+## Readable danger and highland footholds (v0.35.0)
+
+`highlands.js` places four lighter trail creatures and up to three territory-bound ridge guards. A deep-site fallback also uses the lighter profile rather than turning an unusable trail into a stat gate. `enemy-stats.js` separates encounter stats and loot danger: trail prey yields tier-two rewards while guarded highland creatures retain tier-three eligibility.
+
+`creature-variants.js` uses an independent per-region RNG and at most one modifier on an ordinary off-trail enemy. It excludes renewable habitat populations, quest objectives and named bosses. Variant names, graphics badges, inspection and separate journal entries expose their traits. Stalkers reuse the existing next-turn charge/recovery machinery; Armored slow actions do not delay an already prepared telegraph. Generation consumes no combat or loot RNG.
+
+Existing expanding-world saves use a one-time combat-balance upgrade for ordinary retained highland goats/wolves. It retains position, actions, deaths and health fraction, never generates enemies or changes player stats, and does not add variants to already explored populations. New areas use the new seeded generation. The main loops still use exactly one enemy action per completed non-transition player turn.

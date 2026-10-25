@@ -1,3 +1,4 @@
+import {drawVariantMark} from '../game/creature-variants.js';
 import {drawCampProp,drawCampGround} from './camp.js';
 import {CombatFeedback} from './combat-feedback.js';
 import {drawPerson} from './people.js';
@@ -59,7 +60,7 @@ export class DungeonScene extends Phaser.Scene {
     if(s.companion&&s.visible.has(key(s.companion.x,s.companion.y))){this.actor(s.companion,'prince');this.healthBar(s.companion);}
     this.actor(s.player,'player');
     // Draw bars last so neighboring actors and scenery cannot cover them.
-    for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y)))this.healthBar(e);
+    for(const e of s.enemies)if(e.hp>0&&s.visible.has(key(e.x,e.y))){this.healthBar(e);drawVariantMark(g,e,T);}
     for(const e of this.targetHighlights??[]){g.lineStyle(2,0xf4d385,1);g.strokeRect(e.x*T+1,e.y*T+1,T-2,T-2);}
     this.cameras.main.centerOn(s.player.x*T+12,s.player.y*T+12);
     this.combatFeedback.show(s);

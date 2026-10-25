@@ -46,7 +46,7 @@ Start at level 1 with 3 attack, 0 defense, 32 health, two tonics, three throwing
 | --- | ---: |
 | Whisperwood | 1 |
 | Lantern Marsh | 4 |
-| Broken Highlands | 8 |
+| Broken Highlands | 6 |
 | Ashen Reach | 12 |
 
 Biomes form seeded patches with local variation; distance from camp no longer determines the biome. Mountains or ashlands can border camp, while forests can appear farther away. The same run seed and coordinates always produce the same biome, regardless of travel order. Creature strength comes from the biome and encounter, with no automatic scaling to the player's level.
@@ -483,3 +483,14 @@ Northwatch is no longer marked from the start, including when accepting its esco
 Travel costs one turn and no gold. It preserves your gear, progress, health, creatures and ground loot; normal per-turn effects still apply. Enemies within eight tiles of either altar or an incoming attack prevent travel. Peaceful warren rabbits do not block a link. The arrival tile must be walkable and clear. Altar travel is disabled throughout Aldren's accepted, unfinished escort, including when he is told to Stay; activation remains possible. It unlocks again after his homecoming.
 
 Activated altars appear as **◇** on the continuous map; discovered dormant altars have a gray mark. Links are saved with the run. Existing expanding-world saves gain altars in suitable empty locations without regenerating terrain or enemies. Classic expedition keeps its previous travel rules.
+
+
+### v0.35.0 · Read the danger
+
+Biomes remain distinct, with a gentler path into the mountains. Brush rats gain one attack (3 instead of 2), while woodland prey, meat drops and leveling thresholds remain unchanged. Ordinary forest encounters can now include one visibly marked variant away from the main trails; renewable habitat animals, quests and named bosses keep their normal roles.
+
+The highlands now recommend level 6. At least four ordinary creatures favor the main trails: **Ridge yearlings** (16 HP, 6 attack, 1 defense) and **Lean ridge wolves** (12 HP, 5 attack, 0 defense). These trail creatures offer Field-tier loot, rather than highland-tier gear. Prepared level-four adventurers can hunt them, while deeper ridge guards and Cairnhorn remain riskier targets. Ordinary ridge rams have 32 HP, 11 attack and 2 defense at highland strength, down from 37 HP, 14 attack and 5 defense. Deep guards defend marked territories away from the main paths.
+
+Each region can have at most one **Veteran**, **Armored** or **Stalker** ordinary creature. Name prefixes and original colored badges identify them before combat; inspection and the creature journal explain their abilities. Veterans gain modest health and +1 attack; Armored creatures gain +1 defense and health but take ordinary actions every other turn; Stalker rats/wolves telegraph a two-tile lunge and recover afterward. All retain the same central turn rules, with no extra actions, hidden critical hits or player-level scaling. Variants award 50% more XP (rounded up) and improved ordinary loot odds; animals retain their meat-only drops.
+
+New runs and newly generated areas get the full new enemy mix. Existing expanding-world saves receive gentler retained mountain stats while preserving positions, health fractions, deaths, inventory and quests. Existing creatures are not suddenly turned into variants on loading.

@@ -7,7 +7,7 @@ for(const touch of [false,true])test.describe(touch?'phone dangerous frontier':'
   await d.walk({x:0,y:15});expect(d.game.location.rx).toBe(0);expect(d.game.state.player.hp).toBe(32);
   await expect(page.locator('#travel-warning')).toContainText('Broken Highlands');await expect(page.locator('#travel-warning')).toContainText('OVERWHELMING');
   const turn=d.game.state.turn;await page.waitForTimeout(250);await expect(page.locator('.floor')).toContainText('TURN '+turn);
-  await d.send({type:'move',dx:-1,dy:0});expect(d.game.state.biome).toBe('highlands');expect(d.game.state.enemies.some(e=>e.attack>=12)).toBe(true);
+  await d.send({type:'move',dx:-1,dy:0});expect(d.game.state.biome).toBe('highlands');expect(d.game.state.enemies.some(e=>e.attack>=8)).toBe(true);expect(d.game.state.enemies.filter(e=>e.foothill).length).toBeGreaterThanOrEqual(4);
   expect(d.game.state.enemies.every(e=>e.actions===0)).toBe(true);await expect(page.locator('#stats .bar').first()).toContainText('Health 32 / 32');
   await expect(page.locator('#stats h2')).toHaveText('Broken Highlands (-1, 0)');
   await d.send({type:'move',dx:1,dy:0});expect(d.game.location.rx).toBe(0);await expect(page.locator('.floor')).toContainText('SAFE CAMP');await expect(page.locator('#stats .bar').first()).toContainText('Health 32 / 32');expect(errors).toEqual([]);

@@ -81,7 +81,7 @@ describe('seeded nonlinear biome geography',()=>{
   let sample;for(let seed=1;seed<=120&&!sample;seed++)for(const p of neighbors)if(biomeAt(p.rx,p.ry,seed)==='highlands'){sample={seed,...p};break;}
   expect(sample).toBeTruthy();const g=new Expedition(sample.seed);g.visitWorld(sample.rx,sample.ry);
   expect(g.state.player.level).toBe(1);expect(g.state.recommended).toBe(BIOMES.highlands.recommended);
-  const locals=g.state.enemies.filter(e=>BIOMES.highlands.enemies.includes(e.kind));expect(locals.length).toBeGreaterThan(0);expect(locals.some(e=>e.attack>=12)).toBe(true);
+  const locals=g.state.enemies.filter(e=>BIOMES.highlands.enemies.includes(e.kind));expect(locals.length).toBeGreaterThan(0);expect(locals.some(e=>e.attack>=8)).toBe(true);expect(locals.filter(e=>e.foothill).length).toBeGreaterThanOrEqual(4);
   const rng=new Random(42);for(let n=0;n<100;n++){
    const reward=itemReward(rng,g.state.danger,'crypt'),entry=ITEM_CATALOG.find(e=>e.id===reward.id);
    expect(entry).toBeTruthy();expect(entry.minDanger).toBeLessThanOrEqual(g.state.danger);

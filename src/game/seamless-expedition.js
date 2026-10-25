@@ -1,3 +1,6 @@
+import {applyWorldVariants} from './creature-variants.js';
+import {enemyStats} from './enemy-stats.js';
+import {trailDistance} from './marsh.js';
 import {addTravelAltar,travelAltars,altarAction} from './altars.js';
 import {areaSnapshot,landing,travelingPrince,arrivePrince} from './crypt-travel.js';
 import {escortCanLeave} from './story.js';
@@ -22,12 +25,24 @@ export class SeamlessExpedition extends Expedition{
   const s=this.state;s.map=createSurfaceMap(this.surfaceChunks);s.baseMap=createSurfaceMap(this.surfaceChunks,'baseMap');
   for(const field of ['enemies','items','encounters','scenery'])s[field]=[...home[field]];
   s.explored=new Set(home.explored);s.encounterSeen=new Set(home.encounterSeen);s.settlementBounds=[{minX:0,minY:0,maxX:WIDTH,maxY:HEIGHT}];s.seamless=true;s.chartedRegions=this.surveyedRegions;
-  this.visitedSurface=new Set([worldId(0,0)]);this.syncArea();s.transition=false;this.refresh();
+  this.combatBalance=1;this.visitedSurface=new Set([worldId(0,0)]);this.syncArea();s.transition=false;this.refresh();
   this.message('Follow the trails in any direction. The wilderness stretches beyond camp; danger varies by biome.');
   this.message('Creatures, loot and exploration remain in place on return. Faraway creatures wait; they do not respawn or take catch-up turns.');
   this.message(`The starting woodland trail leads ${this.forest.rx>0?'east':this.forest.rx<0?'west':this.forest.ry>0?'south':'north'}. Other directions may be much more dangerous.`);
  }
  refresh(){super.refresh();if(this.state.seamless){this.state.settlementBounds=this.state.settlementBounds.filter(b=>b.minX===0&&b.minY===0||this.visitedSurface?.has(worldId(b.minX/WIDTH,b.minY/HEIGHT)));this.state.surfaceMarkers=this.surfaceWaypoints();}}
+ upgradeCombatBalance(){
+  if(this.combatBalance===1)return;
+  for(const data of this.surfaceChunks.values()){
+   if(data.biome!=='highlands')continue;data.recommended=6;
+   const ordinary=data.enemies.filter(e=>['goat','wolf'].includes(e.kind)&&!e.miniboss&&!e.eventId&&!e.questId&&!e.questKey&&!e.variant),trail=new Set(ordinary.filter(e=>trailDistance({x:e.x-data.rx*WIDTH,y:e.y-data.ry*HEIGHT})<=2).slice(0,4));
+   for(const e of ordinary){const ratio=e.hp<=0?0:e.hp/e.maxHp,foothill=trail.has(e),stats=enemyStats(e.kind,foothill?3:6,foothill);Object.assign(e,stats,{foothill,combatBalance:1,hp:ratio===0?0:Math.max(1,Math.ceil(stats.maxHp*ratio))});}
+  }
+  if(this.state.biome==='highlands')this.state.recommended=this.state.seamless?6:8;
+  if(this.surfaceSnapshot?.biome==='highlands')this.surfaceSnapshot.recommended=6;
+  for(const data of this.crypts?.values()??[])if(data.biome==='highlands')data.recommended=8;
+  this.combatBalance=1;
+ }
  ensureTravelAltars(){
   const surface=this.state.seamless?this.state:this.surfaceSnapshot;
   for(const data of this.surfaceChunks.values()){const event=addTravelAltar(this,data,true);if(event&&!surface.encounters.includes(event))surface.encounters.push(event);}
@@ -91,7 +106,7 @@ export class SeamlessExpedition extends Expedition{
  }
  loadChunk(rx,ry){
   const id=worldId(rx,ry);if(this.surfaceChunks.has(id))return this.surfaceChunks.get(id);
-  const prepared=this.prepareWorld(rx,ry);addHabitats(this,prepared);addTravelAltar(this,prepared);const data=offsetRegion(prepared);this.surfaceChunks.set(id,data);
+  const prepared=this.prepareWorld(rx,ry);addHabitats(this,prepared);addTravelAltar(this,prepared);applyWorldVariants(this,prepared);const data=offsetRegion(prepared);this.surfaceChunks.set(id,data);
   for(const e of data.enemies)this.registerEnemy(e,id);
   for(const field of ['enemies','items','encounters','scenery'])this.state[field].push(...data[field]);
   for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const neighbor=this.surfaceChunks.get(worldId(rx+dx,ry+dy));if(neighbor)joinSurfaceAreas(data,neighbor);}

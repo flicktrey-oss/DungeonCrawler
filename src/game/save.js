@@ -45,7 +45,7 @@ export function decodeRun(text){
   else if(g.location.kind!=='crypt'||!g.surfaceSnapshot||!g.cryptReturn)throw Error('Missing dungeon return point.');
  }
  const p=g.state.player;if(!Number.isInteger(p.x)||!Number.isInteger(p.y)||!g.state.map?.[p.y]?.[p.x])throw Error('Invalid player position.');
- g.ensureTravelAltars?.();g.state.enemyEffects=[];g.refresh();return g;
+ g.upgradeCombatBalance?.();g.ensureTravelAltars?.();g.state.enemyEffects=[];g.refresh();return g;
 }
 export class RunStorage{
  constructor(storage){this.storage=storage;this.error='';}
