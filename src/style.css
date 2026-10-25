@@ -94,3 +94,5 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 #shop-sales.trade-inventory{gap:0}
 
 .save-warning:not([hidden]){position:fixed;top:140px;left:16px;max-width:280px;padding:8px;background:#382c25;color:#ffe0a0;z-index:30;font-size:12px;}
+
+article.intro-dialog{display:flex;flex-direction:column;height:min(680px,calc(100dvh - 60px));overflow:hidden}.intro-dialog .intro-copy{min-height:0;overflow:auto;flex:1;padding-right:8px;scrollbar-color:#5b6d5d #142229}.intro-dialog>h2,.intro-dialog>.eyebrow,.intro-dialog>.buttons,.intro-dialog>.release{flex-shrink:0}

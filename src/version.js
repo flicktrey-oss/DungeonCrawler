@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.32.0 · Below the wilds';
+export const RELEASE = 'v0.32.1 · A simpler menu';

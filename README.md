@@ -465,3 +465,7 @@ A depleted habitat recovers at most one animal after 30 completed turns, outside
 A nearby following Aldren can accompany you underground. Stay leaves him on that floor until you return; he is never teleported from another floor. The Explored map remains available underground, showing your surface entrance and known world. Classic expedition remains available, and its runs can also be saved.
 
 Next planned work: more exploration decisions and encounter variety, followed by a dedicated phone-control/layout pass and real iPhone playtesting.
+
+### v0.32.1 · A simpler menu
+
+Pause / Menu now opens a compact screen with **Resume**, **Intro & controls**, and **Save & title**. The long introduction and controls live on their own scrollable screen, with **Back** kept visible. The title screen is shorter too.
