@@ -2,7 +2,7 @@
 
 Stable rollback: tag `v0.28.1`, branch `backup/v0.28.1`, commit `88aad71`. The first joined-pair preview is also preserved in commit `d186c02`.
 
-Choose **New Game** on the title screen for the expanding world. **Classic expedition** retains the region-based expedition, including crypts. The seamless surface now generates terrain in every direction as the player approaches it. It includes all surface biomes, local quests, camp services, the northern landmarks, Northwatch, city services and Aldren's escort completion. Crypt interiors are not connected to this mode yet.
+Choose **New Game** on the title screen for the expanding world. **Classic expedition** retains the region-based expedition, including crypts. The seamless surface now generates terrain in every direction as the player approaches it. It includes all surface biomes, local quests, camp services, the northern landmarks, Northwatch, city services and Aldren's escort completion. Discovered crypt entrances connect to persistent two-floor interiors.
 
 ## Coordinates and ownership
 
@@ -28,10 +28,10 @@ Choose **New Game** on the title screen for the expanding world. **Classic exped
 
 ## Remaining stages
 
-1. Attach crypt instances to global entrances and support surface return/companion behavior.
+1. Playtest the connected two-floor crypts and their reward/difficulty balance.
 2. Tune border scenery and biome blending, trail variety and the density of discoveries on longer journeys.
 3. Extend the initial rabbit/rat habitats to other biomes if the population rules play well; keep quests and unique rewards persistent.
-4. Add long-run cache budgets and persistence.
+4. Add long-run cache budgets; local run persistence is implemented in v0.32.0.
 
 ## Default world and habitats (v0.31.0)
 
@@ -42,3 +42,12 @@ New Game uses `SeamlessExpedition`; Classic expedition explicitly retains the ol
 Population recovery runs in `finishTurn`, after the enemy snapshot has acted. Visibility is updated from the player's current position before selecting a spawn. A newborn takes its first enemy action on the following completed turn. Homes below capacity wait 30 turns between births, within 48 Manhattan tiles of the player. A blocked/visible habitat waits without building a backlog. Candidates exclude occupants, scenery, items and encounter sites; no map tiles are rewritten.
 
 A live rat burrow blocks player movement through a bump strike and is excluded from creature, companion and click-travel paths. Destroying its 12 HP permanently disables births for the run without killing its survivors. Rabbit homes are non-destructible. Inspection is free; strikes use one authoritative player turn. Rabbits flee on alternate turns, remain within six walking tiles of their warren and never attack; rats use ordinary combat near home and return when the player leaves.
+
+
+## Connected crypts and local saves (v0.32.0)
+
+`SeamlessExpedition` retains a surface area snapshot while activating a local-coordinate crypt. Global player stats, inventory, quests, turn count and RNG streams stay shared. Crypt instances are cached by region/depth, retain their own entities and fog, and do not respawn on return. Transition actions take one turn with the existing arrival grace; other areas do not simulate catch-up turns. Returning restores the original surface map proxy and arrays, placing the player at the entrance or the nearest safe tile if occupied. Following Aldren travels only when nearby; Stay and downed companions remain at their actual location.
+
+`save.js` uses a versioned reference graph, retaining identity between equipped inventory items, quick slots, quests and their events. It restores Maps, Sets and independent Random streams, rebuilds surface proxies and creates a fresh TurnManager. Runtime input/animation state is not resumed. The browser saves after rendered changes and on page-hide/background events; Continue advances no turn. Death removes the key. New Game confirms replacement of a valid save. Storage failures and damaged/version-incompatible saves produce clear messages without blocking a new run. A single localStorage value is written atomically; quota failures retain the preceding save. Browser storage is device/origin specific and is not cloud backup.
+
+Tests exercise negative-coordinate entrances, both depths, persistent drops/deaths, companion Stay, reference/RNG restoration, invalid data, storage errors and permadeath. Desktop and mobile-browser tests enter a crypt through real input, reload, Continue without time passing, inspect the surface map underground and return to the same entrance. Actual iPhone hardware testing remains separate.

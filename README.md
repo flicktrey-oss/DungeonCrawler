@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.18.0 — Bones and keys** and start **New Game** after deployment. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.32.0 · Below the wilds**. **New Game** starts the expanding world with connected crypts; **Continue** resumes your locally saved expedition. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -78,11 +78,11 @@ Shrines reject exchanges you cannot afford, lethal HP payments, and restoring an
 
 Each region's terrain, paths, scenery and crypt entrances remain fixed for the run. **Explored tiles stay revealed on the local minimap after leaving and returning**, dimmed when outside current sight. Dungeon layouts, stairs and explored dungeon tiles persist too. New runs still create a newly randomized world.
 
-In a region without an accepted quest, re-entering respawns enemies and rerolls non-crypt discoveries: villagers, dens, caravans, shrines and caches can appear at different valid locations or be absent. Quest placement varies between regions, visits and run seeds; it is not locked to one sector. People and encounters are placed on existing reachable terrain without carving new trails. New encounters on previously explored ground are hidden until rediscovered, so remembered maps do not reveal fresh rewards remotely.
+In **Classic expedition**, re-entering a region without an accepted quest respawns enemies and rerolls non-crypt discoveries: villagers, dens, caravans, shrines and caches can appear at different valid locations or be absent. Quest placement varies between regions, visits and run seeds; it is not locked to one sector. People and encounters are placed on existing reachable terrain without carving new trails. New encounters on previously explored ground are hidden until rediscovered, so remembered maps do not reveal fresh rewards remotely.
 
-Accepted quests retain their givers, encounter sites, objectives, special enemies (including wounds/deaths), ground items and progress across travel, including after reward collection. Ordinary creatures in those regions still respawn. Unaccepted, unpinned regions refresh their local offers and loose loot. Claimed character rewards stay yours. Crypt foes and loot also respawn on re-entry. Stable surface entrances and dungeon stairs make return journeys predictable; arrival always chooses a vacant walkable tile with no immediate enemy turn. Camp terrain, stored supplies and merchant stock remain stable throughout the run.
+Accepted quests retain their givers, encounter sites, objectives, special enemies (including wounds/deaths), ground items and progress across travel, including after reward collection. Ordinary creatures in those regions still respawn. Unaccepted, unpinned regions refresh their local offers and loose loot. Claimed character rewards stay yours. The default expanding world retains crypt foes, wounds, opened chests and loot on re-entry. Stable surface entrances and dungeon stairs make return journeys predictable; arrival always chooses a vacant walkable tile with no immediate enemy turn. Camp terrain, stored supplies and merchant stock remain stable throughout the run.
 
-The World map remembers visited coordinates and discovered, fixed crypt entrances. **Memory lasts for the current run only**: death, refresh or closing the browser still ends the run; no save system was added.
+The World map remembers visited coordinates and discovered, fixed crypt entrances. **Maps are saved with your run on this browser/device**. Refresh or close, then choose Continue. Death ends the run permanently.
 
 ## Gold, drops and merchant
 
@@ -109,7 +109,7 @@ Local and World tabs switch the same minimap canvas. Local shows explored tiles 
 
 Mana begins at 100. Mind Vision costs 25 and lasts for the casting turn plus two further completed turns. Every completed turn restores 0.3 Mana, including waiting and casting; invalid actions and idle time restore none. Recovery bonuses on the Lantern Relic and Amber Moth add 0.2 each. Detect Creatures unlocks at level 3: press G or use its button in the Map panel to spend 25 Mana and mark all living creatures on the current local minimap for the casting turn plus one further turn, without revealing terrain or hidden actors. Transitions end the effect. Revealed terrain stays mapped for the rest of the run, including when you leave a region.
 
-**There is no save system.** Death ends the run, including camp storage. Refreshing, closing the page or Safari unloading it also loses the run. The slower progression is intended for longer runs, not cross-session persistence yet. No construction, crafting, hunger, gathering, farming systems, multiplayer, or paid services were added.
+**Runs save locally.** Choose Continue after returning to this browser/device. Death ends the run, including camp storage. Clearing site data removes your save; blocked or full browser storage shows an error. No construction, crafting, hunger, gathering, farming systems, multiplayer, or paid services were added.
 
 ## Verify
 
@@ -232,7 +232,7 @@ Quest equipment uses the existing quest modifier odds (70% modified, with except
 
 Open **Journal** to see progress, objective region, suggested biome level, and where to return. Track one quest to highlight it within the Journal and brighten its World minimap marker; unvisited quest destinations remain neutral and reveal no terrain. Quest targets have a small gold marker when visible. Quest-givers have colored clothing and inspection names.
 
-Quest persistence lasts only for the current run. Death or refreshing still ends it; no cross-session save/load has been added. Escort quests, cross-region search chains and additional templates are deferred.
+Quest progress is included in your local save. Death ends the run; refreshing offers Continue. Escort quests, cross-region search chains and additional templates are deferred.
 
 
 ## Woodland discoveries (v0.12.0)
@@ -455,3 +455,13 @@ The engine prepares a nearby ring, renders only the viewport and makes distant e
 The starting woodland contains a **rabbit warren** and a **rat burrow**; other forests may contain either habitat. Each supports 3–5 residents roaming near home. Warren rabbits flee on alternate turns when approached, so they can still be caught; warrens remain intact as hunting grounds. Rats defend their surroundings. Bump into a rat burrow or select **Strike** nearby to damage it. Each strike takes one turn and uses your attack stat. Its 12 HP bar shows progress. Clearing it prevents further spawning for the run; surviving rats remain, and the cleared ground becomes walkable.
 
 A depleted habitat recovers at most one animal after 30 completed turns, outside your current sight and more than eight walking tiles away. No real-time timers, visible pop-in or accumulated catch-up waves occur. Nearby habitats recover while you explore; faraway habitats wait. Habitat locations, population and cleared status persist for the run. Animals retain their existing meat-drop chances; burrows do not award free treasure for destruction.
+
+### v0.32.0 · Below the wilds
+
+**Your expedition now saves on this browser/device.** Choose **Continue** after refreshing, closing the page or returning later. Completed turns and inventory changes save automatically; Pause / Help also offers **Save & title**. Death removes the resumable run. Starting a new game asks before replacing an existing save. There is one local save, with no account, backend, cloud sync or transfer between devices. Clearing site data removes it. Private browsing, blocked storage or a full device can prevent saving; the game shows an error instead of silently claiming success.
+
+**Crypt entrances now work in the expanding world.** Stand on a discovered entrance and press Enter / **Enter ↓**, or click it to approach and enter. Explore two floors, fight guardians and find crypt rewards, then use Q / **Leave ↑** on upward stairs to return. Each crypt keeps its layout, fog, creatures, opened chests and dropped items for the run, including through save/resume. The wilderness is retained while you are below; it does not regenerate on your return.
+
+A nearby following Aldren can accompany you underground. Stay leaves him on that floor until you return; he is never teleported from another floor. The Explored map remains available underground, showing your surface entrance and known world. Classic expedition remains available, and its runs can also be saved.
+
+Next planned work: more exploration decisions and encounter variety, followed by a dedicated phone-control/layout pass and real iPhone playtesting.

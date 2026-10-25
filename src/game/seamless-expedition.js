@@ -1,7 +1,9 @@
+import {areaSnapshot,landing,travelingPrince,arrivePrince} from './crypt-travel.js';
+import {escortCanLeave} from './story.js';
 import {addHabitats,habitatAt,strikeHabitat,replenishHabitats,actHabitatResident} from './habitats.js';
 import {Expedition} from './expedition.js';
 import {Game} from './game.js';
-import {startingForest,worldId,BIOMES,regionInfo} from './world.js';
+import {startingForest,worldId,cryptId,BIOMES,regionInfo} from './world.js';
 import {WIDTH,HEIGHT,walkable} from './dungeon.js';
 import {createSurfaceMap,offsetRegion,joinSurfaceAreas,areaCoordinates} from './surface-map.js';
 import {ensureCampObjectives} from './quests.js';
@@ -25,6 +27,38 @@ export class SeamlessExpedition extends Expedition{
   this.message(`The starting woodland trail leads ${this.forest.rx>0?'east':this.forest.rx<0?'west':this.forest.ry>0?'south':'north'}. Other directions may be much more dangerous.`);
  }
  refresh(){super.refresh();if(this.state.seamless)this.state.surfaceMarkers=this.surfaceWaypoints();}
+ saveRegion(){
+  if(!this.surfaceChunks)return super.saveRegion();
+  if(this.state.seamless)this.surfaceSnapshot=areaSnapshot(this.state);else this.cacheCurrentCrypt();
+ }
+ cacheCurrentCrypt(){if(this.surfaceChunks&&this.location.kind==='crypt'){this.crypts??=new Map();this.crypts.set(this.location.id,areaSnapshot(this.state));}}
+ activate(location,data,preferred){
+  if(!this.surfaceChunks)return super.activate(location,data,preferred);
+  const companion=travelingPrince(this);this.saveRegion();
+  Object.assign(this.state,areaSnapshot(data),{seamless:false});this.location={...location};this.state.location={...location};
+  this.state.areaBounds={minX:0,minY:0,maxX:WIDTH,maxY:HEIGHT};this.state.floor=Math.min(5,data.danger);
+  const resident=princeHere(this);Object.assign(this.state.player,landing(this.state,preferred,resident?[resident]:[]));arrivePrince(this,companion);
+  this.state.transition=true;this.state.enemyEffects=[];this.interactionTarget=null;this.refresh();
+ }
+ visitCrypt(rx,ry,depth,arrival='upstairs'){
+  if(!this.surfaceChunks)return super.visitCrypt(rx,ry,depth,arrival);
+  const id=cryptId(rx,ry,depth),cached=this.crypts?.get(id);
+  if(cached){this.activate({id,kind:'crypt',rx,ry,depth},cached,cached[arrival]);this.message(`Crypt depth ${depth}/2. Your earlier exploration and encounters remain.`);}
+  else super.visitCrypt(rx,ry,depth,arrival);
+ }
+ returnToSurface(){
+  const companion=travelingPrince(this),point=this.cryptReturn;
+  this.cacheCurrentCrypt();Object.assign(this.state,this.surfaceSnapshot);this.state.seamless=true;
+  this.location={id:worldId(point.rx,point.ry),kind:'world',rx:point.rx,ry:point.ry,depth:0};
+  const resident=princeHere(this);Object.assign(this.state.player,landing(this.state,point,resident?[resident]:[]));this.syncArea();arrivePrince(this,companion);
+  this.state.transition=true;this.state.enemyEffects=[];this.interactionTarget=null;this.refresh();this.message('You return to the wilderness. The world remains as you left it.');
+ }
+ worldMapModel(){
+  if(this.location.kind!=='crypt'||!this.surfaceSnapshot)return this;
+  const view=Object.create(this),r=this.cryptReturn;
+  view.state={...this.surfaceSnapshot,turn:this.state.turn,player:{...this.state.player,x:r.x,y:r.y},chartedRegions:this.surveyedRegions};
+  view.location={id:worldId(r.rx,r.ry),kind:'world',rx:r.rx,ry:r.ry,depth:0};return view;
+ }
  surfaceWaypoints(){
   const marks=[{x:20,y:15,label:'C',name:'Lantern Camp'},{x:KINGDOM.rx*WIDTH+KINGDOM.keep.x,y:KINGDOM.ry*HEIGHT+KINGDOM.keep.y,label:'K',name:'Northwatch'}];
   for(const q of this.quests.values()){if(!q.accepted||q.claimed)continue;let point;
@@ -34,7 +68,7 @@ export class SeamlessExpedition extends Expedition{
    else point=q.surfaceTarget??{x:q.region.rx*WIDTH+20,y:q.region.ry*HEIGHT+15};
    if(point){const existing=marks.find(m=>m.x===point.x&&m.y===point.y);if(existing)existing.quest=true;else marks.push({x:point.x,y:point.y,label:q.complete?'✓':'!',name:q.title,quest:true});}
   }
-  const c=this.story.prince,p=this.state.player;if(this.story.accepted&&!this.story.complete&&(c.mode!=='follow'||Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>32))marks.push({x:c.x,y:c.y,label:'A',name:'Prince Aldren'});
+  const c=this.story.prince,p=this.state.player;if(this.story.accepted&&!this.story.complete&&(c.mode!=='follow'||Math.abs(c.x-p.x)+Math.abs(c.y-p.y)>32)){const a=this.surfaceChunks.get(worldId(c.rx,c.ry)),point=c.depth>0&&a?.entrance?{x:a.entrance.x,y:a.entrance.y}:c;marks.push({x:point.x,y:point.y,label:'A',name:c.depth>0?'Aldren underground':'Prince Aldren'});}
   return marks;
  }
  areaAt(x,y){return this.state.map.areaAt?.(x,y);}
@@ -100,10 +134,18 @@ export class SeamlessExpedition extends Expedition{
   for(const field of ['enemies','items','encounters'])for(const e of data[field].slice(counts[field])){e.x+=dx;e.y+=dy;if(e.territory){e.territory.x+=dx;e.territory.y+=dy;}if(field==='enemies')this.registerEnemy(e,worldId(a.rx,a.ry));this.state[field].push(e);}
  }
  resolvePlayer(action){
+  if(this.surfaceChunks&&['descend','ascend'].includes(action.type)){
+   const s=this.state,p=s.player,l=this.location;
+   if(!escortCanLeave(this))return false;
+   if(action.type==='descend'){
+    if(l.kind==='world'&&s.map[p.y]?.[p.x]==='D'){this.cryptReturn={rx:l.rx,ry:l.ry,x:p.x,y:p.y};this.visitCrypt(l.rx,l.ry,1);return true;}
+    if(l.kind==='crypt'&&l.depth===1&&p.x===s.stairs.x&&p.y===s.stairs.y){this.visitCrypt(l.rx,l.ry,2);return true;}
+   }else if(l.kind==='crypt'&&p.x===s.upstairs.x&&p.y===s.upstairs.y){if(l.depth===2)this.visitCrypt(l.rx,l.ry,1,'stairs');else this.returnToSurface();return true;}
+   this.message('Stand on a usable staircase first.');return false;
+  }
   if(!this.state.seamless)return super.resolvePlayer(action);
   const s=this.state,p=s.player;
   if(action.type==='strikeHabitat')return strikeHabitat(this,action.id);
-  if(['descend','ascend'].includes(action.type)){this.message('Crypt interiors are available in Classic expedition; they are not connected to this world yet.');return false;}
   if(action.type==='move'){
    if(!Number.isInteger(action.dx)||!Number.isInteger(action.dy)||Math.abs(action.dx)+Math.abs(action.dy)!==1)return false;
    const x=p.x+action.dx,y=p.y+action.dy;
@@ -124,7 +166,7 @@ export class SeamlessExpedition extends Expedition{
  }
  finishTurn(){
   super.finishTurn();if(!this.state.seamless)return;
-  replenishHabitats(this);
-  const c=this.story.prince,{rx,ry}=areaCoordinates(c.x,c.y);Object.assign(c,{rx,ry,locationId:worldId(rx,ry)});
+  if(!this.state.transition)replenishHabitats(this);
+  const c=this.story.prince;if(c.depth>0)return;const {rx,ry}=areaCoordinates(c.x,c.y);Object.assign(c,{rx,ry,locationId:worldId(rx,ry)});
  }
 }

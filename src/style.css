@@ -92,3 +92,5 @@ main:has(#targeting-bar:not(.hidden)) #event-feed{visibility:hidden}
 @media(max-height:600px){.trade-body{max-height:40dvh}.trade-inventory{width:min(100%,190px)}.trade-offer{min-height:58px}.trade-icon{font-size:20px}.trade-detail{min-height:90px}.trade-description{max-height:32px}.trading-dialog .buttons{margin-top:4px}}
 
 #shop-sales.trade-inventory{gap:0}
+
+.save-warning:not([hidden]){position:fixed;top:140px;left:16px;max-width:280px;padding:8px;background:#382c25;color:#ffe0a0;z-index:30;font-size:12px;}

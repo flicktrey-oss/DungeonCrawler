@@ -4,13 +4,13 @@ import {assignQuick,quickMatches,compareEquipment} from './game/quality.js';
 import { equippedSlot, consumableKinds, isEquipment } from './game/items.js';
 import { itemEmoji } from './item-icons.js';
 import { inventoryLayout, footprint } from './game/inventory.js';
-export function mountInventory(container, game, perform) {
+export function mountInventory(container, game, perform, changed=()=>{}) {
   let selected=null, rotated=false, notice='Select an item, then tap an empty cell or set its row and column. Arranging is free; using or dropping takes a turn.';
   function draw(){
     const player=game.state.player,items=player.inventory,layout=inventoryLayout(items)??[];container.replaceChildren();
     const info=document.createElement('p');info.textContent=`${layout.reduce((n,p)=>n+p.w*p.h,0)} / 100 cells · ${items.length} items`;container.append(info);
     const grid=document.createElement('div');grid.className='bag-grid';grid.setAttribute('aria-label','10 by 10 inventory grid');
-    const place=(x,y)=>{if(selected===null){notice='Select an item first.';draw();return;}notice=game.arrange(selected,x,y,rotated)?'Item moved. No turn spent.':'That footprint overlaps another item or leaves the bag.';draw();};
+    const place=(x,y)=>{if(selected===null){notice='Select an item first.';draw();return;}const moved=game.arrange(selected,x,y,rotated);notice=moved?'Item moved. No turn spent.':'That footprint overlaps another item or leaves the bag.';if(moved)changed();draw();};
     for(let y=0;y<10;y++)for(let x=0;x<10;x++){const cell=document.createElement('div');cell.className='bag-cell';cell.style.gridArea=`${y+1} / ${x+1}`;cell.onclick=()=>place(x,y);grid.append(cell);}
     for(const p of layout){
       const item=items[p.index],b=document.createElement('button');b.className=`bag-item ${selected===p.index?'selected':''}`;if(equippedSlot(player,item)){b.classList.add('equipped');const badge=document.createElement('span');badge.className='bag-equipped';badge.textContent='✓';badge.title='Equipped';b.append(badge);}b.style.gridArea=`${p.y+1} / ${p.x+1} / span ${p.h} / span ${p.w}`;b.style.setProperty('--item-icon-size',Math.min(44,Math.min(p.w,p.h)*20)+'px');
@@ -31,7 +31,7 @@ export function mountInventory(container, game, perform) {
     button(slot?'Unequip item':projectile?'Throw stones':'Use / equip',()=>perform(slot?{type:'unequip',slot}:{type:projectile?'targetThrow':consumableKinds.includes(item.kind)?'use':'equip',index:selected}),!item||!slot&&!projectile&&!consumableKinds.includes(item.kind)&&!isEquipment(item));
     button('Drop item',()=>perform({type:'drop',index:selected}),!item||Boolean(slot));
     if(slot){const note=document.createElement('p');note.className='hint';note.textContent='Equipped · '+slot+'. Still occupies satchel cells. Unequip before dropping, storing or selling.';controls.append(note);}
-    if(item){for(let n=0;n<3;n++)button((quickMatches(game,n,item)?'Clear':'Assign to')+' quick slot '+(n+1),()=>{if(quickMatches(game,n,item)){game.quickSlots[n]=null;notice='Quick slot cleared. No turn spent.';}else{assignQuick(game,n,selected);notice='Assigned '+item.name+' to slot '+(n+1)+'. No turn spent.';}draw();});const comparison=compareEquipment(player,item);if(comparison){const p=document.createElement('p');p.className='equipment-comparison';p.textContent=comparison;container.append(p);}}
+    if(item){for(let n=0;n<3;n++)button((quickMatches(game,n,item)?'Clear':'Assign to')+' quick slot '+(n+1),()=>{if(quickMatches(game,n,item)){game.quickSlots[n]=null;notice='Quick slot cleared. No turn spent.';}else{assignQuick(game,n,selected);notice='Assigned '+item.name+' to slot '+(n+1)+'. No turn spent.';}changed();draw();});const comparison=compareEquipment(player,item);if(comparison){const p=document.createElement('p');p.className='equipment-comparison';p.textContent=comparison;container.append(p);}}
     container.append(controls);
   }
   draw();
