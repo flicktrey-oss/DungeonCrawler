@@ -26,7 +26,7 @@ export class SeamlessExpedition extends Expedition{
   this.message('Creatures, loot and exploration remain in place on return. Faraway creatures wait; they do not respawn or take catch-up turns.');
   this.message(`The starting woodland trail leads ${this.forest.rx>0?'east':this.forest.rx<0?'west':this.forest.ry>0?'south':'north'}. Other directions may be much more dangerous.`);
  }
- refresh(){super.refresh();if(this.state.seamless)this.state.surfaceMarkers=this.surfaceWaypoints();}
+ refresh(){super.refresh();if(this.state.seamless){this.state.settlementBounds=this.state.settlementBounds.filter(b=>b.minX===0&&b.minY===0||this.visitedSurface?.has(worldId(b.minX/WIDTH,b.minY/HEIGHT)));this.state.surfaceMarkers=this.surfaceWaypoints();}}
  saveRegion(){
   if(!this.surfaceChunks)return super.saveRegion();
   if(this.state.seamless)this.surfaceSnapshot=areaSnapshot(this.state);else this.cacheCurrentCrypt();
@@ -57,12 +57,12 @@ export class SeamlessExpedition extends Expedition{
   if(this.location.kind!=='crypt'||!this.surfaceSnapshot)return this;
   const view=Object.create(this),r=this.cryptReturn;
   view.state={...this.surfaceSnapshot,turn:this.state.turn,player:{...this.state.player,x:r.x,y:r.y},chartedRegions:this.surveyedRegions};
-  view.location={id:worldId(r.rx,r.ry),kind:'world',rx:r.rx,ry:r.ry,depth:0};return view;
+  view.location={id:worldId(r.rx,r.ry),kind:'world',rx:r.rx,ry:r.ry,depth:0};view.state.settlementBounds=view.state.settlementBounds.filter(b=>b.minX===0&&b.minY===0||this.visitedSurface.has(worldId(b.minX/WIDTH,b.minY/HEIGHT)));view.state.surfaceMarkers=view.surfaceWaypoints();return view;
  }
  surfaceWaypoints(){
-  const marks=[{x:20,y:15,label:'C',name:'Lantern Camp'},{x:KINGDOM.rx*WIDTH+KINGDOM.keep.x,y:KINGDOM.ry*HEIGHT+KINGDOM.keep.y,label:'K',name:'Northwatch'}];
+  const kingdomKnown=this.visitedSurface.has(worldId(KINGDOM.rx,KINGDOM.ry)),kingdom={x:KINGDOM.rx*WIDTH+KINGDOM.keep.x,y:KINGDOM.ry*HEIGHT+KINGDOM.keep.y,label:'K',name:'Northwatch'},marks=[{x:20,y:15,label:'C',name:'Lantern Camp'},...(kingdomKnown?[kingdom]:[])];
   for(const q of this.quests.values()){if(!q.accepted||q.claimed)continue;let point;
-   if(q.kind==='escort')point=marks[1];
+   if(q.kind==='escort'){if(!kingdomKnown)continue;point=kingdom;}
    else if(q.complete)point=this.state.encounters.find(e=>e.quest===q&&['villager','bridge'].includes(e.type))??q.giverPosition;
    else if(q.kind==='bridge')point=q.medicineSite??q.layout.center;
    else point=q.surfaceTarget??{x:q.region.rx*WIDTH+20,y:q.region.ry*HEIGHT+15};
@@ -88,7 +88,6 @@ export class SeamlessExpedition extends Expedition{
   const prepared=this.prepareWorld(rx,ry);addHabitats(this,prepared);const data=offsetRegion(prepared);this.surfaceChunks.set(id,data);
   for(const e of data.enemies)this.registerEnemy(e,id);
   for(const field of ['enemies','items','encounters','scenery'])this.state[field].push(...data[field]);
-  if(data.city)this.state.settlementBounds.push({minX:rx*WIDTH,minY:ry*HEIGHT,maxX:(rx+1)*WIDTH,maxY:(ry+1)*HEIGHT});
   for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const neighbor=this.surfaceChunks.get(worldId(rx+dx,ry+dy));if(neighbor)joinSurfaceAreas(data,neighbor);}
   return data;
  }
@@ -103,6 +102,7 @@ export class SeamlessExpedition extends Expedition{
   this.location={id,kind:'world',rx:a.rx,ry:a.ry,depth:0};s.location={...this.location};
   for(const field of ['home','city','biome','danger','recommended','rx','ry','quest','bridgeLayout','entrance','riverForward'])s[field]=a[field];
   s.areaBounds={minX:a.rx*WIDTH,minY:a.ry*HEIGHT,maxX:(a.rx+1)*WIDTH,maxY:(a.ry+1)*HEIGHT};
+  if(a.city&&!s.settlementBounds.some(b=>b.minX===a.rx*WIDTH&&b.minY===a.ry*HEIGHT))s.settlementBounds.push({minX:a.rx*WIDTH,minY:a.ry*HEIGHT,maxX:(a.rx+1)*WIDTH,maxY:(a.ry+1)*HEIGHT});
   if(!this.visitedSurface.has(id)){this.visitedSurface.add(id);s.regionsDiscovered++;}
   if(changed){
    if(announce)this.message(a.home?'Lantern Camp.':`${BIOMES[a.biome].name} · recommended level ${a.recommended}${p.level<a.recommended?' — DANGER: you are underleveled.':'.'}`);

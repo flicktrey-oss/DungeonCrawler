@@ -1,3 +1,4 @@
+import {zoomFrame} from './map-navigation.js';
 import {KINGDOM} from './game/city.js';
 import {journeyHints} from './game/journey.js';
 import { rememberedTile } from './game/map-memory.js';
@@ -20,17 +21,17 @@ export function campBearing(location) {
   if (location.ry) parts.push(`${Math.abs(location.ry)} ${location.ry > 0 ? 'N' : 'S'}`);
   return `${location.kind === 'crypt' ? 'Surface camp' : 'Camp'}: ${parts.join(' · ') || 'this region'}`;
 }
-export function minimapFrame(state,view='world',cells){
- if(!state.seamless)return mapBounds(state.map);
- if(view==='local')return {minX:state.player.x-20,minY:state.player.y-15,maxX:state.player.x+20,maxY:state.player.y+15};
+export function minimapFrame(state,view='world',cells,zoom=1){
+ if(!state.seamless)return zoomFrame(mapBounds(state.map),state.player,zoom);
+ if(view==='local')return zoomFrame({minX:state.player.x-20,minY:state.player.y-15,maxX:state.player.x+20,maxY:state.player.y+15},state.player,zoom);
  const frame={minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity},include=(x,y)=>{frame.minX=Math.min(frame.minX,x);frame.minY=Math.min(frame.minY,y);frame.maxX=Math.max(frame.maxX,x+1);frame.maxY=Math.max(frame.maxY,y+1);};
  for(const c of cells??minimapCells(state))include(c.x,c.y);
  for(const m of state.surfaceMarkers??[])include(m.x,m.y);
  for(const r of state.chartedRegions?.values()??[]){include(r.rx*WIDTH,r.ry*HEIGHT);include((r.rx+1)*WIDTH-1,(r.ry+1)*HEIGHT-1);}
- return frame;
+ return zoomFrame(frame,state.player,zoom);
 }
-export function drawMinimap(canvas,state,location,objectives=[],view='world'){
- const cells=minimapCells(state),frame=minimapFrame(state,view,cells),ctx=canvas.getContext('2d'),sx=canvas.width/(frame.maxX-frame.minX),sy=canvas.height/(frame.maxY-frame.minY),mx=x=>(x-frame.minX)*sx,my=y=>(y-frame.minY)*sy,inside=p=>p.x>=frame.minX&&p.x<frame.maxX&&p.y>=frame.minY&&p.y<frame.maxY;
+export function drawMinimap(canvas,state,location,objectives=[],view='world',zoom=1){
+ const cells=minimapCells(state),frame=minimapFrame(state,view,cells,zoom),ctx=canvas.getContext('2d'),sx=canvas.width/(frame.maxX-frame.minX),sy=canvas.height/(frame.maxY-frame.minY),mx=x=>(x-frame.minX)*sx,my=y=>(y-frame.minY)*sy,inside=p=>p.x>=frame.minX&&p.x<frame.maxX&&p.y>=frame.minY&&p.y<frame.maxY;
  ctx.globalAlpha=1;ctx.fillStyle='#080c12';ctx.fillRect(0,0,canvas.width,canvas.height);
  if(state.seamless&&view==='world')for(const r of state.chartedRegions?.values()??[]){ctx.fillStyle=({forest:'#263d2c',marsh:'#263b43',highlands:'#44443c',ashlands:'#4a2d2b',city:'#354050'})[r.biome];ctx.fillRect(mx(r.rx*WIDTH),my(r.ry*HEIGHT),WIDTH*sx,HEIGHT*sy);}
  for(const cell of cells)if(inside(cell)){ctx.globalAlpha=cell.visible?1:.5;ctx.fillStyle=state.seamless&&[',',';'].includes(cell.tile)?({forest:'#507447',marsh:'#47717b',highlands:'#858678',ashlands:'#89574d',city:'#7a8ba7'})[state.map.areaAt(cell.x,cell.y)?.biome]??'#677481':palette[cell.tile]??'#677481';ctx.fillRect(Math.floor(mx(cell.x)),Math.floor(my(cell.y)),Math.ceil(sx),Math.ceil(sy));}
@@ -43,7 +44,7 @@ export function drawMinimap(canvas,state,location,objectives=[],view='world'){
  if(state.seamless)for(const mark of state.surfaceMarkers??[])if(inside(mark)){const x=mx(mark.x),y=my(mark.y);ctx.fillStyle='#111824';ctx.fillRect(x-4,y-4,9,10);ctx.fillStyle=mark.quest?'#ffdc86':'#d9e1bf';ctx.fillText(mark.label,x,y+1);if(mark.quest){ctx.strokeStyle='#ffdc86';ctx.lineWidth=1;ctx.strokeRect(x-5,y-5,11,12);}}
  const p=state.player;ctx.fillStyle='#fff';ctx.fillRect(mx(p.x)-1,my(p.y)-1,sx+2,sy+2);ctx.fillStyle='#4cf3dc';ctx.fillRect(mx(p.x),my(p.y),sx,sy);
  canvas.setAttribute('aria-label',`Explored map, ${location.kind==='crypt'?`crypt depth ${location.depth}`:`region ${location.rx}, ${location.ry}`}. ${state.home||state.city?'Safe settlement map is fully revealed. ':''}You are at tile ${p.x}, ${p.y}. ${campBearing(location)}.${detected.length?` Detect Creatures: ${detected.length} living creatures marked in pink.`:''}`);
- if(state.seamless)canvas.setAttribute('aria-label',`Continuous explored map. ${view==='local'?'Nearby terrain':'Explored world'}. You are at tile ${p.x}, ${p.y}. Known terrain spans (${frame.minX}, ${frame.minY}) to (${frame.maxX-1}, ${frame.maxY-1}). ${state.chartedRegions?.size??0} charted regions. Camp and Northwatch are always marked. Gold marks accepted quests. ${detected.length?`Detect Creatures: ${detected.length} living creatures marked.`:''}`);
+ if(state.seamless)canvas.setAttribute('aria-label',`Continuous explored map. ${view==='local'?'Nearby terrain':'Explored world'}. You are at tile ${p.x}, ${p.y}. Known terrain spans (${frame.minX}, ${frame.minY}) to (${frame.maxX-1}, ${frame.maxY-1}). ${state.chartedRegions?.size??0} charted regions. Camp is always marked. Northwatch appears after discovery. Gold marks accepted quests. ${detected.length?`Detect Creatures: ${detected.length} living creatures marked.`:''}`);
 }
 
 // Saved regions exclude the active, newly generated region until departure.
@@ -60,13 +61,14 @@ export function worldMapCells(game) {
   }));
   for(const region of game.surveyedRegions?.values()??[])if(!cells.some(c=>c.rx===region.rx&&c.ry===region.ry))cells.push({...region,charted:true,visited:false,current:false,entranceKnown:false,questCount:0,returnCount:0,tracked:false});
   // Known destinations are cartographic landmarks, not visited or explored maps.
-  for(const place of [{rx:0,ry:0,home:true,known:true,biome:'forest',label:'Lantern Camp'},{rx:KINGDOM.rx,ry:KINGDOM.ry,kingdom:true,known:true,biome:'city',label:KINGDOM.name}]){
+  const kingdomKnown=cells.some(c=>c.rx===KINGDOM.rx&&c.ry===KINGDOM.ry&&c.visited);
+  for(const place of [{rx:0,ry:0,home:true,known:true,biome:'forest',label:'Lantern Camp'},...(kingdomKnown?[{rx:KINGDOM.rx,ry:KINGDOM.ry,kingdom:true,known:true,biome:'city',label:KINGDOM.name}]:[])]){
     let cell=cells.find(c=>c.rx===place.rx&&c.ry===place.ry);
     if(!cell){cell={visited:false,current:false,entranceKnown:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}
     Object.assign(cell,place);
   }
   for(const q of game.quests?.values()??[]){
-    if(!q.accepted||q.claimed)continue;
+    if(!q.accepted||q.claimed||q.kind==='escort'&&!kingdomKnown)continue;
     const target=q.complete?q.giverRegion:q.region;
     let cell=cells.find(c=>c.rx===target.rx&&c.ry===target.ry);
     if(!cell){cell={rx:target.rx,ry:target.ry,visited:false,home:false,current:false,entranceKnown:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}
@@ -75,17 +77,17 @@ export function worldMapCells(game) {
   for(const hint of journeyHints(game)){let cell=cells.find(c=>c.rx===hint.rx&&c.ry===hint.ry);if(!cell){cell={rx:hint.rx,ry:hint.ry,visited:false,questCount:0,returnCount:0,tracked:false};cells.push(cell);}(cell.leads??=[]).push(hint);}
   return cells.sort((a,b)=>a.ry-b.ry||a.rx-b.rx);
 }
-export function worldMapLayout(cells, width = 160, height = 120) {
+export function worldMapLayout(cells, width = 160, height = 120, zoom=1, focus=null) {
   const xs = cells.map(c => c.rx), ys = cells.map(c => c.ry);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  const size = Math.min(width / Math.max(5, maxX - minX + 3), height / Math.max(5, maxY - minY + 3));
-  return { size, x: width / 2 - (minX + maxX + 1) / 2 * size, y: height / 2 - (minY + maxY + 1) / 2 * size };
+  const size = Math.min(width / Math.max(5, maxX - minX + 3), height / Math.max(5, maxY - minY + 3))*zoom;
+  return { size, x: width / 2 - (zoom>1&&focus?focus.rx+.5:(minX+maxX+1)/2)*size, y: height / 2 - (zoom>1&&focus?focus.ry+.5:(minY+maxY+1)/2)*size };
 }
-export function drawWorldMinimap(canvas, game) {
+export function drawWorldMinimap(canvas, game, zoom=1) {
   const cells = worldMapCells(game), ctx = canvas.getContext('2d');
   ctx.globalAlpha = 1; ctx.fillStyle = '#080c12'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (!cells.length) { canvas.setAttribute('aria-label', 'World map: no visited regions.'); return; }
-  const layout = worldMapLayout(cells, canvas.width, canvas.height), size = layout.size;
+  const layout = worldMapLayout(cells, canvas.width, canvas.height,zoom,game.location), size = layout.size;
   for (const cell of cells) {
     const x = layout.x + cell.rx * size, y = layout.y + cell.ry * size;
     ctx.fillStyle = ({forest:'#547749',marsh:'#47717b',highlands:'#8a887b',ashlands:'#99594f',city:'#7a8ba7'})[cell.biome]??'#202c38'; ctx.fillRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2));
@@ -101,5 +103,5 @@ export function drawWorldMinimap(canvas, game) {
     if(cell.leads?.length){ctx.fillStyle='#93c7eb';ctx.font=`bold ${Math.max(7,Math.min(11,size*.5))}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(cell.leads[0].symbol,x+size*.74,y+size*.7);}
     if (cell.current) { ctx.strokeStyle = '#4cf3dc'; ctx.lineWidth = Math.min(2, size / 5); ctx.strokeRect(x + 1, y + 1, Math.max(.5, size - 2), Math.max(.5, size - 2)); }
   }
-  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks Lantern Camp (0, 0); K marks Northwatch (0, -6). Both destinations and their settlement maps are always revealed. ${game.surveyedRegions?.size??0} charted regions. Purple marks discovered entrances; ? marks discovered quests. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} ${cells.filter(c=>c.availableCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.availableCount} discovered quests available.`).join(' ')} ${journeyHints(game).map(h=>`${h.label} lead in region ${h.rx}, ${h.ry}.`).join(' ')} Unvisited quest and lead regions show no terrain.`);
+  canvas.setAttribute('aria-label', `World map: ${cells.filter(c=>c.visited).length} visited regions. Current region ${game.location.rx}, ${game.location.ry}${game.location.kind === 'crypt' ? ', underground' : ''}. C marks Lantern Camp (0, 0). Northwatch appears after discovery. ${game.surveyedRegions?.size??0} charted regions. Purple marks discovered entrances; ? marks discovered quests. Gold ! marks accepted quest objectives; ✓ marks rewards ready to collect. ${cells.filter(c=>c.questCount||c.returnCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.questCount} quest objectives, ${c.returnCount} rewards ready.`).join(' ')} ${cells.filter(c=>c.availableCount).map(c=>`Region ${c.rx}, ${c.ry}: ${c.availableCount} discovered quests available.`).join(' ')} ${journeyHints(game).map(h=>`${h.label} lead in region ${h.rx}, ${h.ry}.`).join(' ')} Unvisited quest and lead regions show no terrain.`);
 }

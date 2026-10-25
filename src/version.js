@@ -1,1 +1,1 @@
-export const RELEASE = 'v0.32.1 · A simpler menu';
+export const RELEASE = 'v0.33.0 · Find your bearings';

@@ -33,6 +33,7 @@
       </button>
       <section id="stats" aria-label="Character status"></section><span id="block-feedback" aria-live="polite"></span>
     </div>
+    <div id="kingdom-bearing" role="status" aria-label="Direction to Northwatch" hidden><span id="kingdom-arrow" aria-hidden="true">↑</span><span>Northwatch</span></div>
     <div id="map-tools" aria-label="World tools">
       <details id="minimap-widget" open>
         <summary aria-label="Toggle minimap" title="Minimize map"><span data-icon="compass" aria-hidden="true"></span><span>Map</span><span id="minimap-location"></span><span id="map-collapse-icon" aria-hidden="true">−</span></summary>
@@ -43,6 +44,7 @@
           </div>
           <div id="minimap-panel" role="tabpanel" aria-labelledby="map-local-tab">
             <canvas id="minimap" width="160" height="120" role="img" aria-label="Explored region map"></canvas>
+            <div class="map-zoom" role="group" aria-label="Map zoom"><button id="map-zoom-out" aria-label="Zoom map out">−</button><button id="map-zoom-fit" aria-label="Fit map">1×</button><button id="map-zoom-in" aria-label="Zoom map in">+</button></div>
             <p id="map-inspection" role="status">Tap a square for details.</p>
             <button id="detect-creatures" title="Detect Creatures [G] · 25 Mana · level 3">Detect Creatures · Lv 3</button><p id="camp-bearing"></p><details class="map-key"><summary>Map key</summary><p id="map-legend" class="map-legend"></p></details>
           </div>

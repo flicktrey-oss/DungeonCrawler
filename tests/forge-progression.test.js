@@ -54,8 +54,8 @@ describe('region equipment tiers and animal drops',()=>{
  });
 });
 describe('permanent destinations and discovered quest map markers',()=>{
- it('always marks camp and Northwatch without exploring terrain, generating regions or changing turns',()=>{
-  const g=new Expedition(17),before=structuredClone(g.state);for(let i=0;i<3;i++){const cells=worldMapCells(g);expect(cells.find(c=>c.home)).toMatchObject({rx:0,ry:0,visited:true});expect(cells.find(c=>c.kingdom)).toMatchObject({rx:0,ry:-6,visited:false,questCount:0});expect(cells).toHaveLength(2);expect(g.regions.size).toBe(0);}expect(g.state).toEqual(before);g.visitCrypt(2,1,1);expect(worldMapCells(g).filter(c=>c.kingdom)).toHaveLength(1);expect(worldMapCells(g).filter(c=>c.home)).toHaveLength(1);
+ it('marks camp but keeps Northwatch hidden until visited without changing turns',()=>{
+  const g=new Expedition(17),before=structuredClone(g.state);for(let i=0;i<3;i++){const cells=worldMapCells(g);expect(cells.find(c=>c.home)).toMatchObject({rx:0,ry:0,visited:true});expect(cells.find(c=>c.kingdom)).toBeUndefined();expect(cells).toHaveLength(1);expect(g.regions.size).toBe(0);}expect(g.state).toEqual(before);g.visitCrypt(2,1,1);expect(worldMapCells(g).filter(c=>c.kingdom)).toHaveLength(0);expect(worldMapCells(g).filter(c=>c.home)).toHaveLength(1);g.visitWorld(0,-6);expect(worldMapCells(g).find(c=>c.kingdom)).toMatchObject({rx:0,ry:-6,visited:true});
  });
  it('marks discovered offers locally, accepted targets at their destination, and completed rewards at the giver',()=>{
   const g=new Expedition(5),q=g.quests.get('trailwarden'),home=()=>worldMapCells(g).find(c=>c.home);expect(home().availableCount).toBe(1);g.state.encounters.push({type:'shrine',x:20,y:15,quest:q});g.state.encounterSeen.add('20,15');expect(home().availableCount).toBe(1);Object.assign(g.state.player,{x:18,y:15});g.action({type:'acceptQuest'});expect(home().availableCount).toBe(0);expect(worldMapCells(g).find(c=>c.rx===q.region.rx&&c.ry===q.region.ry)).toMatchObject({questCount:1,visited:false});q.complete=true;expect(home().returnCount).toBe(1);q.claimed=true;expect(home().returnCount).toBe(0);

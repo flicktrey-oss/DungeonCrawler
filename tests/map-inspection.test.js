@@ -5,8 +5,8 @@ import {inspectMapAt,mapInspectionText} from '../src/map-inspection.js';
 import {biomeAt,BIOMES} from '../src/game/world.js';
 const select=(g,rx,ry)=>{const l=worldMapLayout(worldMapCells(g));return inspectMapAt(g,'world',l.x+(rx+.5)*l.size,l.y+(ry+.5)*l.size);};
 describe('map inspection',()=>{
- it('hits camp and unvisited Northwatch, supplies coordinates and safe recommended level without visiting',()=>{
-  const g=new Expedition(5),before=structuredClone(g.state);expect(mapInspectionText(g,select(g,0,0))).toContain('Lantern Camp (0, 0)');expect(mapInspectionText(g,select(g,0,-6))).toContain('Northwatch (0, -6)\nSafe');expect(g.regions.size).toBe(0);expect(g.state).toEqual(before);
+ it('hits camp but cannot inspect Northwatch until it is visited',()=>{
+  const g=new Expedition(5),before=structuredClone(g.state);expect(mapInspectionText(g,select(g,0,0))).toContain('Lantern Camp (0, 0)');expect(select(g,0,-6)).toBeNull();expect(g.regions.size).toBe(0);expect(g.state).toEqual(before);
  });
  it('reports real biome difficulty relative to the adventurer on a discovered region',()=>{
   const g=new Expedition(5);let rx=1;while(biomeAt(rx,2,5)!=='highlands')rx++;g.visitWorld(rx,2);const sel=select(g,rx,2);expect(mapInspectionText(g,sel)).toContain('Lv 8 · Overwhelming');g.state.player.level=8;expect(mapInspectionText(g,sel)).toContain('Stay alert');

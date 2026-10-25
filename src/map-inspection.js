@@ -1,15 +1,16 @@
 import {worldMapCells,worldMapLayout,minimapFrame} from './minimap.js';
 import {regionInfo,BIOMES,threatLabel,worldId} from './game/world.js';
 // Canvas coordinates, independent of CSS scaling or touch/desktop input.
-export function inspectMapAt(game,view,x,y,width=160,height=120){
+export function inspectMapAt(game,view,x,y,width=160,height=120,zoom=1){
  if(!game||!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0||x>=width||y>=height)return null;
- if(game.state.seamless){const frame=minimapFrame(game.state,view),tx=Math.floor(frame.minX+x/width*(frame.maxX-frame.minX)),ty=Math.floor(frame.minY+y/height*(frame.maxY-frame.minY)),s=game.state;if(!s.explored.has(`${tx},${ty}`)&&!s.settlementBounds.some(b=>tx>=b.minX&&tx<b.maxX&&ty>=b.minY&&ty<b.maxY)&&!s.chartedRegions?.has(worldId(Math.floor(tx/40),Math.floor(ty/30)))&&!s.surfaceMarkers?.some(m=>Math.abs(m.x-tx)<=2&&Math.abs(m.y-ty)<=2))return null;return {view:'surface',x:tx,y:ty};}
+ if(game.state.seamless){const frame=minimapFrame(game.state,view,undefined,zoom),tx=Math.floor(frame.minX+x/width*(frame.maxX-frame.minX)),ty=Math.floor(frame.minY+y/height*(frame.maxY-frame.minY)),s=game.state;if(!s.explored.has(`${tx},${ty}`)&&!s.settlementBounds.some(b=>tx>=b.minX&&tx<b.maxX&&ty>=b.minY&&ty<b.maxY)&&!s.chartedRegions?.has(worldId(Math.floor(tx/40),Math.floor(ty/30)))&&!s.surfaceMarkers?.some(m=>Math.abs(m.x-tx)<=2&&Math.abs(m.y-ty)<=2))return null;return {view:'surface',x:tx,y:ty};}
  if(view==='world'){
-  const cells=worldMapCells(game),layout=worldMapLayout(cells,width,height),rx=Math.floor((x-layout.x)/layout.size),ry=Math.floor((y-layout.y)/layout.size);
+  const cells=worldMapCells(game),layout=worldMapLayout(cells,width,height,zoom,game.location),rx=Math.floor((x-layout.x)/layout.size),ry=Math.floor((y-layout.y)/layout.size);
   if(!cells.some(c=>c.rx===rx&&c.ry===ry))return null;
   return {view,rx,ry};
  }
- const s=game.state,tx=Math.floor(x/width*s.map[0].length),ty=Math.floor(y/height*s.map.length);
+ const s=game.state,frame=minimapFrame(s,view,undefined,zoom),tx=Math.floor(frame.minX+x/width*(frame.maxX-frame.minX)),ty=Math.floor(frame.minY+y/height*(frame.maxY-frame.minY));
+ if(!s.map[ty]?.[tx])return null;
  if(!s.home&&!s.city&&!s.explored.has(`${tx},${ty}`))return null;
  return {view:'local',rx:game.location.rx,ry:game.location.ry,locationId:game.location.id,x:tx,y:ty};
 }

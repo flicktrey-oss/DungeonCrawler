@@ -22,7 +22,7 @@ Choose **New Game** on the title screen for the expanding world. **Classic exped
 ## Geography and map
 
 - The first woodland's river uses a shared global plan and continues through neighboring regions, independently of generation order. The Willow Crossing retains its quest solutions and shallow ford. Other river stretches have ordinary trail bridges.
-- Nearby shows the surrounding terrain; Explored shows the continuous known world, without quadrant borders. Camp and Northwatch are permanent waypoints. Accepted quests are marked; completed objectives point back to their giver.
+- Nearby shows the surrounding terrain; Explored shows the continuous known world, without quadrant borders. Camp is a permanent waypoint; Northwatch becomes one after a visit. An escort-only direction indicator guides travel before discovery. Accepted quests are marked; completed objectives point back to their giver.
 - Survey maps chart the 5×5 areas around camp, showing broad biome information without generating inhabitants, visiting areas or revealing local encounters. Their muted background appears on the Explored map.
 - Town services and the royal keep use global positions. Rescued citizens can be added after Northwatch was prepared, without duplication.
 
@@ -51,3 +51,7 @@ A live rat burrow blocks player movement through a bump strike and is excluded f
 `save.js` uses a versioned reference graph, retaining identity between equipped inventory items, quick slots, quests and their events. It restores Maps, Sets and independent Random streams, rebuilds surface proxies and creates a fresh TurnManager. Runtime input/animation state is not resumed. The browser saves after rendered changes and on page-hide/background events; Continue advances no turn. Death removes the key. New Game confirms replacement of a valid save. Storage failures and damaged/version-incompatible saves produce clear messages without blocking a new run. A single localStorage value is written atomically; quota failures retain the preceding save. Browser storage is device/origin specific and is not cloud backup.
 
 Tests exercise negative-coordinate entrances, both depths, persistent drops/deaths, companion Stay, reference/RNG restoration, invalid data, storage errors and permadeath. Desktop and mobile-browser tests enter a crypt through real input, reload, Continue without time passing, inspect the surface map underground and return to the same entrance. Actual iPhone hardware testing remains separate.
+
+## Map discovery and zoom (v0.33.0)
+
+Map rendering and hit testing share zoom-adjusted frames. Each UI tab keeps its own runtime zoom; map actions never touch the turn manager or reveal terrain. The direction indicator is derived from the active escort and global player/surface-return coordinates. It is absent before acceptance and after completion. Northwatch's marker, escort destination marker and fully revealed settlement bounds require an actual visit, rather than chunk preparation. Refresh also applies that policy to old saves and underground surface-map views.

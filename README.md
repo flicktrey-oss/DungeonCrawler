@@ -469,3 +469,9 @@ Next planned work: more exploration decisions and encounter variety, followed by
 ### v0.32.1 · A simpler menu
 
 Pause / Menu now opens a compact screen with **Resume**, **Intro & controls**, and **Save & title**. The long introduction and controls live on their own scrollable screen, with **Back** kept visible. The title screen is shorter too.
+
+### v0.33.0 · Find your bearings
+
+Use **− / +** under the minimap to zoom from 0.5× to 4×, or **Fit** to reset. Desktop mouse-wheel zoom also works over the map. Nearby/Local and Explored/World remember their own zoom while switching tabs or minimizing. Zooming and map inspection are free; they reveal no terrain and advance no turns. Zooming in centers on your position, and zooming out shows more surrounding context.
+
+Northwatch is no longer marked from the start, including when accepting its escort quest or when its terrain is only preloaded. After accepting Aldren's escort quest, a compact direction arrow appears near the top of the screen. It follows your position (or your surface entrance while underground), and disappears when the escort is complete. Reaching Northwatch adds its persistent map marker; camp stays marked throughout the run. Existing local saves continue to work.

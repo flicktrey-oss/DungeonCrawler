@@ -32,8 +32,8 @@ describe('woodland life',()=>{
 });
 describe('world-map quest markers',()=>{
  it('marks all accepted objectives, hides offers, and shows unknown destinations without revealing terrain',()=>{
- const g=new Expedition(5),q=g.quests.get('trailwarden');expect(worldMapCells(g)).toHaveLength(2);Object.assign(g.state.player,{x:18,y:15});g.action({type:'acceptQuest'});
- const before=g.regions.size,cells=worldMapCells(g);expect(cells).toHaveLength(3);const target=cells.find(c=>c.rx===q.region.rx&&c.ry===q.region.ry);expect(target).toMatchObject({questCount:1,returnCount:0,tracked:true,visited:false,entranceKnown:false});expect(target.biome).toBeUndefined();expect(g.regions.size).toBe(before);
+ const g=new Expedition(5),q=g.quests.get('trailwarden');expect(worldMapCells(g)).toHaveLength(1);Object.assign(g.state.player,{x:18,y:15});g.action({type:'acceptQuest'});
+ const before=g.regions.size,cells=worldMapCells(g);expect(cells).toHaveLength(2);const target=cells.find(c=>c.rx===q.region.rx&&c.ry===q.region.ry);expect(target).toMatchObject({questCount:1,returnCount:0,tracked:true,visited:false,entranceKnown:false});expect(target.biome).toBeUndefined();expect(g.regions.size).toBe(before);
  });
  it('moves the marker to the reward giver on completion, removes it on claim, and stacks quests',()=>{
  const g=new Expedition(5),q=g.quests.get('trailwarden');q.accepted=true;q.complete=true;g.quests.set('second',{id:'second',accepted:true,claimed:false,complete:false,region:{rx:0,ry:0},giverRegion:{rx:1,ry:0}});
