@@ -475,3 +475,11 @@ Pause / Menu now opens a compact screen with **Resume**, **Intro & controls**, a
 Use **− / +** under the minimap to zoom from 0.5× to 4×, or **Fit** to reset. Desktop mouse-wheel zoom also works over the map. Nearby/Local and Explored/World remember their own zoom while switching tabs or minimizing. Zooming and map inspection are free; they reveal no terrain and advance no turns. Zooming in centers on your position, and zooming out shows more surrounding context.
 
 Northwatch is no longer marked from the start, including when accepting its escort quest or when its terrain is only preloaded. After accepting Aldren's escort quest, a compact direction arrow appears near the top of the screen. It follows your position (or your surface entrance while underground), and disappears when the escort is complete. Reaching Northwatch adds its persistent map marker; camp stays marked throughout the run. Existing local saves continue to work.
+
+### v0.34.0 · Linked by light
+
+**Travel altars** link explored footholds to Lantern Camp in the expanding world. Camp's altar starts active, and the first woodland has an altar to discover. Later wilderness altars are uncommon. Stand on or beside one and use **Activate** to awaken it for one turn. An active altar offers **Travel** and a list of activated destinations. Clicking an altar approaches it and opens its interaction.
+
+Travel costs one turn and no gold. It preserves your gear, progress, health, creatures and ground loot; normal per-turn effects still apply. Enemies within eight tiles of either altar or an incoming attack prevent travel. Peaceful warren rabbits do not block a link. The arrival tile must be walkable and clear. Altar travel is disabled throughout Aldren's accepted, unfinished escort, including when he is told to Stay; activation remains possible. It unlocks again after his homecoming.
+
+Activated altars appear as **◇** on the continuous map; discovered dormant altars have a gray mark. Links are saved with the run. Existing expanding-world saves gain altars in suitable empty locations without regenerating terrain or enemies. Classic expedition keeps its previous travel rules.

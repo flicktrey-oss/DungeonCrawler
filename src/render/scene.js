@@ -48,6 +48,7 @@ export class DungeonScene extends Phaser.Scene {
     for(const e of s.encounters??[])if(e.type==='villager'&&e.quest&&s.visible.has(key(e.x,e.y))){g.fillStyle(e.quest.camp?0xc8ab63:({hunt:0x8b9d6b,recovery:0xba8ca6,ward:0x8e9cd0})[e.quest.kind]??0x8fa682);g.fillRect(e.x*T+8,e.y*T+12,9,8);}
     for(let y=view.minY;y<view.maxY;y++)for(let x=view.minX;x<view.maxX;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
     for(const h of s.encounters??[])if(h.type==='habitat'&&s.explored.has(key(h.x,h.y)))this.habitat(h,s.visible.has(key(h.x,h.y))?1:.32);
+    for(const a of s.encounters??[])if(a.type==='altar'&&s.explored.has(key(a.x,a.y)))this.travelAltar(a,s.visible.has(key(a.x,a.y))?1:.32);
     drawDangerPockets(g,s,T);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);
@@ -82,6 +83,11 @@ export class DungeonScene extends Phaser.Scene {
       }
       g.fillStyle(color);g.fillTriangle(e.x*T+8,e.y*T-7,e.x*T+16,e.y*T-7,e.x*T+12,e.y*T-14);g.fillStyle(0x17242d);g.fillRect(e.x*T+11,e.y*T-12,2,3);
     }
+  }
+  travelAltar(altar,a){
+    const g=this.paint,x=altar.x*T,y=altar.y*T,c=altar.active?0x8edfd3:0x8a938b;
+    if(altar.active){g.fillStyle(0x76cfbd,a*.16);g.fillCircle(x+12,y+12,12);}
+    g.fillStyle(0x555d58,a);g.fillEllipse(x+12,y+19,23,9);g.fillStyle(0x9a9f8b,a);g.fillRect(x+5,y+17,14,4);g.fillStyle(0x515c58,a);g.fillRect(x+8,y+8,8,10);g.lineStyle(2,c,a);g.strokeTriangle(x+12,y+3,x+17,y+10,x+12,y+16);g.strokeTriangle(x+12,y+3,x+7,y+10,x+12,y+16);g.fillStyle(c,a);g.fillRect(x+11,y+8,2,5);
   }
   habitat(h,a){
     const g=this.paint,x=h.x*T,y=h.y*T;

@@ -7,7 +7,7 @@ export function planTravel(game,x,y){
  if(!Number.isInteger(x)||!Number.isInteger(y)||!s.visible.has(key(x,y)))return null;
  if(s.enemies.some(e=>e.hp>0&&e.x===x&&e.y===y))return null;
  const item=s.items.find(i=>i.x===x&&i.y===y),event=s.encounters?.find(e=>e.x===x&&e.y===y),tile=s.map[y]?.[x];
- const companion=s.companion?.x===x&&s.companion?.y===y,person=['bridge','habitat'].includes(event?.type)||tile==='M'||tile==='V'||companion;
+ const companion=s.companion?.x===x&&s.companion?.y===y,person=['altar','bridge','habitat'].includes(event?.type)||tile==='M'||tile==='V'||companion;
  let intent=item?{type:'pickup',item}:person||event&&['journey','shrine','woodland'].includes(event.type)||tile==='C'||tile==='F'||['I','N'].includes(tile)?{type:'interact',event,site:companion?'prince':tile}:tile==='D'||tile==='>'?{type:'descend'}:tile==='<'?{type:'ascend'}:null;
  if(!person&&!walkable(s.map,x,y))return null;
  const target={x,y},reached=point=>person?adjacent(point,target):point.x===x&&point.y===y;

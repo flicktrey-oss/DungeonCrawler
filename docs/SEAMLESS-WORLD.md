@@ -55,3 +55,9 @@ Tests exercise negative-coordinate entrances, both depths, persistent drops/deat
 ## Map discovery and zoom (v0.33.0)
 
 Map rendering and hit testing share zoom-adjusted frames. Each UI tab keeps its own runtime zoom; map actions never touch the turn manager or reveal terrain. The direction indicator is derived from the active escort and global player/surface-return coordinates. It is absent before acceptance and after completion. Northwatch's marker, escort destination marker and fully revealed settlement bounds require an actual visit, rather than chunk preparation. Refresh also applies that policy to old saves and underground surface-map views.
+
+## Travel altars (v0.34.0)
+
+`altars.js` uses an independent region seed. Camp and its first woodland receive an altar; other surface regions are eligible on a sparse lattice with a seeded probability. Sites use existing walkable terrain and avoid entities/scenery; no terrain is carved. Activation is stored on the encounter object. Save restoration retrofits missing sites to retained chunks and their shared surface array without resetting anything.
+
+Activation and travel resolve through TurnManager. An activated adjacent source and an activated known destination are required. Guards reject active escorts, nearby threats at either end, incoming telegraphs and obstructed arrivals before moving or spending a turn. Travel changes the player position and synchronizes metadata without calling region activation or granting transition grace; living enemies receive their usual one action. No additional healing, gold charge, ability reset, enemy regeneration or catch-up simulation occurs. Ordinary per-turn effects still apply.

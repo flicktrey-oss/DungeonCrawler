@@ -1,3 +1,4 @@
+import {addTravelAltar,travelAltars,altarAction} from './altars.js';
 import {areaSnapshot,landing,travelingPrince,arrivePrince} from './crypt-travel.js';
 import {escortCanLeave} from './story.js';
 import {addHabitats,habitatAt,strikeHabitat,replenishHabitats,actHabitatResident} from './habitats.js';
@@ -16,7 +17,7 @@ import {placeCitizens} from './town.js';
 export class SeamlessExpedition extends Expedition{
  constructor(seed=Date.now()){
   super(seed);this.saveRegion();this.surfaceGeneration=true;this.forest=startingForest(seed);
-  const home=offsetRegion(this.regions.get(worldId(0,0)));
+  const homeData=this.regions.get(worldId(0,0));addTravelAltar(this,homeData);const home=offsetRegion(homeData);
   this.surfaceChunks=new Map([[worldId(0,0),home]]);
   const s=this.state;s.map=createSurfaceMap(this.surfaceChunks);s.baseMap=createSurfaceMap(this.surfaceChunks,'baseMap');
   for(const field of ['enemies','items','encounters','scenery'])s[field]=[...home[field]];
@@ -27,6 +28,10 @@ export class SeamlessExpedition extends Expedition{
   this.message(`The starting woodland trail leads ${this.forest.rx>0?'east':this.forest.rx<0?'west':this.forest.ry>0?'south':'north'}. Other directions may be much more dangerous.`);
  }
  refresh(){super.refresh();if(this.state.seamless){this.state.settlementBounds=this.state.settlementBounds.filter(b=>b.minX===0&&b.minY===0||this.visitedSurface?.has(worldId(b.minX/WIDTH,b.minY/HEIGHT)));this.state.surfaceMarkers=this.surfaceWaypoints();}}
+ ensureTravelAltars(){
+  const surface=this.state.seamless?this.state:this.surfaceSnapshot;
+  for(const data of this.surfaceChunks.values()){const event=addTravelAltar(this,data,true);if(event&&!surface.encounters.includes(event))surface.encounters.push(event);}
+ }
  saveRegion(){
   if(!this.surfaceChunks)return super.saveRegion();
   if(this.state.seamless)this.surfaceSnapshot=areaSnapshot(this.state);else this.cacheCurrentCrypt();
@@ -61,6 +66,7 @@ export class SeamlessExpedition extends Expedition{
  }
  surfaceWaypoints(){
   const kingdomKnown=this.visitedSurface.has(worldId(KINGDOM.rx,KINGDOM.ry)),kingdom={x:KINGDOM.rx*WIDTH+KINGDOM.keep.x,y:KINGDOM.ry*HEIGHT+KINGDOM.keep.y,label:'K',name:'Northwatch'},marks=[{x:20,y:15,label:'C',name:'Lantern Camp'},...(kingdomKnown?[kingdom]:[])];
+  for(const altar of travelAltars(this))if(altar.active)marks.push({x:altar.x,y:altar.y,label:'◇',name:altar.name,altar:true});
   for(const q of this.quests.values()){if(!q.accepted||q.claimed)continue;let point;
    if(q.kind==='escort'){if(!kingdomKnown)continue;point=kingdom;}
    else if(q.complete)point=this.state.encounters.find(e=>e.quest===q&&['villager','bridge'].includes(e.type))??q.giverPosition;
@@ -85,7 +91,7 @@ export class SeamlessExpedition extends Expedition{
  }
  loadChunk(rx,ry){
   const id=worldId(rx,ry);if(this.surfaceChunks.has(id))return this.surfaceChunks.get(id);
-  const prepared=this.prepareWorld(rx,ry);addHabitats(this,prepared);const data=offsetRegion(prepared);this.surfaceChunks.set(id,data);
+  const prepared=this.prepareWorld(rx,ry);addHabitats(this,prepared);addTravelAltar(this,prepared);const data=offsetRegion(prepared);this.surfaceChunks.set(id,data);
   for(const e of data.enemies)this.registerEnemy(e,id);
   for(const field of ['enemies','items','encounters','scenery'])this.state[field].push(...data[field]);
   for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){const neighbor=this.surfaceChunks.get(worldId(rx+dx,ry+dy));if(neighbor)joinSurfaceAreas(data,neighbor);}
@@ -134,6 +140,7 @@ export class SeamlessExpedition extends Expedition{
   for(const field of ['enemies','items','encounters'])for(const e of data[field].slice(counts[field])){e.x+=dx;e.y+=dy;if(e.territory){e.territory.x+=dx;e.territory.y+=dy;}if(field==='enemies')this.registerEnemy(e,worldId(a.rx,a.ry));this.state[field].push(e);}
  }
  resolvePlayer(action){
+  if(['activateAltar','travelAltar'].includes(action.type))return altarAction(this,action);
   if(this.surfaceChunks&&['descend','ascend'].includes(action.type)){
    const s=this.state,p=s.player,l=this.location;
    if(!escortCanLeave(this))return false;
