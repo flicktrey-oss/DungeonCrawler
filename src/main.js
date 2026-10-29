@@ -192,7 +192,7 @@ function bridgeDialog(){
 function encounterDialog() {
   const event=model?.activeEncounter();if(!event||!['discovery','villager','shrine','woodland'].includes(event.type))return;
   paused=true;panel='encounter';
-  const perform=action=>{model.action(action);render();if(model.state.status==='playing'){encounterDialog();$('encounter-result').textContent=event.type==='woodland'&&event.used?event.result:model.state.log.at(-1);}};
+  const perform=action=>{model.action(action);render();if(model.state.status==='playing'){encounterDialog();$('encounter-result').textContent=['woodland','discovery'].includes(event.type)&&event.used?event.result:model.state.log.at(-1);}};
   if(event.type==='discovery'){
     const buttons=[['Return',closePanel]];
     if(!event.used&&!event.challenged){
