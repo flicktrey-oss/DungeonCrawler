@@ -40,7 +40,7 @@ export class DungeonScene extends Phaser.Scene {
       const area=this.gameModel.areaAt?.(x,y)??s;
       if(s.location?.kind==='world'&&area.city){this.cityTile(t,xx,yy,a,x,y);continue;}
       if(s.location?.kind==='world'){this.outdoorTile(t,xx,yy,a,this.gameModel.renderBiome?.(x,y)??area.biome,x,y);continue;}
-      g.fillStyle(t==='#'?0x3d4351:0x20272e,a);g.fillRect(xx,yy,T-1,T-1);
+      g.fillStyle(t==='~'?0x284e66:t==='T'?0x36513b:t==='#'?0x3d4351:s.cryptTheme==='flooded'?0x20343d:s.cryptTheme==='rootbound'?0x28382b:s.cryptTheme==='ossuary'?0x34312d:0x20272e,a);g.fillRect(xx,yy,T-1,T-1);
       if(t==='#'){g.fillStyle(0x59616b,a);g.fillRect(xx+1,yy+1,22,3);g.lineStyle(1,0x252b37,a);g.lineBetween(xx+12,yy+4,xx+12,yy+12);g.lineBetween(xx,yy+12,xx+24,yy+12);if((x*7+y*13)%37===0){g.fillStyle(0xa96632,a);g.fillRect(xx+10,yy+9,4,9);g.fillStyle(0xffd479,a);g.fillTriangle(xx+9,yy+10,xx+15,yy+10,xx+12,yy+3);}}
       else{if(t==='A'){g.fillStyle(0x9e7890,a);g.fillRect(xx+5,yy+5,14,14);g.fillStyle(0xe8ca7b,a);g.fillRect(xx+10,yy+8,4,8);}g.fillStyle(0x303942,a);g.fillRect(xx+3,yy+5,7,2);if(t==='>'||t==='<'){ g.fillStyle(0xb9c2c8,a);for(let i=0;i<4;i++)g.fillRect(xx+4+i*2,yy+5+i*4,16-i*4,2);}if(t==='+'){g.fillStyle(0x74563a,a);g.fillRect(xx+5,yy+2,14,20);g.fillStyle(0xb79c66,a);g.fillRect(xx+7,yy+5,2,14);g.fillRect(xx+15,yy+5,2,14);}}
     }
@@ -50,6 +50,7 @@ export class DungeonScene extends Phaser.Scene {
     for(let y=view.minY;y<view.maxY;y++)for(let x=view.minX;x<view.maxX;x++)if(s.visible.has(key(x,y))&&['V','M'].includes(s.map[y][x])){const event=s.encounters?.find(e=>e.x===x&&e.y===y),name=s.map[y][x]==='M'?'Mara the Wayfarer':event?.quest?.giver??event?.name??'The Mirekeeper';drawPerson(g,x*T,y*T,name,s.map[y][x]==='M'?'merchant':'traveler');}
     for(const h of s.encounters??[])if(h.type==='habitat'&&s.explored.has(key(h.x,h.y)))this.habitat(h,s.visible.has(key(h.x,h.y))?1:.32);
     for(const a of s.encounters??[])if(a.type==='altar'&&s.explored.has(key(a.x,a.y)))this.travelAltar(a,s.visible.has(key(a.x,a.y))?1:.32);
+    for(const e of s.encounters??[])if(e.type==='discovery'&&s.explored.has(key(e.x,e.y))){const a=s.visible.has(key(e.x,e.y))?1:.32;g.fillStyle(e.used?0x74766b:e.kind==='watchfire'?0xe6ad59:e.kind==='pilgrim'?0xb2c7df:0xd5bc79,a);g.fillRect(e.x*T+7,e.y*T+7,10,12);g.lineStyle(2,0x443326,a);g.strokeRect(e.x*T+7,e.y*T+7,10,12);}
     drawDangerPockets(g,s,T);
     for(const item of s.items)if(s.visible.has(key(item.x,item.y)))this.item(item);
     this.drawEnemyWarnings(s);

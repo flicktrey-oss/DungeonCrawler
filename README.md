@@ -4,7 +4,7 @@ A strictly turn-based, original Phaser 3 browser adventure. Explore a remembered
 
 **Play:** https://flicktrey-oss.github.io/DungeonCrawler/
 
-Look for **v0.32.0 · Below the wilds**. **New Game** starts the expanding world with connected crypts; **Continue** resumes your locally saved expedition. The source lives on `feature/playable-roguelike` until merged into `main`.
+Look for **v0.37.0 · Choices below the wilds**. **New Game** starts the expanding world with connected crypts; **Continue** resumes your locally saved expedition. The source lives on `feature/playable-roguelike` until merged into `main`.
 
 ## Install and run
 
@@ -494,3 +494,12 @@ The highlands now recommend level 6. At least four ordinary creatures favor the 
 Each region can have at most one **Veteran**, **Armored** or **Stalker** ordinary creature. Name prefixes and original colored badges identify them before combat; inspection and the creature journal explain their abilities. Veterans gain modest health and +1 attack; Armored creatures gain +1 defense and health but take ordinary actions every other turn; Stalker rats/wolves telegraph a two-tile lunge and recover afterward. All retain the same central turn rules, with no extra actions, hidden critical hits or player-level scaling. Variants award 50% more XP (rounded up) and improved ordinary loot odds; animals retain their meat-only drops.
 
 New runs and newly generated areas get the full new enemy mix. Existing expanding-world saves receive gentler retained mountain stats while preserving positions, health fractions, deaths, inventory and quests. Existing creatures are not suddenly turned into variants on loading.
+
+
+### v0.37.0 · Choices below the wilds (recreated)
+
+Recreated from the available v0.35 source and the earlier release notes; the lost v0.36/v0.37 commits were not available in this workspace.
+
+Wilderness regions can contain a tollkeeper’s lockbox (pay 5 gold for its 12-gold contents or challenge a guard), a stranded pilgrim (give a tonic or 4 gold for 6 XP), or an old watchfire (restore 10 HP or chart surrounding biomes). Reading and rejected choices are free; successful choices cost one turn. Choices are single-use and persist through travel and local save/resume. Guard rewards require defeating the guard.
+
+New crypt floors are flooded, rootbound, or ossuaries. Water, roots and masonry change movement and cover while keeping all passable tiles and stairs connected. Rootbound floors offer an extra tonic; ossuaries contain bone scenery. Layouts, opened rewards and theme names persist in expanding-world saves. Existing saved floors retain their layouts; newly generated floors receive themes. Local saves remain browser/device specific.

@@ -10,6 +10,8 @@ import {recordDiscovery,assignQuick,creatureIndexKey} from './quality.js';
 import {townAction,townBounties,placeCitizens} from './town.js';
 import {createStory,princeHere,nearPrince,princeAction,escortCanLeave,carryPrince,actPrince,princeEnemyTarget,finishStory} from './story.js';
 import {isKingdom} from './city.js';
+import {themeCrypt,CRYPT_THEMES} from './crypt-themes.js';
+import {addDiscovery,discoveryAction} from './discoveries.js';
 import {addWoodland,woodlandAction} from './woodland.js';
 import {addQuestContent, restoreQuestRegion, questAction} from './quests.js';
 import { MERCHANT, createMerchantStock, buyFromMerchant } from './merchant.js';
@@ -24,7 +26,7 @@ import { EQUIPMENT_SLOTS, equippedSlot, cookedMeat, ratMeat, slotsFor, recalcula
 import { ordinaryDrop, modifyItem, cryptRelic } from './loot.js';
 import { addItem, settleInventory, looseItem, moveItem } from './inventory.js';
 import { ENCOUNTERS, treasure } from './encounters.js';
-const fields=['routeLandmark','bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
+const fields=['cryptTheme','cryptName','routeLandmark','bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city'];
 export class Expedition extends Game {
   constructor(seed=Date.now()){
     super(seed);this.journey=createJourney();this.woodland=new Map();this.quests=new Map();this.trackedQuest=null;this.regions=new Map();this.surveyedRegions=new Map();this.visits=new Map();this.location=null;this.stash=[];this.shop=createMerchantStock();this.quickSlots=[null,null,null];this.creatureIndex=new Map();this.killCounts={};this.bounties=townBounties();this.rescued=[];this.story=createStory();this.quests.set(this.story.id,this.story);
@@ -76,6 +78,7 @@ export class Expedition extends Game {
       if(data.quest)for(const e of data.enemies)if(e.questId)e.questId=data.quest.id;
       if(!restoreQuestRegion(this,data,previous,rx,ry))addQuestContent(this,data,rx,ry);
       addWoodland(this,data,rx,ry);
+      addDiscovery(this,data,rx,ry);
       attachBridge(this,data,rx,ry);
       attachJourney(this,data,rx,ry);
       if(home){data.map[BLACKSMITH.y][BLACKSMITH.x]='V';data.encounters.push({...BLACKSMITH,id:'blacksmith',type:'blacksmith'});data.map[GRAVEKEEPER.y][GRAVEKEEPER.x]='V';data.encounters.push({...GRAVEKEEPER,id:'gravekeeper',type:'gravekeeper'});}
@@ -89,25 +92,26 @@ export class Expedition extends Game {
     const info=BIOMES[data.biome];if(data.biome==='marsh')this.message('Marsh trails shelter small pond frogs. Stronger creatures defend the marked pools off the main trails.');this.message(`${info.name} (${rx}, ${ry}) · ${home?'safe camp':`recommended level ${info.recommended}${this.state.player.level<info.recommended?' — DANGER: you are underleveled!':''}`}.`);
   }
   visitCrypt(rx,ry,depth,arrival='upstairs'){
-    const id=cryptId(rx,ry,depth),visit=this.nextVisit(id),rng=new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:${visit}`)),d=generateDungeon(visit===0?rng:new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:0`))),biome=biomeAt(rx,ry,this.state.seed),danger=BIOMES[biome].danger+depth;
+    const id=cryptId(rx,ry,depth),visit=this.nextVisit(id),rng=new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:${visit}`)),d=themeCrypt(generateDungeon(visit===0?rng:new Random(regionSeed(this.state.seed,rx,ry,`crypt:${depth}:0`))),new Random(regionSeed(this.state.seed,rx,ry,`crypt-theme:${depth}`))),biome=biomeAt(rx,ry,this.state.seed),danger=BIOMES[biome].danger+depth;
     const previous=this.location?.id===id?this.state:this.regions.get(id);
-    const data={...d,rx,ry,biome,danger,recommended:BIOMES[biome].recommended+2,home:false,depth,visit,upstairs:{...d.start},cleared:false,baseMap:null,encounterSeen:new Set(),explored:new Set(previous?.explored??[]),enemies:[],items:[],encounters:[],scenery:[],quest:null,entrance:null,landmark:null};
+    if(previous){d.map=previous.map.map(row=>[...row]);d.scenery=previous.scenery;d.cryptTheme=previous.cryptTheme;d.cryptName=previous.cryptName??'Forgotten crypt';}
+    const data={...d,rx,ry,biome,danger,recommended:BIOMES[biome].recommended+2,home:false,depth,visit,upstairs:{...d.start},cleared:false,baseMap:null,encounterSeen:new Set(),explored:new Set(previous?.explored??[]),enemies:[],items:[],encounters:[],scenery:d.scenery,quest:null,entrance:null,landmark:null};
     data.map[d.start.y][d.start.x]='<';if(depth===2)data.map[d.stairs.y][d.stairs.x]='A';
-    const free=[];for(const room of d.rooms.slice(1))for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(key(x,y)!==key(d.stairs.x,d.stairs.y))free.push({x,y});
+    const free=[];for(const room of d.rooms.slice(1))for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(walkable(d.map,x,y)&&key(x,y)!==key(d.stairs.x,d.stairs.y))free.push({x,y});
     if(previous)for(let i=free.length-1;i>=0;i--)if(previous.items.some(item=>item.x===free[i].x&&item.y===free[i].y))free.splice(i,1);
     const spot=()=>free.length?free.splice(rng.int(0,free.length-1),1)[0]:null;
     for(let i=0;i<5+depth;i++){const kind=rng.pick(['skeleton','goblin']),position=spot();if(position)data.enemies.push(this.makeEnemy(kind,position,danger,i));}
     if(depth===2)data.enemies.push(this.makeEnemy('guardian',{...d.stairs},danger,99));
-    if(!previous)for(const item of [potion(),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger,'crypt')},...(depth===2?[{kind:'chest',name:'Locked reliquary',locked:true,reward:treasure(rng,danger,'boss')}]:[])])data.items.push({...item,...spot()});
+    if(!previous)for(const item of [{...potion(),name:CRYPT_THEMES[d.cryptTheme].supply},...(d.cryptTheme==='rootbound'?[potion()]:[]),{kind:'chest',name:'Crypt coffer',reward:treasure(rng,danger,'crypt')},...(depth===2?[{kind:'chest',name:'Locked reliquary',locked:true,reward:treasure(rng,danger,'boss')}]:[])])data.items.push({...item,...spot()});
     if(previous){data.items=previous.items;data.cleared=previous.cleared;}
     this.activate({id,kind:'crypt',rx,ry,depth},data,data[arrival]);
-    this.message(`Crypt depth ${depth}/2 · recommended level ${data.recommended}. The layout and explored map persist; enemies return. Q on an upward stair retreats.`);
+    this.message(`${data.cryptName} · Crypt depth ${depth}/2 · recommended level ${data.recommended}. The layout and explored map persist; enemies return. Q on an upward stair retreats.`);
   }
   borderPreview(){const p=this.state.player,l=this.location;if(l.kind!=='world')return null;const dx=p.x===0?-1:p.x===39?1:0,dy=p.y===0?-1:p.y===29?1:0;if(!dx&&!dy)return null;return regionInfo(this.state.seed,l.rx+dx,l.ry+dy);}
   atCamp(){const s=this.state;return this.location.kind==='world'&&s.home&&s.player.x===CAMP.x&&s.player.y===CAMP.y;}
   atCampfire(){const s=this.state;return this.location.kind==='world'&&s.home&&s.map[s.player.y]?.[s.player.x]==='F';}
   atMerchant(){const s=this.state;return this.location.kind==='world'&&s.home&&Math.abs(s.player.x-MERCHANT.x)+Math.abs(s.player.y-MERCHANT.y)===1;}
-  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>e.type==='altar'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)<=1:['altar','habitat','bridge','villager','citizen','innkeeper','gravekeeper','guide','steward','blacksmith'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
+  nearbyEncounters(){const p=this.state.player;return (this.state.encounters??[]).filter(e=>e.type==='altar'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)<=1:['discovery','altar','habitat','bridge','villager','citizen','innkeeper','gravekeeper','guide','steward','blacksmith'].includes(e.type)||e.type==='woodland'&&e.kind!=='milestone'?Math.abs(e.x-p.x)+Math.abs(e.y-p.y)===1:e.x===p.x&&e.y===p.y);}
   activeEncounter(){const events=this.nearbyEncounters();return events.includes(this.interactionTarget)?this.interactionTarget:events.find(e=>e.x===this.state.player.x&&e.y===this.state.player.y)??events[0];}
 
   collectQuestReward(q){q.reward??=modifyItem(reedAmulet(),this.rng,'quest');if(!addItem(this.state.player,q.reward)){this.message('Make room in your satchel before claiming your reward.');return false;}return true;}
@@ -134,6 +138,7 @@ export class Expedition extends Game {
       this.message(`Cooked one ${output.name}. It restores ${healing} health.`);return true;
     }
     if(['sell','store','drop'].includes(a.type)&&equippedSlot(p,p.inventory[a.index])){this.message('Unequip that item before selling, storing or dropping it.');return false;}
+    if(a.type==='discovery')return discoveryAction(this,a);
     if(a.type==='woodland')return woodlandAction(this,a);
     if(['acceptQuest','claimQuest','activateWard'].includes(a.type))return questAction(this,a);
     if(a.type==='reach'||a.type==='throw'){
@@ -244,7 +249,7 @@ export class Expedition extends Game {
     this.killCounts[enemy.kind]=(this.killCounts[enemy.kind]??0)+1;const entry=this.creatureIndex.get(creatureIndexKey(enemy));if(entry)entry.kills++;
     this.awardExperience(enemy.xp);this.message(`${enemy.name} falls. +${enemy.xp} XP.`);
     const loot=ordinaryDrop(this.rng,enemy.lootDanger??this.state.danger,enemy.kind,Boolean(enemy.eventId||enemy.variant));if(loot){this.state.items.push({...loot,x:enemy.x,y:enemy.y});if(['rawMeat','rawRatMeat'].includes(loot.kind))this.message(`${loot.name} dropped. Collect it from the ground.`);}
-    if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:enemy.miniboss?enemy.name+'’s hoard':'Beast hoard',reward:enemy.miniboss?minibossReward(this.rng,enemy.miniboss):treasure(this.rng,this.state.danger+2,'den'),x:enemy.x,y:enemy.y});}}
+    if(enemy.eventId){const event=this.state.encounters.find(e=>e.id===enemy.eventId);if(event&&!event.used){event.used=true;this.state.items.push({kind:'chest',name:event.type==='discovery'?'Tollkeeper’s lockbox':enemy.miniboss?enemy.name+'’s hoard':'Beast hoard',reward:event.type==='discovery'?{kind:'gold',name:'Lockbox purse',amount:12}:enemy.miniboss?minibossReward(this.rng,enemy.miniboss):treasure(this.rng,this.state.danger+2,'den'),x:enemy.x,y:enemy.y});}}
     if(enemy.questId&&this.state.quest){const q=this.state.quest;q.remaining=this.questRemaining();q.complete=q.remaining===0;if(q.complete&&q.accepted)this.message('The frogs are cleared. Return to the Mirekeeper whenever you are ready.');}
     if(enemy.questKey){const q=this.quests.get(enemy.questKey)??this.state.encounters.find(e=>e.quest?.id===enemy.questKey)?.quest;if(q&&q.kind!=='recovery'&&!this.state.enemies.some(e=>e.hp>0&&e.questKey===q.id)){q.complete=true;if(q.accepted)this.message(q.title+': objective complete. Return for your reward.');}}
     finishBridgeFight(this,enemy);

@@ -11,7 +11,7 @@ export function availableInteractions(g){
  if(g.atMerchant())add('merchant','merchant','Trade','Mara the Wayfarer');
  for(const e of events){
   if(['guide','steward','journey'].includes(e.type))add(e.id,'journey',e.type==='journey'?'Interact':'Speak',e.name,e);
-  else if(['villager','shrine','woodland'].includes(e.type))add(e.id,'encounter','Interact',e.quest?.giver??e.name??'Wayfarer shrine',e);
+  else if(['discovery','villager','shrine','woodland'].includes(e.type))add(e.id,'encounter','Interact',e.quest?.giver??e.name??'Wayfarer shrine',e);
   else if(e.type==='altar')add(e.id,'altar',e.active?'Travel':'Activate',e.name,e);
   else if(e.type==='habitat')add(e.id,'habitat',e.kind==='rat'&&!e.destroyed?'Strike':'Inspect',e.kind==='rat'&&!e.destroyed?`${e.name} · ${e.hp}/${e.maxHp} HP`:e.name,e);
   else if(e.type==='blacksmith')add(e.id,'blacksmith','Forge',e.name,e);

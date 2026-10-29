@@ -190,10 +190,17 @@ function bridgeDialog(){
  for(const b of $('overlay').querySelectorAll('button'))if(b.textContent==='Pay toll · 8 gold')b.disabled=model.state.player.gold<BRIDGE_TOLL;
 }
 function encounterDialog() {
-  const event=model?.activeEncounter();if(!event||!['villager','shrine','woodland'].includes(event.type))return;
+  const event=model?.activeEncounter();if(!event||!['discovery','villager','shrine','woodland'].includes(event.type))return;
   paused=true;panel='encounter';
   const perform=action=>{model.action(action);render();if(model.state.status==='playing'){encounterDialog();$('encounter-result').textContent=event.type==='woodland'&&event.used?event.result:model.state.log.at(-1);}};
-  if(event.type==='woodland'){
+  if(event.type==='discovery'){
+    const buttons=[['Return',closePanel]];
+    if(!event.used&&!event.challenged){
+      const choices={lockbox:[['Pay 5 gold','pay'],['Fight the guard','fight']],pilgrim:[['Give 4 gold','gold'],['Give Ember tonic','tonic']],watchfire:[['Warm yourself · 10 HP','heal'],['Scout surrounding lands','scout']]};
+      for(const [label,choice] of choices[event.kind]??[])buttons.unshift([label,()=>perform({type:'discovery',choice})]);
+    }
+    modal(event.name,`<p>${escape(event.used?(event.result??'This discovery is resolved.'):event.challenged?'The guard holds the purse. Defeat it to claim your reward.':event.description)}</p><p class="hint">Reading is free. A successful choice takes one turn; enemies act afterward.</p><p id="encounter-result" role="status"></p>`,buttons);
+  }else if(event.type==='woodland'){
     const buttons=[['Return',closePanel]];
     if(!event.used){
       if(event.kind==='herbalist')buttons.unshift(['Buy tonic · 6 gold',()=>perform({type:'woodland',choice:'gold'})],['Exchange hunting trophy',()=>perform({type:'woodland',choice:'trophy'})]);

@@ -1,6 +1,6 @@
 import {walkable,key,directions} from './dungeon.js';
 import {princeHere} from './story.js';
-export const areaFields=['routeLandmark','bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','visible','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city','seamless','areaBounds','settlementBounds','surfaceMarkers','riverForward','floor'];
+export const areaFields=['cryptTheme','cryptName','routeLandmark','bridgeLayout','baseMap','encounterSeen','map','enemies','items','explored','visible','start','stairs','upstairs','entrance','landmark','biome','danger','home','rx','ry','depth','cleared','encounters','scenery','quest','visit','recommended','city','seamless','areaBounds','settlementBounds','surfaceMarkers','riverForward','floor'];
 export const areaSnapshot=s=>Object.fromEntries(areaFields.map(k=>[k,s[k]]));
 export function landing(s,target,excluded=[]){
  const occupied=new Set([...s.enemies.filter(e=>e.hp>0),...s.encounters.filter(e=>e.type==='habitat'&&e.kind==='rat'&&!e.destroyed),...excluded].map(e=>key(e.x,e.y)));
